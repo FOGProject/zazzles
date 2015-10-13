@@ -28,6 +28,20 @@ namespace Zazzles.Data
     {
         private const string LogName = "Data::AES";
 
+        public static byte[] Encrypt(byte[] toEncode, byte[] key, byte[] iv)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static byte[] Encrypt(string toEncode, string passkey, string initializationVector)
+        {
+            var key = Encoding.UTF8.GetBytes(passkey);
+            var iv = Encoding.UTF8.GetBytes(initializationVector);
+            var msg = Transform.HexStringToByteArray(toEncode);
+
+            return Encrypt(msg, key, iv);
+        }
+
         /// <summary>
         ///     AES decrypts a string
         /// </summary>
@@ -73,7 +87,6 @@ namespace Zazzles.Data
         /// <returns>An decrypted string of toDecode</returns>
         public static string Decrypt(string toDecode, string passKey, string initializationVector)
         {
-            //Convert the initialization vector and key into a byte array
             var key = Encoding.UTF8.GetBytes(passKey);
             var iv = Encoding.UTF8.GetBytes(initializationVector);
             var msg = Transform.HexStringToByteArray(toDecode);
