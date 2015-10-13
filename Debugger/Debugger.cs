@@ -20,11 +20,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using Zazzles.Commands;
-using Zazzles.Commands.Core.CBus;
-using Zazzles.Commands.Core.Middleware;
-using Zazzles.Commands.Core.Process;
-using Zazzles.Commands.Core.Settings;
-using Zazzles.Commands.Core.User;
+using Zazzles.Commands.CBus;
+using Zazzles.Commands.Middleware;
+using Zazzles.Commands.Process;
+using Zazzles.Commands.Settings;
+using Zazzles.Commands.User;
 
 namespace Zazzles
 {

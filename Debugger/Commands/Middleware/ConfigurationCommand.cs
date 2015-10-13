@@ -17,18 +17,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-using System;
-using System.IO;
-using System.Reflection;
-using System.Security.Cryptography.X509Certificates;
-using Zazzles.Data;
 using Zazzles.Middleware;
 
-namespace Zazzles.Commands.Core.Middleware
+namespace Zazzles.Commands.Middleware
 {
-    internal class AuthenticationCommand : ICommand
+    internal class ConfigurationCommand : ICommand
     {
-        private const string LogName = "Console::Middleware::Authentication";
+        private const string LogName = "Console::Middleware::Configuration";
+        private const string Server = "http://fog.jbob.io/fog";
+        private const string MAC = "1a:2b:3c:4d:5e:6f";
 
         public bool Process(string[] args)
         {
@@ -38,46 +35,41 @@ namespace Zazzles.Commands.Core.Middleware
                 return true;
             }
 
-            if (args[0].Equals("handshake"))
+            if (args[0].Equals("info"))
             {
-                Authentication.HandShake();
+                Log.Entry(LogName, "Server: " + Configuration.ServerAddress);
+                Log.Entry(LogName, "MAC: " + Configuration.MACAddresses());
+                return true;
+            }
+            if (args[0].Equals("default"))
+            {
+                Configuration.ServerAddress = Server;
+                Configuration.TestMAC = MAC;
                 return true;
             }
 
-            if (args[0].Equals("pin"))
+            if (args.Length < 2) return false;
+
+            if (args[0].Equals("server"))
             {
-                try
-                {
-                    var keyPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tmp",
-                        "fog.ca.crt");
-                    var downloaded = Communication.DownloadFile("/management/other/ca.cert.der", keyPath);
-
-                    if (!downloaded)
-                    {
-                        Log.Error(LogName, "Failed to download CA cert");
-                        return true;
-                    }
-
-                    var caCert = new X509Certificate2(keyPath);
-                    RSA.ServerCertificate();
-                }
-                catch (Exception ex)
-                {
-                    Log.Error(LogName, ex);
-                }
-
-
+                Configuration.ServerAddress = args[1];
                 return true;
             }
-
+            if (args[0].Equals("mac"))
+            {
+                Configuration.TestMAC = args[1];
+                return true;
+            }
             return false;
         }
 
         private static void Help()
         {
             Log.WriteLine("Available commands");
-            Log.WriteLine("--> handshake");
-            Log.WriteLine("--> pin");
+            Log.WriteLine("--> info");
+            Log.WriteLine("--> default");
+            Log.WriteLine("--> server  [SERVER_ADDRESS]");
+            Log.WriteLine("--> mac     [MAC_ADDRESS]");
         }
     }
 }

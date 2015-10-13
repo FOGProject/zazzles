@@ -17,13 +17,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-using Newtonsoft.Json.Linq;
 
-namespace Zazzles.Commands.Core.CBus
+namespace Zazzles.Commands.Settings
 {
-    internal class BusCommand : ICommand
+    internal class SettingsCommand : ICommand
     {
-        private const string LogName = "Console::Bus";
+        private const string LogName = "Console::Settings";
 
         public bool Process(string[] args)
         {
@@ -33,31 +32,42 @@ namespace Zazzles.Commands.Core.CBus
                 return true;
             }
 
-            if (args.Length == 2 && args[0].Equals("mode"))
+
+            if (args[0].Equals("os"))
             {
-                if (args[1].Equals("server"))
-                {
-                    Bus.SetMode(Bus.Mode.Server);
-                    return true;
-                }
-                if (args[1].Equals("client"))
-                {
-                    Bus.SetMode(Bus.Mode.Client);
-                    return true;
-                }
-            }
-            else if (args.Length == 2 && args[0].Equals("public"))
-            {
-                dynamic json = new JObject();
-                json.content = args[1];
-                Bus.Emit(Bus.Channel.Debug, json, true);
+                Log.WriteLine("--> " + Zazzles.Settings.OS);
                 return true;
             }
-            else if (args.Length == 2 && args[0].Equals("private"))
+
+            if (args[0].Equals("reload"))
             {
-                dynamic json = new JObject();
-                json.content = args[1];
-                Bus.Emit(Bus.Channel.Debug, json, false);
+                Zazzles.Settings.Reload();
+                Log.WriteLine("--> " + "Reloaded");
+
+                return true;
+            }
+
+            if (args.Length < 1) return false;
+
+            if (args[0].Equals("get"))
+            {
+                Log.WriteLine("--> " + args[1] + " = \"" + Zazzles.Settings.Get(args[0]) + "\"");
+                return true;
+            }
+
+            if (args[0].Equals("path"))
+            {
+                Zazzles.Settings.SetPath(args[1]);
+                Log.WriteLine("--> " + "Complete");
+                return true;
+            }
+
+            if (args.Length < 2) return false;
+
+            if (args[0].Equals("set"))
+            {
+                Zazzles.Settings.Set(args[1], args[2]);
+                Log.WriteLine("--> " + "Complete");
                 return true;
             }
 
@@ -67,9 +77,11 @@ namespace Zazzles.Commands.Core.CBus
         private static void Help()
         {
             Log.WriteLine("Available commands");
-            Log.WriteLine("--> mode    [server/client]");
-            Log.WriteLine("--> public  [message]");
-            Log.WriteLine("--> private [message]");
+            Log.WriteLine("--> os");
+            Log.WriteLine("--> get [SETTING]");
+            Log.WriteLine("--> set [SETTING] [VALUE]");
+            Log.WriteLine("--> path [PATH]");
+            Log.WriteLine("--> reload");
         }
     }
 }

@@ -125,14 +125,14 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Commands\Core\CBus\BusCommand.cs" />
-    <Compile Include="Commands\Core\Middleware\MiddlewareCommand.cs" />
-    <Compile Include="Commands\Core\Middleware\AuthenticationCommand.cs" />
-    <Compile Include="Commands\Core\Middleware\CommunicationCommand.cs" />
-    <Compile Include="Commands\Core\Middleware\ConfigurationCommand.cs" />
-    <Compile Include="Commands\Core\Process\ProcessCommand.cs" />
-    <Compile Include="Commands\Core\Settings\SettingsCommand.cs" />
-    <Compile Include="Commands\Core\User\UserCommand.cs" />
+    <Compile Include="Commands\CBus\BusCommand.cs" />
+    <Compile Include="Commands\Middleware\MiddlewareCommand.cs" />
+    <Compile Include="Commands\Middleware\AuthenticationCommand.cs" />
+    <Compile Include="Commands\Middleware\CommunicationCommand.cs" />
+    <Compile Include="Commands\Middleware\ConfigurationCommand.cs" />
+    <Compile Include="Commands\Process\ProcessCommand.cs" />
+    <Compile Include="Commands\Settings\SettingsCommand.cs" />
+    <Compile Include="Commands\User\UserCommand.cs" />
     <Compile Include="Commands\ICommand.cs" />
     <Compile Include="Debugger.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

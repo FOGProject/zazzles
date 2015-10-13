@@ -17,12 +17,18 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+using System;
+using System.IO;
+using System.Reflection;
+using System.Security.Cryptography.X509Certificates;
+using Zazzles.Data;
+using Zazzles.Middleware;
 
-namespace Zazzles.Commands.Core.User
+namespace Zazzles.Commands.Middleware
 {
-    internal class UserCommand : ICommand
+    internal class AuthenticationCommand : ICommand
     {
-        private const string LogName = "Console::User";
+        private const string LogName = "Console::Middleware::Authentication";
 
         public bool Process(string[] args)
         {
@@ -32,31 +38,34 @@ namespace Zazzles.Commands.Core.User
                 return true;
             }
 
-            if (args[0].Equals("loggedin"))
+            if (args[0].Equals("handshake"))
             {
-                Log.WriteLine("--> " + Zazzles.User.AnyLoggedIn());
+                Authentication.HandShake();
                 return true;
             }
 
-            if (args[0].Equals("current"))
+            if (args[0].Equals("pin"))
             {
-                Log.WriteLine("--> " + "\"" + Zazzles.User.Current() + "\"");
-                return true;
-            }
+                try
+                {
+                    var keyPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "tmp",
+                        "fog.ca.crt");
+                    var downloaded = Communication.DownloadFile("/management/other/ca.cert.der", keyPath);
 
-            if (args[0].Equals("inactivity"))
-            {
-                Log.WriteLine("--> " + Zazzles.User.InactivityTime() + " seconds");
-                return true;
-            }
+                    if (!downloaded)
+                    {
+                        Log.Error(LogName, "Failed to download CA cert");
+                        return true;
+                    }
 
-            if (args[0].Equals("list"))
-            {
-                var users = Zazzles.User.AllLoggedIn();
-                Log.WriteLine("--> " + "Current users logged in:");
+                    var caCert = new X509Certificate2(keyPath);
+                    RSA.ServerCertificate();
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(LogName, ex);
+                }
 
-                foreach (var user in users)
-                    Log.WriteLine("----> " + user);
 
                 return true;
             }
@@ -67,10 +76,8 @@ namespace Zazzles.Commands.Core.User
         private static void Help()
         {
             Log.WriteLine("Available commands");
-            Log.WriteLine("--> loggedin");
-            Log.WriteLine("--> current");
-            Log.WriteLine("--> inactivity");
-            Log.WriteLine("--> list");
+            Log.WriteLine("--> handshake");
+            Log.WriteLine("--> pin");
         }
     }
 }

@@ -17,15 +17,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-using Zazzles.Middleware;
 
-namespace Zazzles.Commands.Core.Middleware
+namespace Zazzles.Commands.User
 {
-    internal class ConfigurationCommand : ICommand
+    internal class UserCommand : ICommand
     {
-        private const string LogName = "Console::Middleware::Configuration";
-        private const string Server = "http://fog.jbob.io/fog";
-        private const string MAC = "1a:2b:3c:4d:5e:6f";
+        private const string LogName = "Console::User";
 
         public bool Process(string[] args)
         {
@@ -35,41 +32,45 @@ namespace Zazzles.Commands.Core.Middleware
                 return true;
             }
 
-            if (args[0].Equals("info"))
+            if (args[0].Equals("loggedin"))
             {
-                Log.Entry(LogName, "Server: " + Configuration.ServerAddress);
-                Log.Entry(LogName, "MAC: " + Configuration.MACAddresses());
-                return true;
-            }
-            if (args[0].Equals("default"))
-            {
-                Configuration.ServerAddress = Server;
-                Configuration.TestMAC = MAC;
+                Log.WriteLine("--> " + Zazzles.User.AnyLoggedIn());
                 return true;
             }
 
-            if (args.Length < 2) return false;
+            if (args[0].Equals("current"))
+            {
+                Log.WriteLine("--> " + "\"" + Zazzles.User.Current() + "\"");
+                return true;
+            }
 
-            if (args[0].Equals("server"))
+            if (args[0].Equals("inactivity"))
             {
-                Configuration.ServerAddress = args[1];
+                Log.WriteLine("--> " + Zazzles.User.InactivityTime() + " seconds");
                 return true;
             }
-            if (args[0].Equals("mac"))
+
+            if (args[0].Equals("list"))
             {
-                Configuration.TestMAC = args[1];
+                var users = Zazzles.User.AllLoggedIn();
+                Log.WriteLine("--> " + "Current users logged in:");
+
+                foreach (var user in users)
+                    Log.WriteLine("----> " + user);
+
                 return true;
             }
+
             return false;
         }
 
         private static void Help()
         {
             Log.WriteLine("Available commands");
-            Log.WriteLine("--> info");
-            Log.WriteLine("--> default");
-            Log.WriteLine("--> server  [SERVER_ADDRESS]");
-            Log.WriteLine("--> mac     [MAC_ADDRESS]");
+            Log.WriteLine("--> loggedin");
+            Log.WriteLine("--> current");
+            Log.WriteLine("--> inactivity");
+            Log.WriteLine("--> list");
         }
     }
 }

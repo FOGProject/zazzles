@@ -19,7 +19,7 @@
 
 using System.Linq;
 
-namespace Zazzles.Commands.Core.Process
+namespace Zazzles.Commands.Process
 {
     internal class ProcessCommand : ICommand
     {
