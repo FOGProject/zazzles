@@ -25,7 +25,6 @@ using Zazzles.Commands.Core.Middleware;
 using Zazzles.Commands.Core.Process;
 using Zazzles.Commands.Core.Settings;
 using Zazzles.Commands.Core.User;
-using Zazzles.Core;
 
 namespace Zazzles
 {

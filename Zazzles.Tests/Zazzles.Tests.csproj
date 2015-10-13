@@ -92,19 +92,19 @@
     <Otherwise />
   </Choose>
   <ItemGroup>
-    <Compile Include="Core\Bus\Bus.cs" />
-    <Compile Include="Core\Data\Hash.cs" />
-    <Compile Include="Core\Middleware\Authentication.cs" />
-    <Compile Include="Core\Middleware\Configuration.cs" />
-    <Compile Include="Core\Middleware\Response.cs" />
-    <Compile Include="Core\Settings\Settings.cs" />
-    <Compile Include="Core\User\User.cs" />
-    <Compile Include="Core\Data\Transform.cs" />
-    <Compile Include="Core\Data\Generate.cs" />
-    <Compile Include="Core\Data\DPAPI.cs" />
-    <Compile Include="Core\Data\RSA.cs" />
-    <Compile Include="Core\Data\AES.cs" />
-    <Compile Include="Core\Middleware\Communication.cs" />
+    <Compile Include="Bus\Bus.cs" />
+    <Compile Include="Data\Hash.cs" />
+    <Compile Include="Middleware\Authentication.cs" />
+    <Compile Include="Middleware\Configuration.cs" />
+    <Compile Include="Middleware\Response.cs" />
+    <Compile Include="Settings\Settings.cs" />
+    <Compile Include="User\User.cs" />
+    <Compile Include="Data\Transform.cs" />
+    <Compile Include="Data\Generate.cs" />
+    <Compile Include="Data\DPAPI.cs" />
+    <Compile Include="Data\RSA.cs" />
+    <Compile Include="Data\AES.cs" />
+    <Compile Include="Middleware\Communication.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

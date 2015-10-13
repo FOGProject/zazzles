@@ -21,9 +21,8 @@ using System;
 using System.IO;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
-using Zazzles.Core;
-using Zazzles.Core.Data;
-using Zazzles.Core.Middleware;
+using Zazzles.Data;
+using Zazzles.Middleware;
 
 namespace Zazzles.Commands.Core.Middleware
 {

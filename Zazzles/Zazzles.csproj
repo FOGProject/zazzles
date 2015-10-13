@@ -141,27 +141,27 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AbstractService.cs" />
-    <Compile Include="Core\Bus\BusClient.cs" />
-    <Compile Include="Core\Bus\BusServer.cs" />
-    <Compile Include="Core\Data\Hash.cs" />
-    <Compile Include="Core\Eager.cs" />
-    <Compile Include="Core\Middleware\Configuration.cs" />
-    <Compile Include="Core\Middleware\Authentication.cs" />
-    <Compile Include="Core\Middleware\Communication.cs" />
-    <Compile Include="Core\Middleware\Response.cs" />
-    <Compile Include="Core\Data\DPAPI.cs" />
-    <Compile Include="Core\Data\AES.cs" />
-    <Compile Include="Core\Data\Generate.cs" />
-    <Compile Include="Core\Data\Transform.cs" />
-    <Compile Include="Core\Data\RSA.cs" />
-    <Compile Include="Core\Log\Log.cs" />
-    <Compile Include="Core\Notification\Notification.cs" />
-    <Compile Include="Core\Bus\Bus.cs" />
-    <Compile Include="Core\Power\IPower.cs" />
-    <Compile Include="Core\Power\Linux\LinuxPower.cs" />
-    <Compile Include="Core\Power\Mac\MacPower.cs" />
-    <Compile Include="Core\Power\Windows\WindowsPower.cs" />
-    <Compile Include="Core\Process\ProcessHandler.cs" />
+    <Compile Include="Bus\BusClient.cs" />
+    <Compile Include="Bus\BusServer.cs" />
+    <Compile Include="Data\Hash.cs" />
+    <Compile Include="Eager.cs" />
+    <Compile Include="Middleware\Configuration.cs" />
+    <Compile Include="Middleware\Authentication.cs" />
+    <Compile Include="Middleware\Communication.cs" />
+    <Compile Include="Middleware\Response.cs" />
+    <Compile Include="Data\DPAPI.cs" />
+    <Compile Include="Data\AES.cs" />
+    <Compile Include="Data\Generate.cs" />
+    <Compile Include="Data\Transform.cs" />
+    <Compile Include="Data\RSA.cs" />
+    <Compile Include="Log\Log.cs" />
+    <Compile Include="Notification\Notification.cs" />
+    <Compile Include="Bus\Bus.cs" />
+    <Compile Include="Power\IPower.cs" />
+    <Compile Include="Power\Linux\LinuxPower.cs" />
+    <Compile Include="Power\Mac\MacPower.cs" />
+    <Compile Include="Power\Windows\WindowsPower.cs" />
+    <Compile Include="Process\ProcessHandler.cs" />
     <Compile Include="Modules\AbstractModule.cs" />
     <Compile Include="Modules\Updater\IUpdate.cs" />
     <Compile Include="Modules\Updater\Updater.cs" />
@@ -172,14 +172,14 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-    <Compile Include="Core\Registry\RegistryHandler.cs" />
-    <Compile Include="Core\Power\Power.cs" />
-    <Compile Include="Core\Settings\Settings.cs" />
-    <Compile Include="Core\User\IUser.cs" />
-    <Compile Include="Core\User\Linux\LinuxUser.cs" />
-    <Compile Include="Core\User\Mac\MacUser.cs" />
-    <Compile Include="Core\User\UserHandler.cs" />
-    <Compile Include="Core\User\Windows\WindowsUser.cs" />
+    <Compile Include="Registry\RegistryHandler.cs" />
+    <Compile Include="Power\Power.cs" />
+    <Compile Include="Settings\Settings.cs" />
+    <Compile Include="User\IUser.cs" />
+    <Compile Include="User\Linux\LinuxUser.cs" />
+    <Compile Include="User\Mac\MacUser.cs" />
+    <Compile Include="User\User.cs" />
+    <Compile Include="User\Windows\WindowsUser.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

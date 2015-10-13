@@ -17,13 +17,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-using Zazzles.Core;
 
 namespace Zazzles.Commands.Core.User
 {
     internal class UserCommand : ICommand
     {
-        private const string LogName = "Console::UserHandler";
+        private const string LogName = "Console::User";
 
         public bool Process(string[] args)
         {
@@ -35,25 +34,25 @@ namespace Zazzles.Commands.Core.User
 
             if (args[0].Equals("loggedin"))
             {
-                Log.WriteLine("--> " + UserHandler.IsUserLoggedIn());
+                Log.WriteLine("--> " + Zazzles.User.IsUserLoggedIn());
                 return true;
             }
 
             if (args[0].Equals("current"))
             {
-                Log.WriteLine("--> " + "\"" + UserHandler.GetCurrentUser() + "\"");
+                Log.WriteLine("--> " + "\"" + Zazzles.User.GetCurrentUser() + "\"");
                 return true;
             }
 
             if (args[0].Equals("inactivity"))
             {
-                Log.WriteLine("--> " + UserHandler.GetInactivityTime() + " seconds");
+                Log.WriteLine("--> " + Zazzles.User.GetInactivityTime() + " seconds");
                 return true;
             }
 
             if (args[0].Equals("list"))
             {
-                var users = UserHandler.GetUsersLoggedIn();
+                var users = Zazzles.User.GetUsersLoggedIn();
                 Log.WriteLine("--> " + "Current users logged in:");
 
                 foreach (var user in users)

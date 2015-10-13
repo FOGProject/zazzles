@@ -17,8 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-using Zazzles.Core;
-using Zazzles.Core.Middleware;
+using Zazzles.Middleware;
 
 namespace Zazzles.Commands.Core.Middleware
 {

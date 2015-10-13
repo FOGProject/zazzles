@@ -21,7 +21,6 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using Zazzles.Core;
 
 namespace Zazzles.Modules.Updater
 {

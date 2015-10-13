@@ -21,9 +21,7 @@
 using System;
 using System.Linq;
 using System.Threading;
-using Zazzles.Core;
-using Zazzles.Core.Middleware;
-using Zazzles.Core.Power;
+using Zazzles.Middleware;
 using Zazzles.Modules;
 
 namespace Zazzles

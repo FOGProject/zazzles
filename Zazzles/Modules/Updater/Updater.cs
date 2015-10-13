@@ -20,10 +20,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Zazzles.Core;
-using Zazzles.Core.Data;
-using Zazzles.Core.Middleware;
-using Zazzles.Core.Power;
+using Zazzles.Data;
+using Zazzles.Middleware;
 
 namespace Zazzles.Modules.Updater
 {

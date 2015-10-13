@@ -17,7 +17,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-using Zazzles.Core;
 
 namespace Zazzles.Commands.Core.Settings
 {
@@ -36,13 +35,13 @@ namespace Zazzles.Commands.Core.Settings
 
             if (args[0].Equals("os"))
             {
-                Log.WriteLine("--> " + Zazzles.Core.Settings.OS);
+                Log.WriteLine("--> " + Zazzles.Settings.OS);
                 return true;
             }
 
             if (args[0].Equals("reload"))
             {
-                Zazzles.Core.Settings.Reload();
+                Zazzles.Settings.Reload();
                 Log.WriteLine("--> " + "Reloaded");
 
                 return true;
@@ -52,13 +51,13 @@ namespace Zazzles.Commands.Core.Settings
 
             if (args[0].Equals("get"))
             {
-                Log.WriteLine("--> " + args[1] + " = \"" + Zazzles.Core.Settings.Get(args[0]) + "\"");
+                Log.WriteLine("--> " + args[1] + " = \"" + Zazzles.Settings.Get(args[0]) + "\"");
                 return true;
             }
 
             if (args[0].Equals("path"))
             {
-                Zazzles.Core.Settings.SetPath(args[1]);
+                Zazzles.Settings.SetPath(args[1]);
                 Log.WriteLine("--> " + "Complete");
                 return true;
             }
@@ -67,7 +66,7 @@ namespace Zazzles.Commands.Core.Settings
 
             if (args[0].Equals("set"))
             {
-                Zazzles.Core.Settings.Set(args[1], args[2]);
+                Zazzles.Settings.Set(args[1], args[2]);
                 Log.WriteLine("--> " + "Complete");
                 return true;
             }
