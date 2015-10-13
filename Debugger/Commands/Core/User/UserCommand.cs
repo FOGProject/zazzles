@@ -34,25 +34,25 @@ namespace Zazzles.Commands.Core.User
 
             if (args[0].Equals("loggedin"))
             {
-                Log.WriteLine("--> " + Zazzles.User.IsUserLoggedIn());
+                Log.WriteLine("--> " + Zazzles.User.AnyLoggedIn());
                 return true;
             }
 
             if (args[0].Equals("current"))
             {
-                Log.WriteLine("--> " + "\"" + Zazzles.User.GetCurrentUser() + "\"");
+                Log.WriteLine("--> " + "\"" + Zazzles.User.Current() + "\"");
                 return true;
             }
 
             if (args[0].Equals("inactivity"))
             {
-                Log.WriteLine("--> " + Zazzles.User.GetInactivityTime() + " seconds");
+                Log.WriteLine("--> " + Zazzles.User.InactivityTime() + " seconds");
                 return true;
             }
 
             if (args[0].Equals("list"))
             {
-                var users = Zazzles.User.GetUsersLoggedIn();
+                var users = Zazzles.User.AllLoggedIn();
                 Log.WriteLine("--> " + "Current users logged in:");
 
                 foreach (var user in users)

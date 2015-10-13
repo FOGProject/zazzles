@@ -47,15 +47,15 @@ namespace Zazzles
         /// <summary>
         /// </summary>
         /// <returns>True if a user is logged in</returns>
-        public static bool IsUserLoggedIn()
+        public static bool AnyLoggedIn()
         {
-            return GetUsersLoggedIn().Count > 0;
+            return AllLoggedIn().Count > 0;
         }
 
         /// <summary>
         /// </summary>
         /// <returns>The current username</returns>
-        public static string GetCurrentUser()
+        public static string Current()
         {
             try
             {
@@ -73,7 +73,7 @@ namespace Zazzles
         /// <summary>
         /// </summary>
         /// <returns>The inactivity time of the current user in seconds</returns>
-        public static int GetInactivityTime()
+        public static int InactivityTime()
         {
             try
             {
@@ -91,7 +91,7 @@ namespace Zazzles
         /// <summary>
         /// </summary>
         /// <returns>A list of usernames</returns>
-        public static List<string> GetUsersLoggedIn()
+        public static List<string> AllLoggedIn()
         {
             try
             {

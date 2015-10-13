@@ -164,7 +164,7 @@ namespace Zazzles
             int gracePeriod = -1)
         {
             // If no user is logged in, skip trying to notify users
-            if (!User.IsUserLoggedIn())
+            if (!User.AnyLoggedIn())
             {
                 Log.Debug(LogName,"No user is logged in. Though you know what? I don't believe you. So I'm going to pretend someone is logged in.");
                 //CreateTask(parameters);

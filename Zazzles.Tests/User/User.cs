@@ -34,7 +34,7 @@ namespace Zazzles.Tests.User
         [Test]
         public void GetCurrentUser()
         {
-            Assert.AreEqual(Environment.UserName, Zazzles.User.GetCurrentUser());
+            Assert.AreEqual(Environment.UserName, Zazzles.User.Current());
         }
 
         [Test]
@@ -42,16 +42,16 @@ namespace Zazzles.Tests.User
         public void GetInactivityTime()
         {
             if (Zazzles.Settings.OS == Zazzles.Settings.OSType.Windows)
-                Assert.IsTrue(Zazzles.User.GetInactivityTime() != -1);
+                Assert.IsTrue(Zazzles.User.InactivityTime() != -1);
             else
-                Assert.IsTrue(Zazzles.User.GetInactivityTime() == -1);
+                Assert.IsTrue(Zazzles.User.InactivityTime() == -1);
         }
 
         [Test]
         [Ignore("Ignore due to CI server configuration")]
         public void GetUsersLoggedIn()
         {
-            var users = Zazzles.User.GetUsersLoggedIn();
+            var users = Zazzles.User.AllLoggedIn();
             Assert.IsTrue(users.Count >= 1);
             Assert.IsTrue(users.Contains(Environment.UserName));
         }
@@ -60,7 +60,7 @@ namespace Zazzles.Tests.User
         [Ignore("Ignore due to CI server configuration")]
         public void IsUserLoggedIn()
         {
-            Assert.IsTrue(Zazzles.User.IsUserLoggedIn());
+            Assert.IsTrue(Zazzles.User.AnyLoggedIn());
         }
     }
 }
