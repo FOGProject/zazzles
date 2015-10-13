@@ -24,6 +24,7 @@ using NUnit.Framework;
 namespace Zazzles.Tests.Middleware
 {
     [TestFixture]
+    [Ignore("Until our testing servers can be re-setup")]
     public class AuthenticationTests
     {
         [SetUp]

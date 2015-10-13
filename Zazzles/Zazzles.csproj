@@ -96,6 +96,8 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\libs\log4net.dll</HintPath>
       <EmbedInteropTypes>False</EmbedInteropTypes>
+      <EmbedAssembly>true</EmbedAssembly>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="Newtonsoft.Json, Version=7.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
@@ -107,20 +109,28 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\libs\SuperSocket.Common.dll</HintPath>
       <EmbedInteropTypes>False</EmbedInteropTypes>
+      <EmbedAssembly>true</EmbedAssembly>
+      <Private>False</Private>
     </Reference>
     <Reference Include="SuperSocket.SocketBase, Version=1.6.4.0, Culture=neutral, PublicKeyToken=6c80000676988ebb, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\libs\SuperSocket.SocketBase.dll</HintPath>
       <EmbedInteropTypes>False</EmbedInteropTypes>
+      <EmbedAssembly>true</EmbedAssembly>
+      <Private>False</Private>
     </Reference>
     <Reference Include="SuperSocket.SocketEngine">
       <HintPath>..\libs\SuperSocket.SocketEngine.dll</HintPath>
       <EmbedInteropTypes>False</EmbedInteropTypes>
+      <EmbedAssembly>true</EmbedAssembly>
+      <Private>False</Private>
     </Reference>
     <Reference Include="SuperWebSocket, Version=0.9.0.0, Culture=neutral, PublicKeyToken=7ba53b9a7cef5d1c, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\libs\SuperWebSocket.dll</HintPath>
       <EmbedInteropTypes>False</EmbedInteropTypes>
+      <EmbedAssembly>true</EmbedAssembly>
+      <Private>False</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
@@ -136,7 +146,8 @@
     </Reference>
     <Reference Include="WebSocket4Net, Version=0.12.0.0, Culture=neutral, PublicKeyToken=eb4e154b696bf72a, processorArchitecture=MSIL">
       <HintPath>..\packages\WebSocket4Net.0.12\lib\net45\WebSocket4Net.dll</HintPath>
-      <Private>True</Private>
+      <Private>False</Private>
+      <EmbedAssembly>true</EmbedAssembly>
     </Reference>
   </ItemGroup>
   <ItemGroup>

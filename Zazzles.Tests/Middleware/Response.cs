@@ -38,6 +38,7 @@ namespace Zazzles.Tests.Middleware
         private const string URL = "/service/Test.php?unit=";
 
         [Test]
+        [Ignore("Until our testing servers can be re-setup")]
         public void GetBadResponse()
         {
             /**
@@ -50,6 +51,7 @@ namespace Zazzles.Tests.Middleware
         }
 
         [Test]
+        [Ignore("Until our testing servers can be re-setup")]
         public void GetResponse()
         {
             /**
