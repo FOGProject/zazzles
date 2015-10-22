@@ -74,8 +74,15 @@ namespace Zazzles
         {
             lock (locker)
             {
+                var filePath = CalculateLogName();
+
+                var logDir = Path.GetDirectoryName(filePath);
+
+                if (logDir != null && !Directory.Exists(logDir))
+                    Directory.CreateDirectory(logDir);
+
                 //Write message to log file
-                var logWriter = new StreamWriter(CalculateLogName(), true);
+                var logWriter = new StreamWriter(filePath, true);
                 logWriter.WriteLine($"{DateTime.Now.ToShortDateString()} {title}");
                 logWriter.Close();
             }
