@@ -19,7 +19,6 @@
 
 using System;
 using System.IO;
-using System.Reflection;
 using Newtonsoft.Json.Linq;
 
 namespace Zazzles
@@ -52,25 +51,18 @@ namespace Zazzles
         private const long DefaultMaxLogSize = 502400;
         private const int HeaderLength = 78;
         private const string LogName = "Log";
+        public static string FilePath { get; set; }
+        public static long MaxSize { get; set; }
+        public static Mode Output { get; set; }
         private static object locker = new object();
 
         static Log()
         {
-            Output = Mode.Quiet;
-
-            FilePath = Path.Combine(Settings.Location, "fog.log");
-            MaxSize = DefaultMaxLogSize;
-
-            var rootPath = Settings.Get("RootLog");
-            if (!string.IsNullOrEmpty(rootPath) && rootPath.Trim().Equals("1"))
-                FilePath = @"\fog.log";
-
             Output = Mode.File;
-        }
 
-        public static string FilePath { get; set; }
-        public static long MaxSize { get; set; }
-        public static Mode Output { get; set; }
+            FilePath = Path.Combine(Settings.Location, "zazzles.log");
+            MaxSize = DefaultMaxLogSize;
+        }
 
         /// <summary>
         ///     Entry a message
@@ -226,7 +218,6 @@ namespace Zazzles
         private static JObject MessageToJSON(string message)
         {
             dynamic json = new JObject();
-            json.owner = Assembly.GetEntryAssembly().GetName().Name;
             json.message = message;
             return json;
         }
