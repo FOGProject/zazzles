@@ -19,6 +19,8 @@
 
 using System;
 using System.IO;
+using System.Reflection;
+using Newtonsoft.Json.Linq;
 
 namespace Zazzles
 {
@@ -176,6 +178,8 @@ namespace Zazzles
         /// <param name="text">The text to write</param>
         public static void Write(Level level, string text)
         {
+            Bus.Emit(Bus.Channel.Log, MessageToJSON(text));
+
             switch (Output)
             {
                 case Mode.Quiet:
@@ -194,6 +198,11 @@ namespace Zazzles
                     {
                         lock (locker)
                         {
+                            var logDir = Path.GetDirectoryName(FilePath);
+
+                            if(logDir != null && !Directory.Exists(logDir))
+                                Directory.CreateDirectory(logDir);
+
                             var logFile = new FileInfo(FilePath);
 
                             //Delete the log file if it excedes the max log size
@@ -212,6 +221,14 @@ namespace Zazzles
                     }
                     break;
             }
+        }
+
+        private static JObject MessageToJSON(string message)
+        {
+            dynamic json = new JObject();
+            json.owner = Assembly.GetEntryAssembly().GetName().Name;
+            json.message = message;
+            return json;
         }
 
         /// <summary>
