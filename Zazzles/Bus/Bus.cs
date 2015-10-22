@@ -38,6 +38,7 @@ namespace Zazzles
         {
             Debug,
             Power,
+            Log,
             Notification,
             Status,
             Update
@@ -68,6 +69,7 @@ namespace Zazzles
         private static readonly Dictionary<Channel, LinkedList<Action<dynamic>>> Registrar =
             new Dictionary<Channel, LinkedList<Action<dynamic>>>();
         public static readonly HashSet<string> MessageQueue = new HashSet<string>(); 
+        private static object queueLock = new object();
 
         private static bool _initialized;
         private static BusServer _server;
@@ -166,15 +168,16 @@ namespace Zazzles
             if (global)
             {
                 var transport = new JObject {{"channel", channel.ToString()}, {"data", data}};
-                Log.Entry(LogName, transport.ToString());
+                if (channel != Channel.Log)
+                    Log.Entry(LogName, transport.ToString());
                 SendMessage(transport.ToString());
 
                 // If this bus instance is a client, wait for the event to be bounced-back before processing
                 if (_client != null)
                     return;
             }
-
-            Log.Entry(LogName, "Emmiting message on channel: " + channel);
+            if (channel != Channel.Log)
+                Log.Entry(LogName, "Emmiting message on channel: " + channel);
 
             if (!Registrar.ContainsKey(channel)) return;
             try
@@ -221,7 +224,7 @@ namespace Zazzles
 
         private static void client_connect(WebSocketSession clientSession)
         {
-            lock (MessageQueue)
+            lock (queueLock)
             {
                 foreach(var msg in MessageQueue)
                     clientSession.Send(msg);
