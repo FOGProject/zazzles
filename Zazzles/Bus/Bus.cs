@@ -49,7 +49,6 @@ namespace Zazzles
         private static readonly List<Channel> ProtectChannels = new List<Channel>()
         {
             Channel.Status,
-            Channel.Power,
             Channel.Update
         }; 
 
