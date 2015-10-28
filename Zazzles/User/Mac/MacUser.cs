@@ -46,7 +46,10 @@ namespace Zazzles.UserComponents
             {
                 process.Start();
                 while (!process.StandardOutput.EndOfStream)
-                    usersInfo.Add(process.StandardOutput.ReadLine());
+                {
+                    var user = process.StandardOutput.ReadLine();
+                    if (!usersInfo.Contains(user)) usersInfo.Add(user);
+                }
             }
 
             return usersInfo.Select(userInfo => userInfo.Substring(0, userInfo.IndexOf(" "))).ToList();
