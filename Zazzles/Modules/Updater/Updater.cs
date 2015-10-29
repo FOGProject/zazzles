@@ -30,9 +30,12 @@ namespace Zazzles.Modules.Updater
     /// </summary>
     public class ClientUpdater : AbstractModule
     {
-        public ClientUpdater()
+        private string[] _upgradeFiles;
+
+        public ClientUpdater(string[] upgradeFiles)
         {
             Name = "ClientUpdater";
+            this._upgradeFiles = upgradeFiles;
         }
 
         protected override void DoWork()
@@ -41,10 +44,7 @@ namespace Zazzles.Modules.Updater
             var localVersion = Settings.Get("Version");
             try
             {
-                var updater = (Settings.OS == Settings.OSType.Windows)
-                                ? "FOGService.msi"
-                                : "UnixInstaller.exe";
-                var updaterPath = Path.Combine(Settings.Location, "tmp", updater);
+                var updaterPath = Path.Combine(Settings.Location, "tmp", "SmartInstaller.exe");
 
                 if (File.Exists(updaterPath))
                     File.Delete(updaterPath);
@@ -55,7 +55,7 @@ namespace Zazzles.Modules.Updater
                 if (server <= local) return;
 
                 // Ensure the update is authentic
-                Communication.DownloadFile("/client/" + updater, updaterPath);
+                Communication.DownloadFile("/client/" + "SmartInstaller.exe", updaterPath);
                 if (!IsAuthenticate(updaterPath)) return;
 
                 PrepareUpdateHelpers();
@@ -87,13 +87,13 @@ namespace Zazzles.Modules.Updater
         {
             var files = new List<string>
             {
-                "FOGUpdateHelper.exe",
-                "FOGUpdateWaiter.exe",
-                "Core.dll",
+                "Zazzles.dll",
                 "Newtonsoft.Json.dll",
                 "settings.json",
                 "token.dat"
             };
+
+            files.AddRange(_upgradeFiles);
 
             foreach (var file in files)
             {
