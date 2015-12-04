@@ -57,7 +57,11 @@ namespace Zazzles
         public virtual void Start()
         {
             // Only start if a valid server address is present
-            if (string.IsNullOrEmpty(Configuration.ServerAddress)) return;
+            if (string.IsNullOrEmpty(Configuration.ServerAddress))
+            {
+                Log.Error(Name, "ServerAddress not found! Exiting.");
+                return;
+            }
             Load();
             _moduleThread.Start();
         }
