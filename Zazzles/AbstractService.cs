@@ -37,8 +37,7 @@ namespace Zazzles
             _moduleThread = new Thread(ModuleLooper)
             {
                 Priority = ThreadPriority.Normal,
-                IsBackground = false,
-                Name = "FOGService"
+                IsBackground = false
             };
 
             _modules = GetModules();
