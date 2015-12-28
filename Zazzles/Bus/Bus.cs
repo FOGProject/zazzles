@@ -41,7 +41,9 @@ namespace Zazzles
             Log,
             Notification,
             Status,
-            Update
+            Update,
+            RemoteRX,
+            RemoteTX
         }
         /// <summary>
         ///     Protected channels cannot be globally emmited on by clients
@@ -49,7 +51,8 @@ namespace Zazzles
         private static readonly List<Channel> ProtectChannels = new List<Channel>()
         {
             Channel.Status,
-            Channel.Update
+            Channel.Update,
+            Channel.RemoteRX
         }; 
 
         /// <summary>
