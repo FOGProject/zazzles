@@ -36,16 +36,15 @@ namespace Zazzles
         /// <returns>An array of the lines outputed</returns>
         public static string[] GetOutput(string filePath, string param)
         {
-            using (var proc = new Process
+            var procInfo = new ProcessStartInfo
             {
-                StartInfo =
-                {
-                    FileName = filePath,
-                    Arguments = param,
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true
-                }
-            })
+                FileName = filePath,
+                Arguments = param,
+                UseShellExecute = false,
+                RedirectStandardOutput = true
+            };
+
+            using (var proc = new Process { StartInfo = procInfo })
             {
                 proc.Start();
                 var output = proc.StandardOutput.ReadToEnd();
@@ -84,8 +83,7 @@ namespace Zazzles
 
             // Create a process with /bin/bash as the FileName so that we can run multiple commands in one line
             // This is needed for ensuring any GUIs will be rendered on the screen
-            var proc = new Process();
-            var info = new ProcessStartInfo
+            var procInfo = new ProcessStartInfo
             {
                 FileName = "/bin/bash",
                 RedirectStandardInput = true,
@@ -93,24 +91,25 @@ namespace Zazzles
             };
 
             Log.Debug(LogName, "Running process...");
-            Log.Debug(LogName, "--> Filepath:   " + info.FileName);
+            Log.Debug(LogName, "--> Filepath:   " + procInfo.FileName);
             Log.Debug(LogName, "--> Parameters: " + param);
 
-            proc.StartInfo = info;
-            proc.Start();
-
-            // Pipe any GUI to the first display
-            using (var sw = proc.StandardInput)
+            using (var proc = new Process {StartInfo = procInfo})
             {
-                if (sw.BaseStream.CanWrite)
+                proc.Start();
+
+                // Pipe any GUI to the first display
+                using (var sw = proc.StandardInput)
                 {
-                    sw.WriteLine("export DISPLAY=:0;" + param);
+                    if (sw.BaseStream.CanWrite)
+                    {
+                        sw.WriteLine("export DISPLAY=:0;" + param);
+                    }
                 }
+
+                if (!proc.HasExited) return -1;
+                return proc.ExitCode;
             }
-
-
-            if (!proc.HasExited) return -1;
-            return proc.ExitCode;
         }
 
         /// <summary>
@@ -126,26 +125,26 @@ namespace Zazzles
             Log.Debug(LogName, "--> Filepath:   " + filePath);
             Log.Debug(LogName, "--> Parameters: " + param);
 
+            var procInfo = new ProcessStartInfo
+            {
+                UseShellExecute = false,
+                FileName = filePath,
+                Arguments = param
+            };
+
             try
             {
-                using (var process = new Process
+                using (var proc = new Process { StartInfo = procInfo })
                 {
-                    StartInfo =
-                    {
-                        UseShellExecute = false,
-                        FileName = filePath,
-                        Arguments = param
-                    }
-                })
-                {
-                    process.Start();
+                    proc.Start();
                     if (wait)
-                        process.WaitForExit();
+                        proc.WaitForExit();
 
-                    if (!process.HasExited) return -1;
+                    if (!proc.HasExited)
+                        return -1;
 
-                    Log.Entry(LogName, $"--> Exit Code = {process.ExitCode}");
-                    return process.ExitCode;
+                    Log.Entry(LogName, $"--> Exit Code = {proc.ExitCode}");
+                    return proc.ExitCode;
                 }
             }
             catch (Exception ex)
