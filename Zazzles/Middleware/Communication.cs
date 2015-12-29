@@ -133,26 +133,12 @@ namespace Zazzles.Middleware
         }
 
         /// <summary>
-        ///     Downloads a file and creates necessary directories
-        /// </summary>
-        /// <param name="postfix">The postfix to attach to the server address</param>
-        /// <param name="filePath">The location to save the file</param>
-        /// <returns>True if the download was successful</returns>
-        public static bool DownloadFile(string postfix, string filePath)
-        {
-            if (string.IsNullOrEmpty(postfix))
-                throw new ArgumentException("A postfix must be provided!", nameof(postfix));
-
-            return DownloadExternalFile(Configuration.ServerAddress + postfix, filePath);
-        }
-
-        /// <summary>
-        ///     Download a file from an external server
+        ///     Download a file from a server
         /// </summary>
         /// <param name="url">The URL to download from</param>
         /// <param name="filePath">The path to save the file to</param>
         /// <returns>True if successful</returns>
-        public static bool DownloadExternalFile(string url, string filePath)
+        public static bool DownloadFile(string url, string filePath)
         {
             if (string.IsNullOrEmpty(url))
                 throw new ArgumentException("A URL must be provided!", nameof(url));
