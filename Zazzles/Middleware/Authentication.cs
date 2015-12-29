@@ -33,7 +33,6 @@ namespace Zazzles.Middleware
     {
         private const string LogName = "Middleware::Authentication";
         private static byte[] Passkey;
-        public static byte[] TestPassKey;
 
         /// <summary>
         ///     Generate a random AES pass key and securely send it to the server
@@ -145,7 +144,7 @@ namespace Zazzles.Middleware
         /// <returns>True if the server was contacted successfully</returns>
         public static string Decrypt(string toDecode, int payload = 0)
         {
-            return AES.Decrypt(toDecode, TestPassKey ?? Passkey, payload);
+            return AES.Decrypt(toDecode, Passkey, payload);
         }
 
         /// <summary>
@@ -156,7 +155,7 @@ namespace Zazzles.Middleware
         /// <returns>True if the server was contacted successfully</returns>
         public static string Encrypt(string toEncode, byte[] payload = null)
         {
-            return AES.Encrypt(toEncode, TestPassKey ?? Passkey, payload);
+            return AES.Encrypt(toEncode, Passkey, payload);
         }
 
     }
