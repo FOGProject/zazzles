@@ -19,12 +19,8 @@
 
 using System;
 using System.IO;
-using System.Linq;
 using System.Net;
-using System.Text;
 using Zazzles.Middleware.Bindings;
-
-// ReSharper disable InconsistentNaming
 
 namespace Zazzles.Middleware
 {
@@ -63,6 +59,9 @@ namespace Zazzles.Middleware
         /// <returns>True if the download was successful</returns>
         public static bool DownloadFile(string postfix, string filePath)
         {
+            if (string.IsNullOrEmpty(postfix))
+                throw new ArgumentException("A postfix must be provided!", nameof(postfix));
+
             return DownloadExternalFile(Configuration.ServerAddress + postfix, filePath);
         }
 
@@ -74,24 +73,13 @@ namespace Zazzles.Middleware
         /// <returns>True if successful</returns>
         public static bool DownloadExternalFile(string url, string filePath)
         {
+            if (string.IsNullOrEmpty(url))
+                throw new ArgumentException("A URL must be provided!", nameof(url));
+            if (string.IsNullOrEmpty(filePath))
+                throw new ArgumentException("A file path must be provided!", nameof(filePath));
+
             Log.Entry(LogName, $"URL: {url}");
 
-            if (string.IsNullOrEmpty(url) || string.IsNullOrEmpty(filePath))
-            {
-                Log.Error(LogName, "Invalid parameters");
-                return false;
-            }
-
-            // Assign values to these objects here so that they can
-            // be referenced in the finally block
-            Stream remoteStream = null;
-            Stream localStream = null;
-            WebResponse response = null;
-
-            var err = false;
-
-            // Use a try/catch/finally block as both the WebRequest and Stream
-            // classes throw exceptions upon error
             try
             {
                 if (!Directory.Exists(Path.GetDirectoryName(filePath)))
@@ -99,52 +87,19 @@ namespace Zazzles.Middleware
                     Directory.CreateDirectory(Path.GetDirectoryName(filePath));
                 }
 
-                // Create a request for the specified remote file name
-                var request = WebRequest.Create(url);
-                // Send the request to the server and retrieve the
-                // WebResponse object 
-                response = request.GetResponse();
+                using (var client = new WebClient())
                 {
-                    // Once the WebResponse object has been retrieved,
-                    // get the stream object associated with the response's data
-                    remoteStream = response.GetResponseStream();
-
-                    // Create the local file
-                    localStream = File.Create(filePath);
-
-                    // Allocate a 1k buffer
-                    var buffer = new byte[1024];
-                    int bytesRead;
-
-                    // Simple do/while loop to read from stream until
-                    // no bytes are returned
-                    do
-                    {
-                        // Read data (up to 1k) from the stream
-                        bytesRead = remoteStream.Read(buffer, 0, buffer.Length);
-
-                        // Write the data to the local file
-                        localStream.Write(buffer, 0, bytesRead);
-                    } while (bytesRead > 0);
+                    client.DownloadFile(url, filePath);
                 }
             }
             catch (Exception ex)
             {
                 Log.Error(LogName, "Could not download file");
                 Log.Error(LogName, ex);
-                err = true;
-            }
-            finally
-            {
-                // Close the response and streams objects here 
-                // to make sure they're closed even if an exception
-                // is thrown at some point
-                response?.Close();
-                remoteStream?.Close();
-                localStream?.Close();
+                return false;
             }
 
-            return !err && File.Exists(filePath);
+            return File.Exists(filePath);
         }
     }
 }
