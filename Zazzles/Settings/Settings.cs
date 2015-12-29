@@ -108,6 +108,9 @@ namespace Zazzles
         /// <param name="filePath">The path of the file</param>
         public static void SetPath(string filePath)
         {
+            if (string.IsNullOrEmpty(filePath))
+                throw new ArgumentException("File path must be provided!", nameof(filePath));
+
             _file = filePath;
             Reload();
         }
@@ -146,6 +149,9 @@ namespace Zazzles
         /// <returns>The value of a setting. Will return an empty string if the key is not present.</returns>
         public static string Get(string key)
         {
+            if (string.IsNullOrEmpty(key))
+                throw new ArgumentException("Key must be provided!", nameof(key));
+
             if (_data == null) return string.Empty;
 
             try
@@ -168,6 +174,11 @@ namespace Zazzles
         /// <param name="value">The new value of the setting</param>
         public static void Set(string key, JToken value)
         {
+            if (string.IsNullOrEmpty(key))
+                throw new ArgumentException("Key must be provided!", nameof(key));
+            if (value == null)
+                throw new ArgumentNullException(nameof(value));
+
             if (_data == null) _data = new JObject();
             _data[key] = value;
             Save();

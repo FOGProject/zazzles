@@ -39,7 +39,7 @@ namespace Zazzles.Data
         /// <returns></returns>
         public static string MD5(byte[] data)
         {
-            using(var alg = System.Security.Cryptography.MD5.Create())
+            using (var alg = System.Security.Cryptography.MD5.Create())
                 return HashBytes(alg, data);
         }
 
@@ -150,8 +150,10 @@ namespace Zazzles.Data
         /// <returns>A hex encoded hash</returns>
         private static string HashBytes(HashAlgorithm alg, byte[] data)
         {
-            if (data == null) return null;
-
+            if (alg == null)
+                throw new ArgumentNullException(nameof(alg));
+            if (data == null)
+                throw new ArgumentNullException(nameof(data));
             try
             {
                 alg.ComputeHash(data);
@@ -174,7 +176,10 @@ namespace Zazzles.Data
         /// <returns>A hex encoded hash</returns>
         private static string HashFile(HashAlgorithm alg, string filePath)
         {
-            if (filePath == null) return null;
+            if (alg == null)
+                throw new ArgumentNullException(nameof(alg));
+            if (string.IsNullOrEmpty(filePath))
+                throw new ArgumentException("File path required!", nameof(filePath));
 
             try
             {

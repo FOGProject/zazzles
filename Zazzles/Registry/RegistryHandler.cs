@@ -36,6 +36,11 @@ namespace Zazzles
         /// <returns>The value of the key</returns>
         public static string GetRegisitryValue(string keyPath, string keyName)
         {
+            if (string.IsNullOrEmpty(keyPath))
+                throw new ArgumentException("Key Path must be provided!", nameof(keyPath));
+            if (string.IsNullOrEmpty(keyName))
+                throw new ArgumentException("Key Name must be provided!", nameof(keyName));
+
             try
             {
                 var key = Registry.LocalMachine.OpenSubKey(keyPath);
@@ -63,6 +68,13 @@ namespace Zazzles
         /// <returns>True if successful</returns>
         public static bool SetRegistryValue(string keyPath, string keyName, string value)
         {
+            if (string.IsNullOrEmpty(keyPath))
+                throw new ArgumentException("Key Path must be provided!", nameof(keyPath));
+            if (string.IsNullOrEmpty(keyName))
+                throw new ArgumentException("Key Name must be provided!", nameof(keyName));
+            if (value == null)
+                throw new ArgumentNullException(nameof(value));
+
             try
             {
                 var key = Registry.LocalMachine.OpenSubKey(keyPath, true);
@@ -88,6 +100,9 @@ namespace Zazzles
         /// <returns>True if successful</returns>
         public static bool DeleteFolder(string path)
         {
+            if (string.IsNullOrEmpty(path))
+                throw new ArgumentException("Path must be provided!", nameof(path));
+
             try
             {
                 var key = Registry.LocalMachine.OpenSubKey(path, true);
@@ -114,6 +129,11 @@ namespace Zazzles
         /// <returns>True if successful</returns>
         public static bool DeleteKey(string keyPath, string keyName)
         {
+            if (string.IsNullOrEmpty(keyPath))
+                throw new ArgumentException("Key Path must be provided!", nameof(keyPath));
+            if (string.IsNullOrEmpty(keyName))
+                throw new ArgumentException("Key Name must be provided!", nameof(keyName));
+
             try
             {
                 var key = Registry.LocalMachine.OpenSubKey(keyPath, true);

@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+using System;
 using System.Security.Cryptography;
 
 namespace Zazzles.Data
@@ -32,6 +33,9 @@ namespace Zazzles.Data
         /// <returns></returns>
         public static byte[] ProtectData(byte[] data, bool userScope)
         {
+            if(data == null)
+                throw new ArgumentNullException(nameof(data));
+
             return ProtectedData.Protect(data, null,
                 userScope ? DataProtectionScope.CurrentUser : DataProtectionScope.LocalMachine);
         }
@@ -44,6 +48,9 @@ namespace Zazzles.Data
         /// <returns></returns>
         public static byte[] UnProtectData(byte[] data, bool userScope)
         {
+            if (data == null)
+                throw new ArgumentNullException(nameof(data));
+
             return ProtectedData.Unprotect(data, null,
                 userScope ? DataProtectionScope.CurrentUser : DataProtectionScope.LocalMachine);
         }

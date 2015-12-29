@@ -36,6 +36,11 @@ namespace Zazzles
         /// <returns>An array of the lines outputed</returns>
         public static string[] GetOutput(string filePath, string param)
         {
+            if (string.IsNullOrEmpty(filePath))
+                throw new ArgumentException("File path must be provided!", nameof(filePath));
+            if (param == null)
+                throw new ArgumentNullException(nameof(param));
+
             var procInfo = new ProcessStartInfo
             {
                 FileName = filePath,
@@ -62,6 +67,9 @@ namespace Zazzles
         /// <returns>The exit code of the process. Will be -1 if wait is false.</returns>
         public static int RunClientEXE(string file, string param, bool wait = true)
         {
+            if (string.IsNullOrEmpty(file))
+                throw new ArgumentException("File name must be provided!", nameof(file));
+
             return RunEXE(Path.Combine(Settings.Location, file), param, wait);
         }
 
@@ -75,7 +83,13 @@ namespace Zazzles
         public static int RunEXE(string filePath, string param, bool wait = true)
         {
             // If the current OS is Windows, simply run the process
-            if (Settings.OS == Settings.OSType.Windows) return Run(filePath, param, wait);
+            if (Settings.OS == Settings.OSType.Windows)
+                return Run(filePath, param, wait);
+
+            if (string.IsNullOrEmpty(filePath))
+                throw new ArgumentException("File path must be provided!", nameof(filePath));
+            if (param == null)
+                throw new ArgumentNullException(nameof(param));
 
             // Re-write the param information to include mono
             param = $"mono {filePath} {param}";
@@ -121,6 +135,11 @@ namespace Zazzles
         /// <returns>The exit code of the process. Will be -1 if wait is false.</returns>
         public static int Run(string filePath, string param, bool wait = true)
         {
+            if (string.IsNullOrEmpty(filePath))
+                throw new ArgumentException("File path must be provided!", nameof(filePath));
+            if (param == null)
+                throw new ArgumentNullException(nameof(param));
+
             Log.Debug(LogName, "Running process...");
             Log.Debug(LogName, "--> Filepath:   " + filePath);
             Log.Debug(LogName, "--> Parameters: " + param);
@@ -166,7 +185,14 @@ namespace Zazzles
         /// <returns>The process created</returns>
         public static Process CreateImpersonatedClientEXE(string filePath, string param, string user)
         {
-            if (Settings.OS == Settings.OSType.Windows) throw new NotSupportedException();
+            if (Settings.OS == Settings.OSType.Windows)
+                throw new NotSupportedException();
+            if (string.IsNullOrEmpty(user))
+                throw new ArgumentException("User name must be provided!", nameof(user));
+            if (string.IsNullOrEmpty(filePath))
+                throw new ArgumentException("File path must be provided!", nameof(filePath));
+            if (param == null)
+                throw new ArgumentNullException(nameof(param));
 
             var fileName = "su";
             var arguments = "- " + user + " -c \"mono " + Path.Combine(Settings.Location, filePath) + " " + param;
@@ -196,6 +222,9 @@ namespace Zazzles
         /// <param name="name">The name of the process</param>
         public static void KillAll(string name)
         {
+            if (string.IsNullOrEmpty(name))
+                throw new ArgumentException("Process name must be provided!", nameof(name));
+
             try
             {
                 foreach (var process in Process.GetProcessesByName(name))
@@ -214,6 +243,9 @@ namespace Zazzles
         /// <param name="name">The name of the process</param>
         public static void KillAllEXE(string name)
         {
+            if (string.IsNullOrEmpty(name))
+                throw new ArgumentException("Process name must be provided!", nameof(name));
+
             if (Settings.OS == Settings.OSType.Windows)
             {
                 KillAll(name);
@@ -229,6 +261,9 @@ namespace Zazzles
         /// <param name="name">The name of the process</param>
         public static void Kill(string name)
         {
+            if (string.IsNullOrEmpty(name))
+                throw new ArgumentException("Process name must be provided!", nameof(name));
+
             try
             {
                 var processes = Process.GetProcessesByName(name);
@@ -250,6 +285,9 @@ namespace Zazzles
         /// <param name="name">The name of the EXE</param>
         public static void KillEXE(string name)
         {
+            if (string.IsNullOrEmpty(name))
+                throw new ArgumentException("Process name must be provided!", nameof(name));
+
             if (Settings.OS == Settings.OSType.Windows)
             {
                 Kill(name);
