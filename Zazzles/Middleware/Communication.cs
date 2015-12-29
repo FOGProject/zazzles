@@ -20,6 +20,7 @@
 using System;
 using System.IO;
 using System.Net;
+using System.Text;
 using Zazzles.Middleware.Bindings;
 
 namespace Zazzles.Middleware
@@ -49,6 +50,86 @@ namespace Zazzles.Middleware
         public static bool UnBindServerFromBus()
         {
             return _binding.UnBind();
+        }
+
+
+        /// <summary>
+        ///     Get the text response of a url
+        /// </summary>
+        /// <param name="postfix">The postfix to attach to the server address</param>
+        /// <returns>The unparsed response</returns>
+        public static string GetText(string url)
+        {
+            if (string.IsNullOrEmpty(url))
+                throw new ArgumentException("A URL must be provided!", nameof(url));
+
+            Log.Entry(LogName, "URL: " + url);
+
+            var webRequest = WebRequest.Create(url);
+
+            using (var response = webRequest.GetResponse())
+            using (var content = response.GetResponseStream())
+            using (var reader = new StreamReader(content))
+            {
+                var result = reader.ReadToEnd();
+                return result;
+            }
+        }
+
+        /// <summary>
+        ///     POST data to a URL
+        /// </summary>
+        /// <param name="url">The url to post to</param>
+        /// <param name="param">The params to post</param>
+        /// <returns>The text response of the site</returns>
+        public static string Post(string url, string param)
+        {
+            if (string.IsNullOrEmpty(url))
+                throw new ArgumentException("A URL must be provided!", nameof(url));
+
+            Log.Entry(LogName, "POST URL: " + url);
+
+            try
+            {
+                // Create a request using a URL that can receive a post. 
+                var request = WebRequest.Create(url);
+                request.Method = "POST";
+
+                // Create POST data and convert it to a byte array.
+                var byteArray = Encoding.UTF8.GetBytes(param);
+                request.ContentType = "application/x-www-form-urlencoded";
+                request.ContentLength = byteArray.Length;
+
+                // Get the request stream.
+                var dataStream = request.GetRequestStream();
+                dataStream.Write(byteArray, 0, byteArray.Length);
+                dataStream.Close();
+
+                // Get the response.
+                var response = request.GetResponse();
+                Log.Debug(LogName, "Post response = " + ((HttpWebResponse)response).StatusDescription);
+                dataStream = response.GetResponseStream();
+
+                // Open the stream using a StreamReader for easy access.
+                var reader = new StreamReader(dataStream);
+                var textResponse = reader.ReadToEnd();
+
+                // Clean up the streams.
+                reader.Close();
+                dataStream?.Close();
+                response.Close();
+
+                Log.Debug(LogName, textResponse);
+
+                return textResponse;
+            }
+            catch (Exception ex)
+            {
+                Log.Error(LogName, "Failed to POST data");
+                Log.Error(LogName, ex);
+            }
+
+            return null;
         }
 
         /// <summary>
