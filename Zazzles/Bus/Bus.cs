@@ -178,7 +178,7 @@ namespace Zazzles
 
             if (global)
             {
-                var transport = new JObject {{"channel", channel.ToString()}, {"data", data}};
+                var transport = new JObject { {"self", true}, {"channel", channel.ToString()}, {"data", data}};
                 if (channel != Channel.Log)
                     Log.Entry(LogName, transport.ToString());
                 SendMessage(transport.ToString());
@@ -278,6 +278,7 @@ namespace Zazzles
             {
                 dynamic transport = JObject.Parse(message);
 
+                transport.self = false;
                 var channel = (Channel) Enum.Parse(typeof (Channel), transport.channel.ToString());
                 if (_mode == Mode.Server && ProtectChannels.Contains(channel)) return;
 
