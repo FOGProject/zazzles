@@ -35,23 +35,9 @@ namespace Zazzles.Commands.Middleware
 
             if (args.Length < 2) return false;
 
-            if (args[0].Equals("contact"))
-            {
-                var success = Communication.Contact(args[1]);
-                Log.Entry(LogName, "Passed: " + success);
-                return true;
-            }
-
             if (args[0].Equals("response"))
             {
-                var response = Communication.GetResponse(args[1]);
-                response.PrettyPrint();
-                return true;
-            }
-
-            if (args[0].Equals("raw-response"))
-            {
-                var response = Communication.GetRawResponse(args[1]);
+                var response = Communication.GetText(args[1]);
                 Log.Entry(LogName, "Response = " + response);
 
                 return true;
@@ -62,7 +48,7 @@ namespace Zazzles.Commands.Middleware
             if (args[0].Equals("post"))
             {
                 var response = Communication.Post(args[1], args[2]);
-                response.PrettyPrint();
+                Log.Entry(LogName, "Response = " + response);
                 return true;
             }
 
@@ -73,25 +59,15 @@ namespace Zazzles.Commands.Middleware
                 return true;
             }
 
-            if (args[0].Equals("download-external"))
-            {
-                var success = Communication.DownloadExternalFile(args[1], args[2]);
-                Log.Entry(LogName, "Passed: " + success);
-                return true;
-            }
-
             return false;
         }
 
         private static void Help()
         {
             Log.WriteLine("Available commands");
-            Log.WriteLine("--> contact            [postfix]");
-            Log.WriteLine("--> download           [postfix] [download_path]");
-            Log.WriteLine("--> download-external  [url]     [download_path]");
-            Log.WriteLine("--> response           [postfix]");
-            Log.WriteLine("--> raw-response       [postfix]");
-            Log.WriteLine("--> post               [postfix] [parameters]");
+            Log.WriteLine("--> download           [url]     [download_path]");
+            Log.WriteLine("--> response           [url]");
+            Log.WriteLine("--> post               [url]     [parameters]");
         }
     }
 }
