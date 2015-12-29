@@ -96,8 +96,7 @@ namespace Zazzles.Middleware.Bindings
             try
             {
                 var serialized = JsonConvert.SerializeObject(data);
-                // TODO: Encrypt message
-                // serialized = Authentication.Encrypt(serialized);
+                serialized = Authentication.Encrypt(serialized);
 
                 socket.Emit(serialized);
             }
