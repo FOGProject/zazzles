@@ -95,6 +95,9 @@ namespace Zazzles.Middleware
         /// <returns>The decrypted security token</returns>
         private static byte[] GetSecurityToken(string filePath)
         {
+            if (string.IsNullOrEmpty(filePath))
+                throw new ArgumentException("File path must be provided!", nameof(filePath));
+
             try
             {
                 var token = File.ReadAllBytes(filePath);
@@ -117,6 +120,11 @@ namespace Zazzles.Middleware
         /// <param name="token">The security token to encrypt and save</param>
         private static void SetSecurityToken(string filePath, byte[] token)
         {
+            if (string.IsNullOrEmpty(filePath))
+                throw new ArgumentException("File path must be provided!", nameof(filePath));
+            if (token == null)
+                throw new ArgumentNullException(nameof(token));
+
             try
             {
                 token = DPAPI.ProtectData(token, true);
@@ -130,25 +138,26 @@ namespace Zazzles.Middleware
         }
 
         /// <summary>
-        ///     Decrypts a response using AES, filtering out encryption flags
+        ///     Decrypts a server message using AES
         /// </summary>
         /// <param name="toDecode">The string to decrypt</param>
+        /// <param name="payload">The payload length</param>
         /// <returns>True if the server was contacted successfully</returns>
-        public static string Decrypt(string toDecode)
+        public static string Decrypt(string toDecode, int payload = 0)
         {
-            const string encryptedFlag = "#!en=";
-            const string encryptedFlag2 = "#!enkey=";
-
-            if (toDecode.StartsWith(encryptedFlag2))
-            {
-                var decryptedResponse = toDecode.Substring(encryptedFlag2.Length);
-                toDecode = AES.Decrypt(decryptedResponse, TestPassKey ?? Passkey);
-                return toDecode;
-            }
-            if (!toDecode.StartsWith(encryptedFlag)) return toDecode;
-
-            var decrypted = toDecode.Substring(encryptedFlag.Length);
-            return AES.Decrypt(decrypted, TestPassKey ?? Passkey);
+            return AES.Decrypt(toDecode, TestPassKey ?? Passkey, payload);
         }
+
+        /// <summary>
+        ///     Encrypts a message for the server using AES
+        /// </summary>
+        /// <param name="toEncode">The string to encrypt</param>
+        /// <param name="payload">The non-secrete payload</param>
+        /// <returns>True if the server was contacted successfully</returns>
+        public static string Encrypt(string toEncode, byte[] payload = null)
+        {
+            return AES.Encrypt(toEncode, TestPassKey ?? Passkey, payload);
+        }
+
     }
 }
