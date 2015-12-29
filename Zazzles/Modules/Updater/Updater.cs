@@ -40,7 +40,7 @@ namespace Zazzles.Modules.Updater
 
         protected override void DoWork()
         {
-            var serverVersion = Communication.GetRawResponse("/service/getversion.php?client");
+            var serverVersion = Communication.GetText("/service/getversion.php?client");
             var localVersion = Settings.Get("Version");
             try
             {

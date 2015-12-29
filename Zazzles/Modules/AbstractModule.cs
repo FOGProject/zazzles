@@ -50,23 +50,12 @@ namespace Zazzles.Modules
             }
 
             Log.Entry(Name, "Running...");
-            if (IsEnabled())
-                DoWork();
+            DoWork();
         }
 
         /// <summary>
         ///     Called after Start() filters out disabled modules. Contains the module's functionality
         /// </summary>
         protected abstract void DoWork();
-
-        /// <summary>
-        ///     Check if the module is enabled
-        /// </summary>
-        /// <returns>True if the module is enabled</returns>
-        public bool IsEnabled()
-        {
-            var moduleActiveResponse = Communication.GetResponse($"{EnabledURL}?moduleid={Name.ToLower()}", true);
-            return !moduleActiveResponse.Error;
-        }
     }
 }
