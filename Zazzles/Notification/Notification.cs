@@ -45,7 +45,11 @@ namespace Zazzles
 
         public static void Emit(JObject data, bool onGoing = false, bool global = true)
         {
-            if (data["subjectID"] == null) throw new ArgumentNullException();
+            if (data == null)
+                throw new ArgumentNullException(nameof(data));
+            if (data["subjectID"] == null)
+                throw new ArgumentException("A subjectID section in data must be provided!", nameof(data));
+
             if (onGoingList.ContainsKey(data["subjectID"].ToString()))
             {
                 Bus.MessageQueue.Remove(onGoingList[data["subjectID"].ToString()].ToString());
@@ -66,12 +70,19 @@ namespace Zazzles
 
         public static void Record(JObject data)
         {
-            if(data["title"] != null)
-                Record(data["title"].ToString());
+            if (data == null)
+                throw new ArgumentNullException(nameof(data));
+            if (data["title"] == null)
+                throw new ArgumentException("A title section in data must be provided!", nameof(data));
+
+            Record(data["title"].ToString());
         }
 
         public static void Record(string title)
         {
+            if(string.IsNullOrEmpty(title))
+                throw new ArgumentException("A title must be provided!", nameof(title));
+
             lock (locker)
             {
                 var filePath = CalculateLogName();

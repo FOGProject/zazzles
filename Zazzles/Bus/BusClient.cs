@@ -72,6 +72,9 @@ namespace Zazzles.BusComponents
         /// <param name="message">The message to emit</param>
         public void Send(string message)
         {
+            if (message == null)
+                throw new ArgumentNullException(nameof(message));
+
             try
             {
                 Socket.Send(message);

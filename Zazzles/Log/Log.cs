@@ -72,6 +72,11 @@ namespace Zazzles
         /// <param name="message">The message to log</param>
         public static void Entry(Level level, string caller, string message)
         {
+            if (caller == null)
+                throw new ArgumentNullException(nameof(caller));
+            if (message == null)
+                throw new ArgumentNullException(nameof(message));
+
             #if DEBUG
             #else
             if (level == Level.Debug) return;
@@ -136,6 +141,9 @@ namespace Zazzles
         /// <param name="text">The text to put in the center of the header</param>
         public static void Header(string text)
         {
+            if (text == null)
+                throw new ArgumentNullException(nameof(text));
+
             var headerSize = (double) ((HeaderLength - text.Length))/2;
 
             // Construct the first section
@@ -158,6 +166,9 @@ namespace Zazzles
         /// <param name="text">The text to put in the center of the header</param>
         public static void PaddedHeader(string text)
         {
+            if (text == null)
+                throw new ArgumentNullException(nameof(text));
+
             Divider();
             Header(text);
             Divider();
@@ -170,6 +181,9 @@ namespace Zazzles
         /// <param name="text">The text to write</param>
         public static void Write(Level level, string text)
         {
+            if (text == null)
+                throw new ArgumentNullException(nameof(text));
+
             Bus.Emit(Bus.Channel.Log, MessageToJSON(text));
 
             switch (Output)
@@ -217,6 +231,9 @@ namespace Zazzles
 
         private static JObject MessageToJSON(string message)
         {
+            if (message == null)
+                throw new ArgumentNullException(nameof(message));
+
             dynamic json = new JObject();
             json.message = message;
             return json;
@@ -237,6 +254,9 @@ namespace Zazzles
         /// <param name="line">The line to write</param>
         public static void WriteLine(string line)
         {
+            if (line == null)
+                throw new ArgumentNullException(nameof(line));
+
             Write(line + "\r\n");
         }
 
@@ -247,6 +267,9 @@ namespace Zazzles
         /// <param name="level">The logging level</param>
         public static void WriteLine(Level level, string line)
         {
+            if (line == null)
+                throw new ArgumentNullException(nameof(line));
+
             Write(level, line + "\r\n");
         }
 
@@ -263,6 +286,9 @@ namespace Zazzles
         /// <param name="logFile"></param>
         private static void CleanLog(FileSystemInfo logFile)
         {
+            if (logFile == null)
+                throw new ArgumentNullException(nameof(logFile));
+
             try
             {
                 logFile.Delete();

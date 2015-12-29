@@ -70,7 +70,9 @@ namespace Zazzles
 
         private static void ParseBus(dynamic data)
         {
-            if (data.action == null) return;
+            if (data.action == null)
+                return;
+
             string action = data.action.ToString();
             action = action.Trim();
 
@@ -94,7 +96,8 @@ namespace Zazzles
                 _timer.Dispose();
             }
 
-            if (data.delay == null) return;
+            if (data.delay == null)
+                return;
 
             //DelayTime is in minutes
             int delayTime;
@@ -122,7 +125,8 @@ namespace Zazzles
             _timer.Elapsed += TimerElapsed;
             _timer.Start();
 
-            if (Settings.OS == Settings.OSType.Windows) return;
+            if (Settings.OS == Settings.OSType.Windows)
+                return;
 
             ProcessHandler.Run("wall", "-n <<< \"Shutdown has been delayed by " + delayTime + " minutes\"");
         }
@@ -133,8 +137,11 @@ namespace Zazzles
         /// <param name="data">The shutdown data to use</param>
         private static void HelpShutdown(dynamic data)
         {
-            if (data.type == null) return;
-            if (data.reason == null) return;
+            if (data.type == null)
+                return;
+            if (data.reason == null)
+                return;
+
             string type = data.type.ToString();
             type = type.Trim();
 
@@ -150,8 +157,10 @@ namespace Zazzles
         /// <param name="parameters">The parameters to use</param>
         public static void CreateTask(string parameters)
         {
-            shouldAbortFunc = null;
+            if (parameters == null)
+                throw new ArgumentNullException(nameof(parameters));
 
+            shouldAbortFunc = null;
             requestData = new JObject();
 
             Log.Entry(LogName, "Creating shutdown request");

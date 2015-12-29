@@ -136,6 +136,9 @@ namespace Zazzles
         /// <param name="msg">The message to send, should be in json format</param>
         private static void SendMessage(string msg)
         {
+            if (msg == null)
+                throw new ArgumentNullException(nameof(msg));
+
             if (!_initialized) Initializesocket();
             if (!_initialized) return;
 
@@ -153,6 +156,9 @@ namespace Zazzles
         /// <param name="global">Should the data be sent to other processes</param>
         public static void Emit(Channel channel, JObject data, bool global = false)
         {
+            if(data == null)
+                throw new ArgumentNullException(nameof(data));
+
             Emit(channel, data.ToString(), global);
         }
 
@@ -164,6 +170,9 @@ namespace Zazzles
         /// <param name="global">Should the data be sent to other processes</param>
         private static void Emit(Channel channel, string data, bool global = false)
         {
+            if (data == null)
+                throw new ArgumentNullException(nameof(data));
+
             if (global)
             {
                 var transport = new JObject {{"channel", channel.ToString()}, {"data", data}};
@@ -199,6 +208,9 @@ namespace Zazzles
         /// <param name="action">The action (method) to register</param>
         public static void Subscribe(Channel channel, Action<dynamic> action)
         {
+            if (action == null)
+                throw new ArgumentNullException(nameof(action));
+
             Log.Entry(LogName, $"Registering {action.Method.Name} in channel {channel}");
 
             if (!Registrar.ContainsKey(channel))
@@ -215,6 +227,9 @@ namespace Zazzles
         /// <param name="action"></param>
         public static void Unsubscribe(Channel channel, Action<dynamic> action)
         {
+            if (action == null)
+                throw new ArgumentNullException(nameof(action));
+
             Log.Entry(LogName, $"UnRegistering {action.Method.Name} in channel {channel}");
 
             if (!Registrar.ContainsKey(channel)) return;
@@ -223,6 +238,9 @@ namespace Zazzles
 
         private static void client_connect(WebSocketSession clientSession)
         {
+            if (clientSession == null)
+                throw new ArgumentNullException(nameof(clientSession));
+
             lock (queueLock)
             {
                 foreach(var msg in MessageQueue)

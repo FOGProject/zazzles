@@ -37,6 +37,11 @@ namespace Zazzles.Data
         /// <returns>A hex string of the encrypted data</returns>
         public static string Encrypt(X509Certificate2 cert, string data)
         {
+            if(cert == null)
+                throw new ArgumentNullException(nameof(cert));
+            if (string.IsNullOrEmpty(data))
+                throw new ArgumentException("Data must be provided", nameof(data));
+
             var byteData = Encoding.UTF8.GetBytes(data);
             var encrypted = Encrypt(cert, byteData);
             return Transform.ByteArrayToHexString(encrypted);
@@ -50,6 +55,11 @@ namespace Zazzles.Data
         /// <returns>A UTF8 string of the data</returns>
         public static string Decrypt(X509Certificate2 cert, string data)
         {
+            if (cert == null)
+                throw new ArgumentNullException(nameof(cert));
+            if (string.IsNullOrEmpty(data))
+                throw new ArgumentException("Data must be provided", nameof(data));
+
             var byteData = Transform.HexStringToByteArray(data);
             var decrypted = Decrypt(cert, byteData);
             return Encoding.UTF8.GetString(decrypted);
@@ -63,6 +73,11 @@ namespace Zazzles.Data
         /// <returns>A byte array of the encrypted data</returns>
         public static byte[] Encrypt(X509Certificate2 cert, byte[] data)
         {
+            if (cert == null)
+                throw new ArgumentNullException(nameof(cert));
+            if (data == null)
+                throw new ArgumentNullException(nameof(data));
+
             var rsa = (RSACryptoServiceProvider) cert?.PublicKey.Key;
             return rsa?.Encrypt(data, false);
         }
@@ -75,8 +90,12 @@ namespace Zazzles.Data
         /// <returns>A byte array of the decrypted data</returns>
         public static byte[] Decrypt(X509Certificate2 cert, byte[] data)
         {
-            if (cert == null || !cert.HasPrivateKey)
-                return null;
+            if (cert == null)
+                throw new ArgumentNullException(nameof(cert));
+            if (data == null)
+                throw new ArgumentNullException(nameof(data));
+            if (!cert.HasPrivateKey)
+                throw new ArgumentException("Certficate must have a private key!", nameof(cert));
 
             var rsa = (RSACryptoServiceProvider) cert.PrivateKey;
             return rsa.Decrypt(data, false);
@@ -91,6 +110,11 @@ namespace Zazzles.Data
         /// <returns>True if the certificate came from the authority</returns>
         public static bool IsFromCA(X509Certificate2 authority, X509Certificate2 certificate)
         {
+            if (authority == null)
+                throw new ArgumentNullException(nameof(authority));
+            if (certificate == null)
+                throw new ArgumentNullException(nameof(certificate));
+
             Log.Debug(LogName, "Attempting to verify authenticity of certificate...");
             Log.Debug(LogName, "Authority: " + authority);
             Log.Debug(LogName, "Cert: " + certificate);
@@ -155,6 +179,9 @@ namespace Zazzles.Data
         /// <returns>The certificate used to digitally sign a file</returns>
         public static X509Certificate2 ExtractDigitalSignature(string filePath)
         {
+            if (string.IsNullOrEmpty(filePath))
+                throw new ArgumentException("File path must be provided!", nameof(filePath));
+
             try
             {
                 var signer = X509Certificate.CreateFromSignedFile(filePath);
@@ -190,6 +217,9 @@ namespace Zazzles.Data
         /// <returns>Returns the first instance of the certificate matching the name</returns>
         public static X509Certificate2 GetRootCertificate(string name)
         {
+            if (string.IsNullOrEmpty(name))
+                throw new ArgumentException("Certificate name must be provided!", nameof(name));
+
             try
             {
                 X509Certificate2 CAroot = null;
@@ -221,7 +251,8 @@ namespace Zazzles.Data
         /// <param name="caCert">The certificate to add</param>
         public static bool InjectCA(X509Certificate2 caCert)
         {
-            if (caCert == null) return false;
+            if (caCert == null)
+                throw new ArgumentNullException(nameof(caCert));
 
             Log.Entry(LogName, "Injecting root CA: " + caCert.FriendlyName);
             try

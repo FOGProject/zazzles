@@ -35,8 +35,14 @@ namespace Zazzles.Data
         /// <returns>A random number between min and max</returns>
         public static int Random(RNGCryptoServiceProvider rngProvider, int min, int max)
         {
-            if (rngProvider == null) throw new ArgumentNullException(nameof(rngProvider));
-            if (min > max) throw new ArgumentException("Min is greater than max");
+            if (rngProvider == null)
+                throw new ArgumentNullException(nameof(rngProvider));
+            if (min > max)
+                throw new ArgumentException("Min is greater than max", nameof(min));
+            if (min < 1)
+                throw new ArgumentOutOfRangeException(nameof(min), "Min must be greater than 0");
+            if (max < 1)
+                throw new ArgumentOutOfRangeException(nameof(max), "Max must be greater than 0");
 
             var b = new byte[sizeof (uint)];
             rngProvider.GetBytes(b);
@@ -52,7 +58,8 @@ namespace Zazzles.Data
         /// <returns>A randomly generated password</returns>
         public static string Password(int length)
         {
-            if (length <= 0) return null;
+            if (length <= 0)
+                throw new ArgumentOutOfRangeException(nameof(length), "Length must be greater than 0");
 
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
             var stringChars = new char[length];

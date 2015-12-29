@@ -38,6 +38,9 @@ namespace Zazzles.Data
         /// <returns>A base64 encoded string</returns>
         public static string EncodeBase64(string toEncode)
         {
+            if (string.IsNullOrEmpty(toEncode))
+                throw new ArgumentException("toEncode must be provided!", nameof(toEncode));
+
             try
             {
                 var bytes = Encoding.ASCII.GetBytes(toEncode);
@@ -58,6 +61,9 @@ namespace Zazzles.Data
         /// <returns>Returns the base64 decoded string</returns>
         public static string DecodeBase64(string toDecode)
         {
+            if (string.IsNullOrEmpty(toDecode))
+                throw new ArgumentException("toEncode must be provided!", nameof(toDecode));
+
             try
             {
                 var bytes = Convert.FromBase64String(toDecode);
@@ -78,6 +84,9 @@ namespace Zazzles.Data
         /// <returns>A hex string representation of the byte array</returns>
         public static string ByteArrayToHexString(byte[] ba)
         {
+            if (ba == null)
+                throw new ArgumentNullException(nameof(ba));
+
             var hex = new StringBuilder(ba.Length*2);
             foreach (var b in ba)
                 hex.AppendFormat("{0:x2}", b);
@@ -92,6 +101,9 @@ namespace Zazzles.Data
         /// <returns>A byte array representation of the hex string</returns>
         public static byte[] HexStringToByteArray(string hex)
         {
+            if (string.IsNullOrEmpty(hex))
+                throw new ArgumentException("A hex string must be provided!", nameof(hex));
+
             var numberChars = hex.Length;
             var bytes = new byte[numberChars/2];
             for (var i = 0; i < numberChars; i += 2)
