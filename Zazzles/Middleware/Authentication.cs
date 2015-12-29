@@ -20,7 +20,6 @@
 using System;
 using System.IO;
 using System.Net;
-using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Zazzles.Data;
 using RSA = Zazzles.Data.RSA;
@@ -49,14 +48,12 @@ namespace Zazzles.Middleware
                 var certificate = new X509Certificate2(keyPath);
 
                 // Ensure the public key came from the pinned server
-                if (!Data.RSA.IsFromCA(Data.RSA.ServerCertificate(), certificate))
+                if (!RSA.IsFromCA(RSA.ServerCertificate(), certificate))
                     throw new Exception("Certificate is not from FOG CA");
                 Log.Entry(LogName, "Cert OK");
 
                 // Generate a random AES key
-                var aes = new AesCryptoServiceProvider();
-                aes.GenerateKey();
-                Passkey = aes.Key;
+                Passkey = AES.NewKey();
 
                 // Get the security token from the last handshake
                 var token = GetSecurityToken("token.dat");
