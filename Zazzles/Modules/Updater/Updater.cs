@@ -38,35 +38,6 @@ namespace Zazzles.Modules.Updater
             this._upgradeFiles = upgradeFiles;
         }
 
-        protected override void DoWork()
-        {
-            var serverVersion = Communication.GetText("/service/getversion.php?client");
-            var localVersion = Settings.Get("Version");
-            try
-            {
-                var updaterPath = Path.Combine(Settings.Location, "tmp", "SmartInstaller.exe");
-
-                if (File.Exists(updaterPath))
-                    File.Delete(updaterPath);
-
-                var server = int.Parse(serverVersion.Replace(".", ""));
-                var local = int.Parse(localVersion.Replace(".", ""));
-
-                if (server <= local) return;
-
-                // Ensure the update is authentic
-                Communication.DownloadFile("/client/" + "SmartInstaller.exe", updaterPath);
-                if (!IsAuthenticate(updaterPath)) return;
-
-                PrepareUpdateHelpers();
-                Power.Updating = true;
-            }
-            catch (Exception ex)
-            {
-                Log.Error(Name, "Unable to parse versions");
-                Log.Error(Name, ex);
-            }
-        }
 
         private bool IsAuthenticate(string filePath)
         {
@@ -107,6 +78,38 @@ namespace Zazzles.Modules.Updater
                     Log.Error(Name, "Unable to prepare file:" + file);
                     Log.Error(Name, ex);
                 }
+            }
+        }
+
+        public override void ProcessEvent(dynamic data)
+        {
+            if (data.version == null) return;
+
+            var serverVersion = data.version;
+            var localVersion = Settings.Get("Version");
+            try
+            {
+                var updaterPath = Path.Combine(Settings.Location, "tmp", "SmartInstaller.exe");
+
+                if (File.Exists(updaterPath))
+                    File.Delete(updaterPath);
+
+                var server = int.Parse(serverVersion.Replace(".", ""));
+                var local = int.Parse(localVersion.Replace(".", ""));
+
+                if (server <= local) return;
+
+                // Ensure the update is authentic
+                Communication.DownloadFile(Configuration.ServerAddress + "/getclient", updaterPath);
+                if (!IsAuthenticate(updaterPath)) return;
+
+                PrepareUpdateHelpers();
+                Power.Updating = true;
+            }
+            catch (Exception ex)
+            {
+                Log.Error(Name, "Unable to parse versions");
+                Log.Error(Name, ex);
             }
         }
     }

@@ -18,8 +18,7 @@
  */
 
 
-using System;
-using System.Linq;
+using System.Collections.Generic;
 using System.Threading;
 using Zazzles.Middleware;
 using Zazzles.Modules;
@@ -28,13 +27,17 @@ namespace Zazzles
 {
     public abstract class AbstractService
     {
-        protected const int DefaultSleepTime = 60;
-        private readonly AbstractModule[] _modules;
-        private readonly Thread _moduleThread;
+        private readonly Dictionary<string, AbstractModule> _modules;
+        private readonly Thread _eventWaiterThread;
+
+        public string Name { get; protected set; }
+        protected abstract Dictionary<string, AbstractModule> GetModules();
+        protected abstract void Load();
+        protected abstract void Unload();
 
         protected AbstractService()
         {
-            _moduleThread = new Thread(ModuleLooper)
+            _eventWaiterThread = new Thread(EventWaiter)
             {
                 Priority = ThreadPriority.Normal,
                 IsBackground = false
@@ -43,12 +46,6 @@ namespace Zazzles
             _modules = GetModules();
             Name = "Service";
         }
-
-        // Basic variables every service needs
-        public string Name { get; protected set; }
-        protected abstract AbstractModule[] GetModules();
-        protected abstract void Load();
-        protected abstract void Unload();
 
         /// <summary>
         ///     Start the service
@@ -61,63 +58,32 @@ namespace Zazzles
                 Log.Error(Name, "ServerAddress not found! Exiting.");
                 return;
             }
+
+            Communication.BindServerToBus();
+            Bus.Subscribe(Bus.Channel.RemoteRX, ProcessEvent);
+
             Load();
-            _moduleThread.Start();
+            _eventWaiterThread.Start();
         }
 
         /// <summary>
         ///     Loop through all the modules until an update or shutdown is pending
         /// </summary>
-        protected virtual void ModuleLooper()
+        protected virtual void EventWaiter()
         {
-            // Only run the service if there isn't a shutdown or update pending
             while (!Power.ShuttingDown && !Power.Updating)
             {
-                // Stop looping as soon as a shutdown or update pending
-                foreach (var module in _modules.TakeWhile(module => !Power.ShuttingDown && !Power.Updating))
-                {
-                    // Entry file formatting
-                    Log.NewLine();
-                    Log.PaddedHeader(module.Name);
-                    Log.Entry("Client-Info", $"Version: {Settings.Get("Version")}");
-
-                    try
-                    {
-                        module.Start();
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Error(Name, ex);
-                    }
-
-                    // Entry file formatting
-                    Log.Divider();
-                    Log.NewLine();
-
-                    if (Power.Requested)
-                        break;
-                }
-
-                while (Power.Requested)
-                {
-                    Log.Entry(Name, "Power operation being requested, checking back in 30 seconds");
-                    Thread.Sleep(30*1000);
-                }
-
-                // Skip checking for sleep time if there is a shutdown or update pending
-                if (Power.ShuttingDown || Power.Updating) break;
-
-                // Once all modules have been run, sleep for the set time
-                var sleepTime = GetSleepTime() ?? DefaultSleepTime;
-                Log.Entry(Name, $"Sleeping for {sleepTime} seconds");
-                Thread.Sleep(sleepTime*1000);
+                Thread.Sleep(5 * 1000);
             }
         }
 
-        /// <summary>
-        /// </summary>
-        /// <returns>The number of seconds to sleep between running each module</returns>
-        protected abstract int? GetSleepTime();
+        protected virtual void ProcessEvent(dynamic data)
+        {
+            if (data.module == null) return;
+            if (!_modules.ContainsKey(data.module)) return;
+
+            _modules[data.module].ProcessEvent(data);
+        }
 
         /// <summary>
         ///     Stop the service
@@ -125,7 +91,11 @@ namespace Zazzles
         public virtual void Stop()
         {
             Log.Entry(Name, "Stop requested");
-            _moduleThread.Abort();
+
+            Communication.UnBindServerFromBus();
+            Bus.Unsubscribe(Bus.Channel.RemoteRX, ProcessEvent);
+
+            _eventWaiterThread.Abort();
             Unload();
         }
     }

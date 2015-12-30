@@ -19,6 +19,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using SuperWebSocket;
 using WebSocket4Net;
@@ -195,7 +196,7 @@ namespace Zazzles
             {
                 var json = JObject.Parse(data);
                 foreach (var action in Registrar[channel])
-                    action.Invoke(json);
+                    Task.Factory.StartNew(() => action(json));
             }
             catch (Exception ex)
             {

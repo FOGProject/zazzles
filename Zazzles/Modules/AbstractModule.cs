@@ -17,8 +17,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-using Zazzles.Middleware;
-
 namespace Zazzles.Modules
 {
     /// <summary>
@@ -29,33 +27,13 @@ namespace Zazzles.Modules
         protected AbstractModule()
         {
             Name = "Generic Module";
-            EnabledURL = "/service/servicemodule-active.php";
             Compatiblity = Settings.OSType.All;
         }
 
         //Basic variables every module needs
         public string Name { get; protected set; }
-        public string EnabledURL { get; protected set; }
         public Settings.OSType Compatiblity { get; protected set; }
 
-        /// <summary>
-        ///     Called to Start the module. Filters out modules that are disabled on the server
-        /// </summary>
-        public void Start()
-        {
-            if (!Settings.IsCompatible(Compatiblity))
-            {
-                Log.Entry(Name, "Module is not compatible with " + Settings.OS);
-                return;
-            }
-
-            Log.Entry(Name, "Running...");
-            DoWork();
-        }
-
-        /// <summary>
-        ///     Called after Start() filters out disabled modules. Contains the module's functionality
-        /// </summary>
-        protected abstract void DoWork();
+        public abstract void ProcessEvent(dynamic data);
     }
 }
