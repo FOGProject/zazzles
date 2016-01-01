@@ -1,6 +1,6 @@
 ﻿/*
  * Zazzles : A cross platform service framework
- * Copyright (C) 2014-2015 FOG Project
+ * Copyright (C) 2014-2016 FOG Project
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,6 +18,7 @@
  */
 
 
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using Zazzles.Middleware;
@@ -27,23 +28,25 @@ namespace Zazzles
 {
     public abstract class AbstractService
     {
-        private readonly Dictionary<string, AbstractModule> _modules;
         private readonly Thread _eventWaiterThread;
 
+        private readonly Dictionary<string, AbstractModule> _modules;
+        private readonly Queue<dynamic> _eventQueue;
+
+        private object _modulesLock = new object();
+        private object _eventQueueLock = new object(); 
         public string Name { get; protected set; }
+
         protected abstract Dictionary<string, AbstractModule> GetModules();
         protected abstract void Load();
         protected abstract void Unload();
 
         protected AbstractService()
         {
-            _eventWaiterThread = new Thread(EventWaiter)
-            {
-                Priority = ThreadPriority.Normal,
-                IsBackground = false
-            };
+            _eventWaiterThread = new Thread(EventWaiter) { IsBackground = false };
 
             _modules = GetModules();
+            _eventQueue = new Queue<dynamic>();
             Name = "Service";
         }
 
@@ -66,23 +69,69 @@ namespace Zazzles
             _eventWaiterThread.Start();
         }
 
-        /// <summary>
-        ///     Loop through all the modules until an update or shutdown is pending
-        /// </summary>
         protected virtual void EventWaiter()
         {
             while (!Power.ShuttingDown && !Power.Updating)
             {
+                ProcessQueue();
                 Thread.Sleep(5 * 1000);
+            }
+        }
+
+        private void ProcessQueue()
+        {
+            dynamic eventData;
+
+            lock (_eventQueueLock)
+            {
+                if (_eventQueue.Count == 0)
+                    return;
+
+                eventData = _eventQueue.Dequeue();
+            }
+
+            RunModule(eventData.module, eventData);
+        }
+
+        private void RunModule(string id, dynamic data)
+        {
+            try
+            {
+                AbstractModule module;
+                lock (_modulesLock)
+                {
+                    module = _modules[id];
+                }
+                module.ProcessEvent(data);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(Name, "Failed to run " + id.ToString());
+                Log.Error(Name, ex);
             }
         }
 
         protected virtual void ProcessEvent(dynamic data)
         {
             if (data.module == null) return;
-            if (!_modules.ContainsKey(data.module)) return;
 
-            _modules[data.module].ProcessEvent(data);
+            AbstractModule.ModuleType type;
+            lock (_modulesLock)
+            {
+                if (!_modules.ContainsKey(data.module)) return;
+                type = _modules[data.module].GetType();
+            }
+
+            if (data.sync == null && type == AbstractModule.ModuleType.Asynchronous)
+            {
+                RunModule(data.module, data);
+                return;
+            }
+
+            lock (_eventQueueLock)
+            {
+                _eventQueue.Enqueue(data);
+            }
         }
 
         /// <summary>

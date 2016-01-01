@@ -32,7 +32,7 @@ namespace Zazzles.Middleware.Bindings
 
         public bool Bind()
         {
-            var url = Configuration.ServerAddress + "/socketio";
+            var url = Configuration.ServerAddress;
             if (!InitiateSocket(url)) return false;
             Bus.Subscribe(Bus.Channel.RemoteTX, OnTXRequest);
 
@@ -52,7 +52,7 @@ namespace Zazzles.Middleware.Bindings
             {
                 socket = IO.Socket(url);
 
-                socket.On("data", (data) =>
+                socket.On("message", (data) =>
                 {
                     try
                     {
@@ -96,9 +96,9 @@ namespace Zazzles.Middleware.Bindings
             try
             {
                 var serialized = JsonConvert.SerializeObject(data);
-                serialized = Authentication.Encrypt(serialized);
+                //serialized = Authentication.Encrypt(serialized);
 
-                socket.Emit(serialized);
+                socket.Emit("message", serialized);
             }
             catch (Exception ex)
             {

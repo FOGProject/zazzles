@@ -72,7 +72,7 @@ namespace Zazzles
         private static readonly Dictionary<Channel, LinkedList<Action<dynamic>>> Registrar =
             new Dictionary<Channel, LinkedList<Action<dynamic>>>();
         public static readonly HashSet<string> MessageQueue = new HashSet<string>(); 
-        private static object queueLock = new object();
+        private static object _queueLock = new object();
 
         private static bool _initialized;
         private static BusServer _server;
@@ -245,7 +245,7 @@ namespace Zazzles
             if (clientSession == null)
                 throw new ArgumentNullException(nameof(clientSession));
 
-            lock (queueLock)
+            lock (_queueLock)
             {
                 foreach(var msg in MessageQueue)
                     clientSession.Send(msg);

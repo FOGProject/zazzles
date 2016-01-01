@@ -176,6 +176,7 @@
     <Compile Include="Data\Transform.cs" />
     <Compile Include="Data\RSA.cs" />
     <Compile Include="Log\Log.cs" />
+    <Compile Include="Modules\PolicyModule.cs" />
     <Compile Include="Notification\Notification.cs" />
     <Compile Include="Bus\Bus.cs" />
     <Compile Include="Power\IPower.cs" />

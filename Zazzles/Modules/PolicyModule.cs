@@ -17,31 +17,40 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+using System;
+
 namespace Zazzles.Modules
 {
     /// <summary>
-    ///     The base of all FOG Modules
+    ///     Policy modules enforce attributes onto the host
     /// </summary>
-    public abstract class AbstractModule
+    public abstract class PolicyModule : AbstractModule
     {
-        public string Name { get; protected set; }
-        public Settings.OSType Compatiblity { get; protected set; }
-        public ModuleType Type { get; protected set; }
+        private dynamic _cache;
 
-        public enum ModuleType
+        public PolicyModule() : base()
         {
-            Synchronous,
-            Asynchronous,
-            Policy
+            Type = ModuleType.Policy;
         }
 
-        protected AbstractModule()
+        public override void ProcessEvent(dynamic data)
         {
-            Name = "Generic Module";
-            Compatiblity = Settings.OSType.All;
-            Type = ModuleType.Synchronous;
+            if (data != null)
+                _cache = data;
+
+            if (_cache == null)
+                throw new ArgumentNullException(nameof(data),
+                    "Data must be provided when cache is empty");
+
+            ApplyPolicy(_cache);
         }
 
-        public abstract void ProcessEvent(dynamic data);
+        public void ResetCache()
+        {
+            _cache = null;
+        }
+
+        protected abstract void ApplyPolicy(dynamic data);
+
     }
 }
