@@ -20,6 +20,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Newtonsoft.Json.Linq;
 using Zazzles.Data;
 using Zazzles.Middleware;
 
@@ -81,11 +82,11 @@ namespace Zazzles.Modules.Updater
             }
         }
 
-        public override void ProcessEvent(dynamic data)
+        public override void ProcessEvent(JObject data)
         {
-            if (data.version == null) return;
+            if (data["version"] == null) return;
 
-            var serverVersion = data.version;
+            var serverVersion = data["version"].ToString();
             var localVersion = Settings.Get("Version");
             try
             {

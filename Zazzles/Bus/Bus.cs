@@ -69,8 +69,8 @@ namespace Zazzles
         private const string LogName = "Bus";
         private const int Port = 1277;
 
-        private static readonly Dictionary<Channel, LinkedList<Action<dynamic>>> Registrar =
-            new Dictionary<Channel, LinkedList<Action<dynamic>>>();
+        private static readonly Dictionary<Channel, LinkedList<Action<JObject>>> Registrar =
+            new Dictionary<Channel, LinkedList<Action<JObject>>>();
         public static readonly HashSet<string> MessageQueue = new HashSet<string>(); 
         private static object _queueLock = new object();
 
@@ -210,7 +210,7 @@ namespace Zazzles
         /// </summary>
         /// <param name="channel">The channel to register within</param>
         /// <param name="action">The action (method) to register</param>
-        public static void Subscribe(Channel channel, Action<dynamic> action)
+        public static void Subscribe(Channel channel, Action<JObject> action)
         {
             if (action == null)
                 throw new ArgumentNullException(nameof(action));
@@ -218,7 +218,7 @@ namespace Zazzles
             Log.Entry(LogName, $"Registering {action.Method.Name} in channel {channel}");
 
             if (!Registrar.ContainsKey(channel))
-                Registrar.Add(channel, new LinkedList<Action<dynamic>>());
+                Registrar.Add(channel, new LinkedList<Action<JObject>>());
             if (Registrar[channel].Contains(action)) return;
 
             Registrar[channel].AddLast(action);

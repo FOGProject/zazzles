@@ -34,12 +34,12 @@ namespace Zazzles.Middleware.Bindings
             throw new NotImplementedException();
         }
 
-        public JObject Get(dynamic data)
+        public JObject Get(string url, JObject data)
         {
             throw new NotImplementedException();
         }
 
-        public JObject Post(dynamic data)
+        public JObject Post(string url, JObject data)
         {
             throw new NotImplementedException();
         }

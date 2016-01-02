@@ -47,25 +47,40 @@ namespace Zazzles.Middleware.Bindings
             return true;
         }
 
-        public JObject Get(dynamic data)
+        private JObject Emit(string eventString, JObject data)
         {
             var manualResetEvent = new ManualResetEvent(false);
-
             var response = new JObject();
-            socket.Emit("get", new AckImpl((responseData) =>
+
+            socket.Emit(eventString, new AckImpl((responseData) =>
             {
                 response = JObject.Parse(responseData.ToString());
                 manualResetEvent.Set();
             }), data);
-
             manualResetEvent.WaitOne();
-
             return response;
         }
 
-        public JObject Post(dynamic data)
+        public JObject Get(string url, JObject data)
         {
-            throw new NotImplementedException();
+            var emitData = new JObject
+            {
+                ["url"] = url,
+                ["data"] = data
+            };
+
+            return Emit("get", emitData);
+        }
+
+        public JObject Post(string url, JObject data)
+        {
+            var emitData = new JObject
+            {
+                ["url"] = url,
+                ["data"] = data
+            };
+
+            return Emit("post", emitData);
         }
 
         private bool InitiateSocket(string url)

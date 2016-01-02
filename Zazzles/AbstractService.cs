@@ -35,8 +35,10 @@ namespace Zazzles
         private readonly Dictionary<string, AbstractModule> _modules;
         private readonly Queue<dynamic> _eventQueue;
 
-        private object _modulesLock = new object();
-        private object _eventQueueLock = new object(); 
+        private readonly object _modulesLock = new object();
+        private readonly object _eventQueueLock = new object(); 
+        private readonly AutoResetEvent _processQeueuEvent = new AutoResetEvent(false);
+
         public string Name { get; protected set; }
         protected int PolicyWaitTime = 60;
 
@@ -123,7 +125,7 @@ namespace Zazzles
             RunModule(message.module, message.data);
         }
 
-        private void RunModule(string id, dynamic data)
+        private void RunModule(string id, JObject data)
         {
             try
             {

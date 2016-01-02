@@ -53,6 +53,15 @@ namespace Zazzles.Middleware
             return _binding.UnBind();
         }
 
+        public static JObject Get(string url, JObject data)
+        {
+            return _binding.Get(url, data);
+        }
+
+        public static JObject Post(string url, JObject data)
+        {
+            return _binding.Post(url, data);
+        }
 
         /// <summary>
         ///     Get the text response of a url
@@ -77,69 +86,6 @@ namespace Zazzles.Middleware
             }
         }
 
-        public static void Get(string url, dynamic data)
-        {
-            dynamic query = new JObject();
-            query.url = url;
-            query.data = data;
-            _binding.Get(query);
-        }
-
-        /// <summary>
-        ///     POST data to a URL
-        /// </summary>
-        /// <param name="url">The url to post to</param>
-        /// <param name="param">The params to post</param>
-        /// <returns>The text response of the site</returns>
-        public static string Post(string url, string param)
-        {
-            if (string.IsNullOrEmpty(url))
-                throw new ArgumentException("A URL must be provided!", nameof(url));
-
-            Log.Entry(LogName, "POST URL: " + url);
-
-            try
-            {
-                // Create a request using a URL that can receive a post. 
-                var request = WebRequest.Create(url);
-                request.Method = "POST";
-
-                // Create POST data and convert it to a byte array.
-                var byteArray = Encoding.UTF8.GetBytes(param);
-                request.ContentType = "application/x-www-form-urlencoded";
-                request.ContentLength = byteArray.Length;
-
-                // Get the request stream.
-                var dataStream = request.GetRequestStream();
-                dataStream.Write(byteArray, 0, byteArray.Length);
-                dataStream.Close();
-
-                // Get the response.
-                var response = request.GetResponse();
-                Log.Debug(LogName, "Post response = " + ((HttpWebResponse)response).StatusDescription);
-                dataStream = response.GetResponseStream();
-
-                // Open the stream using a StreamReader for easy access.
-                var reader = new StreamReader(dataStream);
-                var textResponse = reader.ReadToEnd();
-
-                // Clean up the streams.
-                reader.Close();
-                dataStream?.Close();
-                response.Close();
-
-                Log.Debug(LogName, textResponse);
-
-                return textResponse;
-            }
-            catch (Exception ex)
-            {
-                Log.Error(LogName, "Failed to POST data");
-                Log.Error(LogName, ex);
-            }
-
-            return null;
-        }
 
         /// <summary>
         ///     Download a file from a server

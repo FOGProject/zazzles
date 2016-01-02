@@ -18,6 +18,7 @@
  */
 
 using System;
+using Newtonsoft.Json.Linq;
 
 namespace Zazzles.Modules
 {
@@ -26,14 +27,14 @@ namespace Zazzles.Modules
     /// </summary>
     public abstract class PolicyModule : AbstractModule
     {
-        private dynamic _cache;
+        private JObject _cache;
 
         public PolicyModule() : base()
         {
             Type = ModuleType.Policy;
         }
 
-        public override void ProcessEvent(dynamic data)
+        public override void ProcessEvent(JObject data)
         {
             if (data != null)
                 _cache = data;
@@ -50,7 +51,7 @@ namespace Zazzles.Modules
             _cache = null;
         }
 
-        protected abstract void ApplyPolicy(dynamic data);
+        protected abstract void ApplyPolicy(JObject data);
 
     }
 }

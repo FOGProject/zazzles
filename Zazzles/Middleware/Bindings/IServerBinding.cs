@@ -25,7 +25,7 @@ namespace Zazzles.Middleware.Bindings
     {
         bool Bind();
         bool UnBind();
-        JObject Get(dynamic data);
-        JObject Post(dynamic data);
+        JObject Get(string url, JObject data);
+        JObject Post(string url, JObject data);
     }
 }
