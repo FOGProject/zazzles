@@ -21,6 +21,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Newtonsoft.Json.Linq;
 using Zazzles.Middleware;
 using Zazzles.Modules;
 
@@ -29,6 +30,7 @@ namespace Zazzles
     public abstract class AbstractService
     {
         private readonly Thread _eventWaiterThread;
+        private readonly Thread _policyAddThread;
 
         private readonly Dictionary<string, AbstractModule> _modules;
         private readonly Queue<dynamic> _eventQueue;
@@ -36,6 +38,7 @@ namespace Zazzles
         private object _modulesLock = new object();
         private object _eventQueueLock = new object(); 
         public string Name { get; protected set; }
+        protected int PolicyWaitTime = 60;
 
         protected abstract Dictionary<string, AbstractModule> GetModules();
         protected abstract void Load();
@@ -44,6 +47,7 @@ namespace Zazzles
         protected AbstractService()
         {
             _eventWaiterThread = new Thread(EventWaiter) { IsBackground = false };
+            _policyAddThread = new Thread(PolicyWaiter) { IsBackground = true };
 
             _modules = GetModules();
             _eventQueue = new Queue<dynamic>();
@@ -69,6 +73,31 @@ namespace Zazzles
             _eventWaiterThread.Start();
         }
 
+        private void PolicyWaiter()
+        {
+            while (true)
+            {
+                lock (_eventQueueLock)
+                {
+                    lock (_modulesLock)
+                    {
+                        foreach (var moduleKey in _modules.Keys)
+                        {
+                            if (_modules[moduleKey].Type != AbstractModule.ModuleType.Policy)
+                                continue;
+
+                            dynamic message = new JObject();
+                            message.module = moduleKey;
+
+                            _eventQueue.Enqueue(message);
+                        }
+                    }
+                }
+
+                Thread.Sleep(PolicyWaitTime * 1000);
+            } 
+        }
+
         protected virtual void EventWaiter()
         {
             while (!Power.ShuttingDown && !Power.Updating)
@@ -80,17 +109,17 @@ namespace Zazzles
 
         private void ProcessQueue()
         {
-            dynamic eventData;
+            dynamic message;
 
             lock (_eventQueueLock)
             {
                 if (_eventQueue.Count == 0)
                     return;
 
-                eventData = _eventQueue.Dequeue();
+                message = _eventQueue.Dequeue();
             }
 
-            RunModule(eventData.module, eventData);
+            RunModule(message.module, message.data);
         }
 
         private void RunModule(string id, dynamic data)
@@ -106,31 +135,31 @@ namespace Zazzles
             }
             catch (Exception ex)
             {
-                Log.Error(Name, "Failed to run " + id.ToString());
+                Log.Error(Name, "Failed to run " + id);
                 Log.Error(Name, ex);
             }
         }
 
-        protected virtual void ProcessEvent(dynamic data)
+        protected virtual void ProcessEvent(dynamic message)
         {
-            if (data.module == null) return;
+            if (message.module == null) return;
 
             AbstractModule.ModuleType type;
             lock (_modulesLock)
             {
-                if (!_modules.ContainsKey(data.module)) return;
-                type = _modules[data.module].GetType();
+                if (!_modules.ContainsKey(message.module)) return;
+                type = _modules[message.module].GetType();
             }
 
-            if (data.sync == null && type == AbstractModule.ModuleType.Asynchronous)
+            if (message.sync == null && type == AbstractModule.ModuleType.Asynchronous)
             {
-                RunModule(data.module, data);
+                RunModule(message.module, message.data);
                 return;
             }
 
             lock (_eventQueueLock)
             {
-                _eventQueue.Enqueue(data);
+                _eventQueue.Enqueue(message);
             }
         }
 
