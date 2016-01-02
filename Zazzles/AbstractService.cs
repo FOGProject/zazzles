@@ -70,6 +70,7 @@ namespace Zazzles
             Bus.Subscribe(Bus.Channel.RemoteRX, ProcessEvent);
 
             Load();
+            _policyAddThread.Start();
             _eventWaiterThread.Start();
         }
 
@@ -173,6 +174,7 @@ namespace Zazzles
             Communication.UnBindServerFromBus();
             Bus.Unsubscribe(Bus.Channel.RemoteRX, ProcessEvent);
 
+            _policyAddThread.Abort();
             _eventWaiterThread.Abort();
             Unload();
         }
