@@ -18,6 +18,7 @@
  */
 
 using System;
+using System.Threading;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Quobject.SocketIoClientDotNet.Client;
@@ -48,8 +49,18 @@ namespace Zazzles.Middleware.Bindings
 
         public JObject Get(dynamic data)
         {
-            socket.Emit("get", data);
-            return new JObject();
+            var manualResetEvent = new ManualResetEvent(false);
+
+            var response = new JObject();
+            socket.Emit("get", new AckImpl((responseData) =>
+            {
+                response = JObject.Parse(responseData.ToString());
+                manualResetEvent.Set();
+            }), data);
+
+            manualResetEvent.WaitOne();
+
+            return response;
         }
 
         public JObject Post(dynamic data)
