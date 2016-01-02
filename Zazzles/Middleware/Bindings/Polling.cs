@@ -1,6 +1,6 @@
 ﻿/*
  * Zazzles : A cross platform service framework
- * Copyright (C) 2014-2015 FOG Project
+ * Copyright (C) 2014-2016 FOG Project
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,6 +18,7 @@
  */
 
 using System;
+using Newtonsoft.Json.Linq;
 
 namespace Zazzles.Middleware.Bindings
 {
@@ -29,6 +30,16 @@ namespace Zazzles.Middleware.Bindings
         }
 
         public bool UnBind()
+        {
+            throw new NotImplementedException();
+        }
+
+        public JObject Get(dynamic data)
+        {
+            throw new NotImplementedException();
+        }
+
+        public JObject Post(dynamic data)
         {
             throw new NotImplementedException();
         }

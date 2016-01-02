@@ -1,6 +1,6 @@
 ﻿/*
  * Zazzles : A cross platform service framework
- * Copyright (C) 2014-2015 FOG Project
+ * Copyright (C) 2014-2016 FOG Project
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,6 +21,7 @@ using System;
 using System.IO;
 using System.Net;
 using System.Text;
+using Newtonsoft.Json.Linq;
 using Zazzles.Middleware.Bindings;
 
 namespace Zazzles.Middleware
@@ -74,6 +75,14 @@ namespace Zazzles.Middleware
                 var result = reader.ReadToEnd();
                 return result;
             }
+        }
+
+        public static void Get(string url, dynamic data)
+        {
+            dynamic query = new JObject();
+            query.url = url;
+            query.data = data;
+            _binding.Get(query);
         }
 
         /// <summary>

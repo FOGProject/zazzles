@@ -1,6 +1,6 @@
 ﻿/*
  * Zazzles : A cross platform service framework
- * Copyright (C) 2014-2015 FOG Project
+ * Copyright (C) 2014-2016 FOG Project
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -46,11 +46,26 @@ namespace Zazzles.Middleware.Bindings
             return true;
         }
 
+        public JObject Get(dynamic data)
+        {
+            socket.Emit("get", data);
+            return new JObject();
+        }
+
+        public JObject Post(dynamic data)
+        {
+            throw new NotImplementedException();
+        }
+
         private bool InitiateSocket(string url)
         {
             try
             {
-                socket = IO.Socket(url);
+                var opts = new IO.Options
+                {
+                    QueryString ="__sails_io_sdk_version=0.11.0"
+                };
+                socket = IO.Socket(url, opts);
 
                 socket.On("message", (data) =>
                 {
