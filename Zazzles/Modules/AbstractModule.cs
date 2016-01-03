@@ -27,14 +27,14 @@ namespace Zazzles.Modules
     /// </summary>
     public abstract class AbstractModule<TMessageContainer> : IEventProcessor
     {
-        public abstract string LogName { get; protected set; }
+        public abstract string Name { get; protected set; }
         public abstract Settings.OSType Compatiblity { get; protected set; }
         public abstract EventProcessorType Type { get; protected set; }
 
         public virtual void ProcessEvent(JObject data)
         {
             if (!Settings.IsCompatible(Compatiblity))
-                throw new Exception($"{LogName} is not compatible with {Settings.OS}");
+                throw new Exception($"{Name} is not compatible with {Settings.OS}");
 
             var message = data.ToObject<TMessageContainer>();
             OnEvent(message);
@@ -44,7 +44,6 @@ namespace Zazzles.Modules
         {
             return Type;
         }
-
 
         protected abstract void OnEvent(TMessageContainer message);
     }

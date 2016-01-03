@@ -20,7 +20,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Newtonsoft.Json.Linq;
 using Zazzles.Data;
 using Zazzles.Middleware;
 
@@ -32,13 +31,13 @@ namespace Zazzles.Modules.Updater
     public sealed class ClientUpdater : AbstractModule<UpdaterMessage>
     {
         private string[] _upgradeFiles;
-        public override string LogName { get; protected set; }
+        public override string Name { get; protected set; }
         public override sealed Settings.OSType Compatiblity { get; protected set; }
         public override EventProcessorType Type { get; protected set; }
 
         public ClientUpdater(string[] upgradeFiles)
         {
-            LogName = "ClientUpdater";
+            Name = "ClientUpdater";
             Compatiblity = Settings.OSType.All;
             Type = EventProcessorType.Synchronous;
 
@@ -51,11 +50,11 @@ namespace Zazzles.Modules.Updater
             var targetSigner = RSA.FOGProjectCertificate();
             if (RSA.IsFromCA(targetSigner, signeeCert))
             {
-                Log.Entry(LogName, "Update file is authentic");
+                Log.Entry(Name, "Update file is authentic");
                 return true;
             }
 
-            Log.Error(LogName, "Update file is not authentic");
+            Log.Error(Name, "Update file is not authentic");
             return false;
         }
 
@@ -81,8 +80,8 @@ namespace Zazzles.Modules.Updater
                 }
                 catch (Exception ex)
                 {
-                    Log.Error(LogName, "Unable to prepare file:" + file);
-                    Log.Error(LogName, ex);
+                    Log.Error(Name, "Unable to prepare file:" + file);
+                    Log.Error(Name, ex);
                 }
             }
         }
@@ -111,8 +110,8 @@ namespace Zazzles.Modules.Updater
             }
             catch (Exception ex)
             {
-                Log.Error(LogName, "Unable to parse versions");
-                Log.Error(LogName, ex);
+                Log.Error(Name, "Unable to parse versions");
+                Log.Error(Name, ex);
             }
         }
     }
