@@ -45,13 +45,6 @@ namespace Zazzles.Commands.Middleware
 
             if (args.Length <= 2) return false;
 
-            if (args[0].Equals("post"))
-            {
-                var response = Communication.Post(args[1], args[2]);
-                Log.Entry(LogName, "Response = " + response);
-                return true;
-            }
-
             if (args[0].Equals("download"))
             {
                 var success = Communication.DownloadFile(args[1], args[2]);
@@ -67,7 +60,6 @@ namespace Zazzles.Commands.Middleware
             Log.WriteLine("Available commands");
             Log.WriteLine("--> download           [url]     [download_path]");
             Log.WriteLine("--> response           [url]");
-            Log.WriteLine("--> post               [url]     [parameters]");
         }
     }
 }
