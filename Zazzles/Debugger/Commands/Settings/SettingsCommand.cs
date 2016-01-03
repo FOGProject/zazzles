@@ -18,7 +18,7 @@
  */
 
 
-namespace Zazzles.Commands.Settings
+namespace Zazzles.Debugger.Commands.Settings
 {
     internal class SettingsCommand : ICommand
     {

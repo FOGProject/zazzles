@@ -24,7 +24,7 @@ using System.Security.Cryptography.X509Certificates;
 using Zazzles.Data;
 using Zazzles.Middleware;
 
-namespace Zazzles.Commands.Middleware
+namespace Zazzles.Debugger.Commands.Middleware
 {
     internal class AuthenticationCommand : ICommand
     {

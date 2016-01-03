@@ -18,7 +18,7 @@
  */
 
 
-namespace Zazzles.Commands.User
+namespace Zazzles.Debugger.Commands.User
 {
     internal class UserCommand : ICommand
     {

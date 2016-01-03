@@ -20,7 +20,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Zazzles.Commands.Middleware
+namespace Zazzles.Debugger.Commands.Middleware
 {
     internal class MiddlewareCommand : ICommand
     {

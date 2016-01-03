@@ -17,10 +17,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-using System;
 using Newtonsoft.Json.Linq;
 
-namespace Zazzles.Commands.CBus
+namespace Zazzles.Debugger.Commands.CBus
 {
     internal class BusCommand : ICommand
     {

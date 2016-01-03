@@ -19,7 +19,7 @@
 
 using Zazzles.Middleware;
 
-namespace Zazzles.Commands.Middleware
+namespace Zazzles.Debugger.Commands.Middleware
 {
     internal class CommunicationCommand : ICommand
     {

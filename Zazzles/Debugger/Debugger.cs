@@ -19,14 +19,14 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using Zazzles.Commands;
-using Zazzles.Commands.CBus;
-using Zazzles.Commands.Middleware;
-using Zazzles.Commands.Process;
-using Zazzles.Commands.Settings;
-using Zazzles.Commands.User;
+using Zazzles.Debugger.Commands;
+using Zazzles.Debugger.Commands.CBus;
+using Zazzles.Debugger.Commands.Middleware;
+using Zazzles.Debugger.Commands.Process;
+using Zazzles.Debugger.Commands.Settings;
+using Zazzles.Debugger.Commands.User;
 
-namespace Zazzles
+namespace Zazzles.Debugger
 {
     public class Debugger
     {
