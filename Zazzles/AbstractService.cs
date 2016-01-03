@@ -20,6 +20,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Management.Instrumentation;
 using System.Threading;
 using Newtonsoft.Json.Linq;
 using Zazzles.Middleware;
@@ -32,7 +33,7 @@ namespace Zazzles
         private readonly Thread _eventWaiterThread;
         private readonly Thread _policyAddThread;
 
-        private readonly Dictionary<string, AbstractModule> _modules;
+        private readonly Dictionary<string, IEventProcessor> _modules;
         private readonly Queue<dynamic> _eventQueue;
 
         private readonly object _modulesLock = new object();
@@ -42,7 +43,7 @@ namespace Zazzles
         public string Name { get; protected set; }
         protected int PolicyWaitTime = 60;
 
-        protected abstract Dictionary<string, AbstractModule> GetModules();
+        protected abstract Dictionary<string, IEventProcessor> GetModules();
         protected abstract void Load();
         protected abstract void Unload();
 
@@ -84,13 +85,13 @@ namespace Zazzles
                 {
                     lock (_modulesLock)
                     {
-                        foreach (var moduleKey in _modules.Keys)
+                        foreach (var key in _modules.Keys)
                         {
-                            if (_modules[moduleKey].Type != AbstractModule.ModuleType.Policy)
+                            if (_modules[key].GetEventProcessorType() == EventProcessorType.Policy)
                                 continue;
 
                             dynamic message = new JObject();
-                            message.module = moduleKey;
+                            message.module = key;
 
                             _eventQueue.Enqueue(message);
                         }
@@ -129,7 +130,7 @@ namespace Zazzles
         {
             try
             {
-                AbstractModule module;
+                IEventProcessor module;
                 lock (_modulesLock)
                 {
                     module = _modules[id];
@@ -147,14 +148,14 @@ namespace Zazzles
         {
             if (message.module == null) return;
 
-            AbstractModule.ModuleType type;
+            EventProcessorType type;
             lock (_modulesLock)
             {
                 if (!_modules.ContainsKey(message.module)) return;
                 type = _modules[message.module].GetType();
             }
 
-            if (message.sync == null && type == AbstractModule.ModuleType.Asynchronous)
+            if (message.sync == null && type == EventProcessorType.Asynchronous)
             {
                 RunModule(message.module, message.data);
                 return;

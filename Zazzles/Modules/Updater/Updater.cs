@@ -29,16 +29,21 @@ namespace Zazzles.Modules.Updater
     /// <summary>
     ///     Update the FOG Service
     /// </summary>
-    public class ClientUpdater : AbstractModule
+    public sealed class ClientUpdater : AbstractModule<UpdaterMessage>
     {
         private string[] _upgradeFiles;
+        public override string LogName { get; protected set; }
+        public override sealed Settings.OSType Compatiblity { get; protected set; }
+        public override EventProcessorType Type { get; protected set; }
 
         public ClientUpdater(string[] upgradeFiles)
         {
-            Name = "ClientUpdater";
-            this._upgradeFiles = upgradeFiles;
-        }
+            LogName = "ClientUpdater";
+            Compatiblity = Settings.OSType.All;
+            Type = EventProcessorType.Synchronous;
 
+            _upgradeFiles = upgradeFiles;
+        }
 
         private bool IsAuthenticate(string filePath)
         {
@@ -46,11 +51,11 @@ namespace Zazzles.Modules.Updater
             var targetSigner = RSA.FOGProjectCertificate();
             if (RSA.IsFromCA(targetSigner, signeeCert))
             {
-                Log.Entry(Name, "Update file is authentic");
+                Log.Entry(LogName, "Update file is authentic");
                 return true;
             }
 
-            Log.Error(Name, "Update file is not authentic");
+            Log.Error(LogName, "Update file is not authentic");
             return false;
         }
 
@@ -76,17 +81,14 @@ namespace Zazzles.Modules.Updater
                 }
                 catch (Exception ex)
                 {
-                    Log.Error(Name, "Unable to prepare file:" + file);
-                    Log.Error(Name, ex);
+                    Log.Error(LogName, "Unable to prepare file:" + file);
+                    Log.Error(LogName, ex);
                 }
             }
         }
 
-        public override void ProcessEvent(JObject data)
+        protected override void OnEvent(UpdaterMessage message)
         {
-            if (data["version"] == null) return;
-
-            var serverVersion = data["version"].ToString();
             var localVersion = Settings.Get("Version");
             try
             {
@@ -95,7 +97,7 @@ namespace Zazzles.Modules.Updater
                 if (File.Exists(updaterPath))
                     File.Delete(updaterPath);
 
-                var server = int.Parse(serverVersion.Replace(".", ""));
+                var server = int.Parse(message.Version.Replace(".", ""));
                 var local = int.Parse(localVersion.Replace(".", ""));
 
                 if (server <= local) return;
@@ -109,8 +111,8 @@ namespace Zazzles.Modules.Updater
             }
             catch (Exception ex)
             {
-                Log.Error(Name, "Unable to parse versions");
-                Log.Error(Name, ex);
+                Log.Error(LogName, "Unable to parse versions");
+                Log.Error(LogName, ex);
             }
         }
     }

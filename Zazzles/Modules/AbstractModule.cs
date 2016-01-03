@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+using System;
 using Newtonsoft.Json.Linq;
 
 namespace Zazzles.Modules
@@ -24,26 +25,27 @@ namespace Zazzles.Modules
     /// <summary>
     ///     The base of all FOG Modules
     /// </summary>
-    public abstract class AbstractModule
+    public abstract class AbstractModule<TMessageContainer> : IEventProcessor
     {
-        public string Name { get; protected set; }
-        public Settings.OSType Compatiblity { get; protected set; }
-        public ModuleType Type { get; protected set; }
+        public abstract string LogName { get; protected set; }
+        public abstract Settings.OSType Compatiblity { get; protected set; }
+        public abstract EventProcessorType Type { get; protected set; }
 
-        public enum ModuleType
+        public virtual void ProcessEvent(JObject data)
         {
-            Synchronous,
-            Asynchronous,
-            Policy
+            if (!Settings.IsCompatible(Compatiblity))
+                throw new Exception($"{LogName} is not compatible with {Settings.OS}");
+
+            var message = data.ToObject<TMessageContainer>();
+            OnEvent(message);
         }
 
-        protected AbstractModule()
+        public EventProcessorType GetEventProcessorType()
         {
-            Name = "Generic Module";
-            Compatiblity = Settings.OSType.All;
-            Type = ModuleType.Synchronous;
+            return Type;
         }
 
-        public abstract void ProcessEvent(JObject data);
+
+        protected abstract void OnEvent(TMessageContainer message);
     }
 }

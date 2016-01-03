@@ -17,36 +17,20 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-using System;
 using Newtonsoft.Json.Linq;
 
 namespace Zazzles.Modules
 {
-    /// <summary>
-    ///     Policy modules enforce attributes onto the host
-    /// </summary>
-    public abstract class PolicyModule<TMessageContainer> : AbstractModule<TMessageContainer>
+    public interface IEventProcessor
     {
-        private JObject _cache;
+        void ProcessEvent(JObject data);
+        EventProcessorType GetEventProcessorType();
+    }
 
-        public override sealed EventProcessorType Type { get; protected set; }
-
-        protected PolicyModule() : base()
-        {
-            Type = EventProcessorType.Policy;
-        }
-
-        public override void ProcessEvent(JObject data)
-        {
-            if (data != null)
-                _cache = data;
-
-            if (_cache == null)
-                throw new ArgumentNullException(nameof(data),
-                    "Data must be provided when cache is empty");
-
-            base.ProcessEvent(data);
-        }
-
+    public enum EventProcessorType
+    {
+        Synchronous,
+        Asynchronous,
+        Policy
     }
 }
