@@ -46,8 +46,8 @@ namespace Zazzles.Tests.Data
         [Test]
         public void PasswordInvalidUsage()
         {
-            var nullPW = Generate.Password(-1);
-            Assert.IsNull(nullPW);
+            Assert.Throws(typeof (ArgumentOutOfRangeException),
+                delegate { Generate.Password(-1); });
         }
 
         [Test]

@@ -229,7 +229,7 @@ namespace Zazzles
         /// </summary>
         /// <param name="channel"></param>
         /// <param name="action"></param>
-        public static void Unsubscribe(Channel channel, Action<dynamic> action)
+        public static void Unsubscribe(Channel channel, Action<JObject> action)
         {
             if (action == null)
                 throw new ArgumentNullException(nameof(action));
