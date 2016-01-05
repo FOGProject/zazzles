@@ -90,7 +90,7 @@
               LogStandardErrorAsError="true"
               Condition="Exists('$(PackagesConfig)')" />
     </Target>
-
+	<Target Name="BuildPackage" DependsOnTargets="CheckPrerequisites">
         <Exec Command="$(BuildCommand)"
               LogStandardErrorAsError="true"/>
     </Target>
