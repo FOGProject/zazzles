@@ -5,6 +5,9 @@ echo ============================
 echo Running Windows Build Script
 echo ============================
 
+del .\.nuget\NuGet.targets
+copy .\.nuget\NuGet.targets.windows .\.nuget\NuGet.targets
+
 .\.nuget\NuGet.exe restore .\
 msbuild .\Zazzles.sln /p:Platform="Any CPU" /p:Configuration=Release
 .\.nuget\NuGet.exe install NUnit.Runners -Version 2.6.4 -OutputDirectory .\testrunner
