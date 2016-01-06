@@ -1,6 +1,6 @@
 ﻿/*
  * Zazzles : A cross platform service framework
- * Copyright (C) 2014-2015 FOG Project
+ * Copyright (C) 2014-2016 FOG Project
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+using System;
 using System.Text;
 using Zazzles.Data;
 using NUnit.Framework;
@@ -33,16 +34,30 @@ namespace Zazzles.Tests.Data
         }
 
         [Test]
+        public void NullProtect()
+        {
+            Assert.Throws<ArgumentNullException>(() => DPAPI.ProtectData(null, true));
+        }
+
+        [Test]
+        public void NullUnProtect()
+        {
+            Assert.Throws<ArgumentNullException>(() => DPAPI.UnProtectData(null, true));
+        }
+
+        [Test]
         public void RoundTrip_Protect()
         {
             // Roundtrip a message using DPAPI protection
-            const string message = "The dog jumped over the fence #@//\\\\$";
+            const string message = @"The dog jumped over the fence #@//\\$";
             var messageBytes = Encoding.ASCII.GetBytes(message);
 
             var protectedBytes = DPAPI.ProtectData(messageBytes, true);
             var unProtectedBytes = DPAPI.UnProtectData(protectedBytes, true);
 
+            // ensure the message was actually protected
             Assert.AreNotEqual(messageBytes, protectedBytes);
+
             Assert.AreEqual(messageBytes, unProtectedBytes);
         }
     }

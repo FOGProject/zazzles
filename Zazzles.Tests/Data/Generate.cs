@@ -1,6 +1,6 @@
 ﻿/*
  * Zazzles : A cross platform service framework
- * Copyright (C) 2014-2015 FOG Project
+ * Copyright (C) 2014-2016 FOG Project
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -34,7 +34,7 @@ namespace Zazzles.Tests.Data
         }
 
         [Test]
-        public void Password()
+        public void PasswordLength()
         {
             // Generate a random password, ensure they are the correct length
             const int length = 64;
@@ -44,10 +44,10 @@ namespace Zazzles.Tests.Data
         }
 
         [Test]
-        public void PasswordInvalidUsage()
+        public void InvalidPasswordSize()
         {
-            Assert.Throws(typeof (ArgumentOutOfRangeException),
-                delegate { Generate.Password(-1); });
+            Assert.Throws<ArgumentOutOfRangeException>(() => Generate.Password(0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => Generate.Password(-1));
         }
 
         [Test]
@@ -66,7 +66,7 @@ namespace Zazzles.Tests.Data
         }
 
         [Test]
-        public void RandomInvalidUsage()
+        public void InvalidRandomParameters()
         {
             using (var rng = new RNGCryptoServiceProvider())
             {

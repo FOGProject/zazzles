@@ -1,6 +1,6 @@
 ﻿/*
  * Zazzles : A cross platform service framework
- * Copyright (C) 2014-2015 FOG Project
+ * Copyright (C) 2014-2016 FOG Project
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+using System;
 using Zazzles.Data;
 using NUnit.Framework;
 
@@ -29,6 +30,34 @@ namespace Zazzles.Tests.Data
         public void Init()
         {
             Log.Output = Log.Mode.Console;
+        }
+
+        [Test]
+        public void NullEmptyBase64Encode()
+        {
+            Assert.Throws<ArgumentException>(() => Transform.EncodeBase64(null));
+            Assert.Throws<ArgumentException>(() => Transform.EncodeBase64(string.Empty));
+        }
+
+        [Test]
+        public void NullEmptyBase64Decode()
+        {
+            Assert.Throws<ArgumentException>(() => Transform.DecodeBase64(null));
+            Assert.Throws<ArgumentException>(() => Transform.DecodeBase64(string.Empty));
+
+        }
+
+        [Test]
+        public void NullEmptyHexStringToByteArray()
+        {
+            Assert.Throws<ArgumentException>(() => Transform.HexStringToByteArray(null));
+            Assert.Throws<ArgumentException>(() => Transform.HexStringToByteArray(string.Empty));
+        }
+
+        [Test]
+        public void NullByteArrayToHexString()
+        {
+            Assert.Throws<ArgumentNullException>(() => Transform.ByteArrayToHexString(null));
         }
 
         [Test]

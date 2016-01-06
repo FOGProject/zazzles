@@ -1,6 +1,6 @@
 ﻿/*
  * Zazzles : A cross platform service framework
- * Copyright (C) 2014-2015 FOG Project
+ * Copyright (C) 2014-2016 FOG Project
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+using System;
 using System.Threading;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
@@ -41,6 +42,18 @@ namespace Zazzles.Tests.Bus
         {
             _message = data["message"].ToString();
             _resetRevent.Set();
+        }
+
+        [Test]
+        public void NullEmit()
+        {
+            Assert.Throws<ArgumentNullException>(() => Zazzles.Bus.Emit(Zazzles.Bus.Channel.Debug, null));
+        }
+
+        [Test]
+        public void NullSubscribe()
+        {
+            Assert.Throws<ArgumentNullException>(() => Zazzles.Bus.Subscribe(Zazzles.Bus.Channel.Debug, null));
         }
 
         [Test, MaxTime(2000)]

@@ -1,6 +1,6 @@
 ﻿/*
  * Zazzles : A cross platform service framework
- * Copyright (C) 2014-2015 FOG Project
+ * Copyright (C) 2014-2016 FOG Project
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,9 +17,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+using System;
 using System.IO;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
+using Zazzles.Data;
 
 namespace Zazzles.Tests.Settings
 {
@@ -62,6 +64,21 @@ namespace Zazzles.Tests.Settings
             };
 
             File.WriteAllText("settings.json", settings.ToString());
+        }
+
+        [Test]
+        public void NullEmptySet()
+        {
+            Assert.Throws<ArgumentException>(() => Zazzles.Settings.Set(null, new JObject()));
+            Assert.Throws<ArgumentException>(() => Zazzles.Settings.Set(string.Empty, new JObject()));
+            Assert.Throws<ArgumentNullException>(() => Zazzles.Settings.Set("d", null));
+        }
+
+        [Test]
+        public void NullEmptyGet()
+        {
+            Assert.Throws<ArgumentException>(() => Zazzles.Settings.Get(null));
+            Assert.Throws<ArgumentException>(() => Zazzles.Settings.Get(string.Empty));
         }
 
         [Test]

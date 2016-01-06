@@ -1,6 +1,6 @@
 ﻿/*
  * Zazzles : A cross platform service framework
- * Copyright (C) 2014-2015 FOG Project
+ * Copyright (C) 2014-2016 FOG Project
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,8 +17,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-using Zazzles;
-using Zazzles.Data;
 using NUnit.Framework;
 
 namespace Zazzles.Tests.Data
@@ -31,5 +29,7 @@ namespace Zazzles.Tests.Data
         {
             Log.Output = Log.Mode.Console;
         }
+
+        //TODO: Implement AES GCM test vectors
     }
 }
