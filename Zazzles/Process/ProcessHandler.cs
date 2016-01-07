@@ -120,14 +120,14 @@ namespace Zazzles
                 {
                     if (sw.BaseStream.CanWrite)
                     {
-                        sw.WriteLine("export DISPLAY=:0;" + param + " &>/dev/null");
+                        sw.WriteLine("export DISPLAY=:0;" + param);
                     }
                 }
 
                 if (wait)
                 {
-                    proc.WaitForExit();
                     var rawOutput = proc.StandardOutput.ReadToEnd();
+                    proc.WaitForExit();
                     stdout = SplitOutput(rawOutput);
                 }
 
@@ -189,8 +189,8 @@ namespace Zazzles
                     proc.Start();
                     if (wait)
                     {
-                        proc.WaitForExit();
                         var rawOutput = proc.StandardOutput.ReadToEnd();
+                        proc.WaitForExit();
                         stdout = SplitOutput(rawOutput);
                     }
 
