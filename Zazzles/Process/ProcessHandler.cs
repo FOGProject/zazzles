@@ -120,7 +120,7 @@ namespace Zazzles
                 {
                     if (sw.BaseStream.CanWrite)
                     {
-                        sw.WriteLine("export DISPLAY=:0;" + param);
+                        sw.WriteLine("export DISPLAY=:0;" + param + " &>/dev/null");
                     }
                 }
 
