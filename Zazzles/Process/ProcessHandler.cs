@@ -1,6 +1,6 @@
 ﻿/*
  * Zazzles : A cross platform service framework
- * Copyright (C) 2014-2015 FOG Project
+ * Copyright (C) 2014-2016 FOG Project
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -29,62 +29,60 @@ namespace Zazzles
         private const string LogName = "Process";
 
         /// <summary>
-        ///     Get the output of a command
-        /// </summary>
-        /// <param name="filePath">The file to execute</param>
-        /// <param name="param">The arguments to use</param>
-        /// <returns>An array of the lines outputed</returns>
-        public static string[] GetOutput(string filePath, string param)
-        {
-            if (string.IsNullOrEmpty(filePath))
-                throw new ArgumentException("File path must be provided!", nameof(filePath));
-            if (param == null)
-                throw new ArgumentNullException(nameof(param));
-
-            var procInfo = new ProcessStartInfo
-            {
-                FileName = filePath,
-                Arguments = param,
-                UseShellExecute = false,
-                RedirectStandardOutput = true
-            };
-
-            using (var proc = new Process { StartInfo = procInfo })
-            {
-                proc.Start();
-                var output = proc.StandardOutput.ReadToEnd();
-                proc.WaitForExit();
-                return output.Split(new[] {"\r\n", "\n"}, StringSplitOptions.None);
-            }
-        }
-
-        /// <summary>
-        ///     Run an EXE located in the client's directory
+        /// Run an EXE located in the client's directory
         /// </summary>
         /// <param name="file">The name of the EXE to run</param>
         /// <param name="param">Parameters to run the EXE with</param>
         /// <param name="wait">Wait for the process to exit</param>
         /// <returns>The exit code of the process. Will be -1 if wait is false.</returns>
-        public static int RunClientEXE(string file, string param, bool wait = true)
+        public static int RunClientEXE(string file, string param, bool wait)
+        {
+            string[] stdout;
+            return RunClientEXE(file, param, wait, out stdout);
+        }
+
+        /// <summary>
+        /// Run an EXE located in the client's directory
+        /// </summary>
+        /// <param name="file">The name of the EXE to run</param>
+        /// <param name="param">Parameters to run the EXE with</param>
+        /// <param name="stdout">An array to place stdout, split by lines</param>
+        /// <param name="wait">Wait for the process to exit</param>
+        /// <returns>The exit code of the process. Will be -1 if wait is false.</returns>
+        public static int RunClientEXE(string file, string param, bool wait, out string[] stdout)
         {
             if (string.IsNullOrEmpty(file))
                 throw new ArgumentException("File name must be provided!", nameof(file));
 
-            return RunEXE(Path.Combine(Settings.Location, file), param, wait);
+            return RunEXE(Path.Combine(Settings.Location, file), param, wait, out stdout);
         }
 
         /// <summary>
-        ///     Run an EXE
+        /// Run an EXE
         /// </summary>
         /// <param name="filePath">The path of the EXE to run</param>
         /// <param name="param">Parameters to run the EXE with</param>
         /// <param name="wait">Wait for the process to exit</param>
         /// <returns>The exit code of the process. Will be -1 if wait is false.</returns>
-        public static int RunEXE(string filePath, string param, bool wait = true)
+        public static int RunEXE(string filePath, string param, bool wait)
+        {
+            string[] stdout;
+            return RunEXE(filePath, param, wait, out stdout);
+        }
+
+        /// <summary>
+        /// Run an EXE
+        /// </summary>
+        /// <param name="filePath">The path of the EXE to run</param>
+        /// <param name="param">Parameters to run the EXE with</param>
+        /// <param name="stdout">An array to place stdout, split by lines</param>
+        /// <param name="wait">Wait for the process to exit</param>
+        /// <returns>The exit code of the process. Will be -1 if wait is false.</returns>
+        public static int RunEXE(string filePath, string param, bool wait, out string[] stdout)
         {
             // If the current OS is Windows, simply run the process
             if (Settings.OS == Settings.OSType.Windows)
-                return Run(filePath, param, wait);
+                return Run(filePath, param, wait, out stdout);
 
             if (string.IsNullOrEmpty(filePath))
                 throw new ArgumentException("File path must be provided!", nameof(filePath));
@@ -95,18 +93,21 @@ namespace Zazzles
             param = $"mono {filePath} {param}";
             param = param.Trim();
 
+
             // Create a process with /bin/bash as the FileName so that we can run multiple commands in one line
             // This is needed for ensuring any GUIs will be rendered on the screen
             var procInfo = new ProcessStartInfo
             {
                 FileName = "/bin/bash",
+                UseShellExecute = false,
                 RedirectStandardInput = true,
-                UseShellExecute = false
             };
 
             Log.Debug(LogName, "Running process...");
             Log.Debug(LogName, "--> Filepath:   " + procInfo.FileName);
             Log.Debug(LogName, "--> Parameters: " + param);
+
+            stdout = null;
 
             using (var proc = new Process {StartInfo = procInfo})
             {
@@ -121,19 +122,44 @@ namespace Zazzles
                     }
                 }
 
-                if (!proc.HasExited) return -1;
+                if (wait)
+                {
+                    proc.WaitForExit();
+                    var rawOutput = proc.StandardOutput.ReadToEnd();
+                    stdout = SplitOutput(rawOutput);
+                }
+
+                if (!proc.HasExited)
+                    return -1;
+
+                Log.Entry(LogName, $"--> Exit Code = {proc.ExitCode}");
                 return proc.ExitCode;
             }
         }
 
+
         /// <summary>
-        ///     Run a process
+        /// Run a process 
         /// </summary>
         /// <param name="filePath">The path of the executable to run</param>
         /// <param name="param">Parameters to run the process with</param>
         /// <param name="wait">Wait for the process to exit</param>
         /// <returns>The exit code of the process. Will be -1 if wait is false.</returns>
-        public static int Run(string filePath, string param, bool wait = true)
+        public static int Run(string filePath, string param, bool wait)
+        {
+            string[] stdout;
+            return Run(filePath, param, wait, out stdout);
+        }
+
+        /// <summary>
+        /// Run a process 
+        /// </summary>
+        /// <param name="filePath">The path of the executable to run</param>
+        /// <param name="param">Parameters to run the process with</param>
+        /// <param name="stdout">An array to place stdout, split by lines</param>
+        /// <param name="wait">Wait for the process to exit</param>
+        /// <returns>The exit code of the process. Will be -1 if wait is false.</returns>
+        public static int Run(string filePath, string param, bool wait, out string[] stdout)
         {
             if (string.IsNullOrEmpty(filePath))
                 throw new ArgumentException("File path must be provided!", nameof(filePath));
@@ -144,11 +170,14 @@ namespace Zazzles
             Log.Debug(LogName, "--> Filepath:   " + filePath);
             Log.Debug(LogName, "--> Parameters: " + param);
 
+            stdout = null;
+
             var procInfo = new ProcessStartInfo
             {
                 UseShellExecute = false,
                 FileName = filePath,
-                Arguments = param
+                Arguments = param,
+                RedirectStandardOutput = true
             };
 
             try
@@ -157,7 +186,11 @@ namespace Zazzles
                 {
                     proc.Start();
                     if (wait)
+                    {
                         proc.WaitForExit();
+                        var rawOutput = proc.StandardOutput.ReadToEnd();
+                        stdout = SplitOutput(rawOutput);
+                    }
 
                     if (!proc.HasExited)
                         return -1;
@@ -176,8 +209,8 @@ namespace Zazzles
         }
 
         /// <summary>
-        ///     Create an process as another user. The process will not be run automatically. This can only be done on unix
-        ///     systems.
+        /// Create an process as another user. The process will not be run automatically. 
+        /// This can only be done on unix systems.
         /// </summary>
         /// <param name="filePath">The path of the executable to run</param>
         /// <param name="param">Parameters to run the process with</param>
@@ -217,7 +250,7 @@ namespace Zazzles
         }
 
         /// <summary>
-        ///     Kill all instances of a process
+        /// Kill all instances of a process
         /// </summary>
         /// <param name="name">The name of the process</param>
         public static void KillAll(string name)
@@ -238,7 +271,7 @@ namespace Zazzles
         }
 
         /// <summary>
-        ///     Kill all instances of an EXE
+        ///  Kill all instances of an EXE
         /// </summary>
         /// <param name="name">The name of the process</param>
         public static void KillAllEXE(string name)
@@ -252,7 +285,7 @@ namespace Zazzles
                 return;
             }
 
-            Run("pkill", "-f " + name);
+            Run("pkill", "-f " + name, true);
         }
 
         /// <summary>
@@ -294,7 +327,12 @@ namespace Zazzles
                 return;
             }
 
-            Run("pgrep " + name + " | while read -r line; do kill $line; exit; done", "");
+            Run("pgrep " + name + " | while read -r line; do kill $line; exit; done", "", true);
+        }
+
+        private static string[] SplitOutput(string output)
+        {
+            return output.Trim().Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
         }
     }
 }

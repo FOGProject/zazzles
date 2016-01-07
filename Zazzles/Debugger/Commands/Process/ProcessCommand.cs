@@ -42,7 +42,7 @@ namespace Zazzles.Debugger.Commands.Process
                 if (args.Length > 2)
                     param = string.Join(" ", args.Skip(2));
 
-                var code = ProcessHandler.Run(app, param);
+                var code = ProcessHandler.Run(app, param, true);
                 Log.Entry(LogName, "--> Return code = " + code);
 
                 return true;
@@ -57,7 +57,7 @@ namespace Zazzles.Debugger.Commands.Process
                 if (args.Length > 2)
                     param = string.Join(" ", args.Skip(2));
 
-                ProcessHandler.RunEXE(app, param);
+                ProcessHandler.RunEXE(app, param, true);
                 return true;
             }
 
@@ -70,7 +70,7 @@ namespace Zazzles.Debugger.Commands.Process
                 if (args.Length > 2)
                     param = string.Join(" ", args.Skip(2));
 
-                ProcessHandler.RunEXE(app, param);
+                ProcessHandler.RunEXE(app, param, true);
                 return true;
             }
 
@@ -83,7 +83,7 @@ namespace Zazzles.Debugger.Commands.Process
                 if (args.Length > 2)
                     param = string.Join(" ", args.Skip(2));
 
-                ProcessHandler.RunClientEXE(app, param);
+                ProcessHandler.RunClientEXE(app, param, true);
                 return true;
             }
 

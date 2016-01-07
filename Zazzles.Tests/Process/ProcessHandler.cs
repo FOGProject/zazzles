@@ -1,6 +1,6 @@
 ﻿/*
  * Zazzles : A cross platform service framework
- * Copyright (C) 2014-2015 FOG Project
+ * Copyright (C) 2014-2016 FOG Project
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,7 +17,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-using Zazzles.Middleware;
+using System;
+using System.IO;
+using System.Reflection;
 using NUnit.Framework;
 
 namespace Zazzles.Tests.Process
@@ -25,83 +27,89 @@ namespace Zazzles.Tests.Process
     [TestFixture]
     public class ProcessHandlerTests
     {
+        private const string TestEXE = "ProcessTester.exe";
+        private const string IncludesDir = "tests-include";
+
+        private string TestEXEPath;
+
         [SetUp]
         public void Init()
         {
             Log.Output = Log.Mode.Console;
-            Configuration.ServerAddress = Server;
-            Configuration.TestMAC = MAC;
+
+            var loc = Path.GetDirectoryName(Assembly.GetExecutingAssembly().CodeBase);
+            loc = loc.Replace(@"file:\", string.Empty);
+            TestEXEPath = Path.Combine(loc, IncludesDir, TestEXE);
+        }
+
+
+        [Test]
+        public void RunSTDOUT()
+        {
+            string[] echoTest =
+            {
+                "hello",
+                "12345",
+                "@-Q\\/"
+            };
+
+            string[] stdout;
+
+            var filename = TestEXEPath;
+            var param = "echo " + string.Join(" ", echoTest);
+            MakeUnixFriendly(ref filename, ref param);
+            ProcessHandler.Run(filename, param, true, out stdout);
+
+            Assert.AreEqual(echoTest, stdout);
         }
 
         [Test]
-        [Ignore("Until our testing servers can be re-setup")]
-        public void GetBadResponse()
+        public void RunReturnCodes()
         {
-            /**
-            * Ensure that responses error codes are handled properely
-            */
-            var response = Communication.GetResponse(URL + "BadResponse");
+            var filename = TestEXEPath;
+            var param = "exit 0";
+            MakeUnixFriendly(ref filename, ref param);
+            var exit0 = ProcessHandler.Run(filename, param, true);
 
-            Assert.IsTrue(response.Error);
-            Assert.AreEqual("#!er", response.ReturnCode);
+            filename = TestEXEPath;
+            param = "exit 1";
+            MakeUnixFriendly(ref filename, ref param);
+            var exit1 = ProcessHandler.Run(filename, param, true);
+
+            filename = TestEXEPath;
+            param = "exit 2";
+            MakeUnixFriendly(ref filename, ref param);
+            var exit2 = ProcessHandler.Run(filename, param, true);
+
+            Assert.AreEqual(0, exit0);
+            Assert.AreEqual(1, exit1);
+            Assert.AreEqual(2, exit2);
         }
 
         [Test]
-        [Ignore("Until our testing servers can be re-setup")]
-        public void GetResponse()
+        public void RunFakeFile()
         {
-            /**
-            * Ensure that responses can be obtained and parsed
-            */
-            var response = Communication.GetResponse(URL + "Response");
+            var exit = ProcessHandler.Run("FOG_DNE_FILE.FOG_DNE_FILE", "", true);
 
-            Assert.IsFalse(response.Error);
-            Assert.AreEqual("bar", response.GetField("#Foo"));
-            Assert.IsEmpty(response.GetField("#Empty"));
-            Assert.AreEqual("Special", response.GetField("#-X"));
-            Assert.IsNullOrEmpty(response.GetField("#NON_EXISTENT"));
+            Assert.AreEqual(-1, exit);
         }
 
         [Test]
-        public void ParseDataArray()
+        public void NullEmptyRun()
         {
-            /**
-             * Ensure that response arrays can be parsed
-             */
-
-            const string msg = "#!ok\n" +
-                               "#obj0=foo\n" +
-                               "#obj1=bar\n" +
-                               "#obj2=22!";
-
-            var response = new Response(msg, false);
-            var objArray = response.GetList("#obj", false);
-
-            Assert.AreEqual(3, objArray.Count);
-            Assert.AreEqual("foo", objArray[0]);
-            Assert.AreEqual("bar", objArray[1]);
-            Assert.AreEqual("22!", objArray[2]);
+            Assert.Throws<ArgumentException>(() => ProcessHandler.Run(null, "", true));
+            Assert.Throws<ArgumentNullException>(() => ProcessHandler.Run("a", null, true));
+            Assert.Throws<ArgumentException>(() => ProcessHandler.Run(null, "", true));
+            Assert.Throws<ArgumentException>(() => ProcessHandler.Run("", "", true));
         }
 
-        [Test]
-        public void ParseResponse()
+        private void MakeUnixFriendly(ref string filename , ref string param)
         {
-            /**
-            * Ensure that responses can be parsed
-            */
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+                return;
 
-            const string msg = "#!ok\n" +
-                               "#Foo=bar\n" +
-                               "#Empty=\n" +
-                               "#-X=Special";
-
-            var response = new Response(msg, false);
-
-            Assert.IsFalse(response.Error);
-            Assert.AreEqual("bar", response.GetField("#Foo"));
-            Assert.IsEmpty(response.GetField("#Empty"));
-            Assert.AreEqual("Special", response.GetField("#-X"));
-            Assert.IsNullOrEmpty(response.GetField("#NON_EXISTENT"));
+            param = filename + " " + param;
+            filename = "mono";
         }
     }
 }

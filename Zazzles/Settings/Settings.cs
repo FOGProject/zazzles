@@ -64,9 +64,11 @@ namespace Zazzles
                     OS = OSType.Mac;
                     break;
                 case PlatformID.Unix:
-                    var output = ProcessHandler.GetOutput("uname", "");
-                    if (output != null && output.Length > 1)
-                        if (output[0].ToLower().StartsWith("darwin"))
+                    string[] stdout;
+                    ProcessHandler.Run("uname", "", true, out stdout);
+
+                    if (stdout != null && stdout.Length > 1)
+                        if (stdout[0].ToLower().StartsWith("darwin"))
                         {
                             OS = OSType.Mac;
                             break;

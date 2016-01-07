@@ -21,7 +21,6 @@ using System;
 using System.IO;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
-using Zazzles.Data;
 
 namespace Zazzles.Tests.Settings
 {
