@@ -101,6 +101,8 @@ namespace Zazzles
                 FileName = "/bin/bash",
                 UseShellExecute = false,
                 RedirectStandardInput = true,
+                RedirectStandardOutput = true
+
             };
 
             Log.Debug(LogName, "Running process...");
