@@ -44,7 +44,7 @@ namespace Zazzles.Tests.Process
 
 
         [Test]
-        public void RunSTDOUT()
+        public void RunEXESTDOUT()
         {
             string[] echoTest =
             {
@@ -55,31 +55,19 @@ namespace Zazzles.Tests.Process
 
             string[] stdout;
 
-            var filename = TestEXEPath;
             var param = "echo " + string.Join(" ", echoTest);
-            MakeUnixFriendly(ref filename, ref param);
-            ProcessHandler.Run(filename, param, true, out stdout);
+            ProcessHandler.RunEXE(TestEXEPath, param, true, out stdout);
 
             Assert.AreEqual(echoTest, stdout);
         }
 
         [Test]
-        public void RunReturnCodes()
+        public void RunEXEReturnCodes()
         {
-            var filename = TestEXEPath;
-            var param = "exit 0";
-            MakeUnixFriendly(ref filename, ref param);
-            var exit0 = ProcessHandler.Run(filename, param, true);
+            var exit0 = ProcessHandler.RunEXE(TestEXEPath, "exit 0", true);
+            var exit1 = ProcessHandler.RunEXE(TestEXEPath, "exit 1", true);
+            var exit2 = ProcessHandler.RunEXE(TestEXEPath, "exit 2", true);
 
-            filename = TestEXEPath;
-            param = "exit 1";
-            MakeUnixFriendly(ref filename, ref param);
-            var exit1 = ProcessHandler.Run(filename, param, true);
-
-            filename = TestEXEPath;
-            param = "exit 2";
-            MakeUnixFriendly(ref filename, ref param);
-            var exit2 = ProcessHandler.Run(filename, param, true);
 
             Assert.AreEqual(0, exit0);
             Assert.AreEqual(1, exit1);
@@ -103,13 +91,13 @@ namespace Zazzles.Tests.Process
             Assert.Throws<ArgumentException>(() => ProcessHandler.Run("", "", true));
         }
 
-        private void MakeUnixFriendly(ref string filename , ref string param)
+        [Test]
+        public void NullEmptyRunEXE()
         {
-            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-                return;
-
-            param = filename + " " + param;
-            filename = "mono";
+            Assert.Throws<ArgumentException>(() => ProcessHandler.RunEXE(null, "", true));
+            Assert.Throws<ArgumentNullException>(() => ProcessHandler.RunEXE("a", null, true));
+            Assert.Throws<ArgumentException>(() => ProcessHandler.RunEXE(null, "", true));
+            Assert.Throws<ArgumentException>(() => ProcessHandler.RunEXE("", "", true));
         }
     }
 }
