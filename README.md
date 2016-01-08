@@ -29,7 +29,7 @@ The framework's functionality derives from modules. Each module has 1 specific g
 
 ## Noteworthy API
 
-#### Bus
+### Bus
 The Bus is an IPC [publisher/subscriber](https://en.wikipedia.org/wiki/Publish%E2%80%93subscribe_pattern) system. The currently implementation uses a local websocket server bound to the 127.0.0.1 loopback address. The Bus provides methods for both IPC and non-IPC events. It should be assumed that this websocket can be comprimised at any time, thus treat all messages that derived from an IPC source, with the possible exception of root, with caution. 
 
 ### Log
