@@ -17,19 +17,36 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-using NUnit.Framework;
+using System;
+using Newtonsoft.Json.Linq;
 
-namespace Zazzles.Tests.Data
+namespace Zazzles.Modules
 {
-    [TestFixture]
-    public class AESTests
+    /// <summary>
+    ///     Policy modules enforce attributes onto the host
+    /// </summary>
+    public abstract class PolicyModule<TMessageContainer> : AbstractModule<TMessageContainer>
     {
-        [SetUp]
-        public void Init()
+        private JObject _cache;
+
+        public override sealed EventProcessorType Type { get; protected set; }
+
+        protected PolicyModule() : base()
         {
-            Log.Output = Log.Mode.Console;
+            Type = EventProcessorType.Policy;
         }
 
-        //TODO: Implement AES GCM test vectors
+        public override void ProcessEvent(JObject data)
+        {
+            if (data != null)
+                _cache = data;
+
+            if (_cache == null)
+                throw new ArgumentNullException(nameof(data),
+                    "Data must be provided when cache is empty");
+
+            base.ProcessEvent(data);
+        }
+
     }
 }

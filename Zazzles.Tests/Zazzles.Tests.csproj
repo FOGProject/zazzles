@@ -94,9 +94,8 @@
   <ItemGroup>
     <Compile Include="Bus\Bus.cs" />
     <Compile Include="Data\Hash.cs" />
-    <Compile Include="Middleware\Authentication.cs" />
     <Compile Include="Middleware\Configuration.cs" />
-    <Compile Include="Middleware\Response.cs" />
+    <Compile Include="Process\ProcessHandler.cs" />
     <Compile Include="Settings\Settings.cs" />
     <Compile Include="User\User.cs" />
     <Compile Include="Data\Transform.cs" />
@@ -104,7 +103,6 @@
     <Compile Include="Data\DPAPI.cs" />
     <Compile Include="Data\RSA.cs" />
     <Compile Include="Data\AES.cs" />
-    <Compile Include="Middleware\Communication.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -116,6 +114,11 @@
       <Project>{4cacd1de-ef40-4db9-8ee0-9dcb90c359e7}</Project>
       <Name>Zazzles</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="tests-include\ProcessTester.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

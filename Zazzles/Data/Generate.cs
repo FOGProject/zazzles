@@ -39,10 +39,6 @@ namespace Zazzles.Data
                 throw new ArgumentNullException(nameof(rngProvider));
             if (min > max)
                 throw new ArgumentException("Min is greater than max", nameof(min));
-            if (min < 1)
-                throw new ArgumentOutOfRangeException(nameof(min), "Min must be greater than 0");
-            if (max < 1)
-                throw new ArgumentOutOfRangeException(nameof(max), "Max must be greater than 0");
 
             var b = new byte[sizeof (uint)];
             rngProvider.GetBytes(b);

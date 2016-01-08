@@ -92,6 +92,10 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="EngineIoClientDotNet, Version=0.9.21.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\EngineIoClientDotNet.0.9.21\lib\net45\EngineIoClientDotNet.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="BouncyCastle.Crypto, Version=1.7.4137.9688, Culture=neutral, PublicKeyToken=a4292a325f69b123, processorArchitecture=MSIL">
       <HintPath>..\packages\BouncyCastle.1.7.0\lib\Net40-Client\BouncyCastle.Crypto.dll</HintPath>
       <Private>True</Private>
@@ -108,6 +112,10 @@
       <HintPath>..\packages\Newtonsoft.Json.7.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
       <EmbedInteropTypes>False</EmbedInteropTypes>
+    </Reference>
+    <Reference Include="SocketIoClientDotNet, Version=0.9.12.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\SocketIoClientDotNet.0.9.12\lib\net45\SocketIoClientDotNet.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="SuperSocket.Common, Version=1.6.4.0, Culture=neutral, PublicKeyToken=6c80000676988ebb, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -140,12 +148,13 @@
     <Reference Include="System.Management" />
     <Reference Include="System.Security" />
     <Reference Include="System.ServiceProcess" />
+    <Reference Include="System.Web" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
-    <Reference Include="WebSocket4Net, Version=0.12.0.0, Culture=neutral, PublicKeyToken=eb4e154b696bf72a, processorArchitecture=MSIL">
-      <HintPath>..\packages\WebSocket4Net.0.12\lib\net45\WebSocket4Net.dll</HintPath>
+    <Reference Include="WebSocket4Net, Version=0.14.1.0, Culture=neutral, PublicKeyToken=eb4e154b696bf72a, processorArchitecture=MSIL">
+      <HintPath>..\packages\WebSocket4Net.0.14.1\lib\net45\WebSocket4Net.dll</HintPath>
       <Private>True</Private>
     </Reference>
   </ItemGroup>
@@ -154,17 +163,32 @@
     <Compile Include="Bus\BusClient.cs" />
     <Compile Include="Bus\BusServer.cs" />
     <Compile Include="Data\Hash.cs" />
+    <Compile Include="Debugger\Commands\CBus\BusCommand.cs" />
+    <Compile Include="Debugger\Commands\ICommand.cs" />
+    <Compile Include="Debugger\Commands\Middleware\AuthenticationCommand.cs" />
+    <Compile Include="Debugger\Commands\Middleware\CommunicationCommand.cs" />
+    <Compile Include="Debugger\Commands\Middleware\ConfigurationCommand.cs" />
+    <Compile Include="Debugger\Commands\Middleware\MiddlewareCommand.cs" />
+    <Compile Include="Debugger\Commands\Process\ProcessCommand.cs" />
+    <Compile Include="Debugger\Commands\Settings\SettingsCommand.cs" />
+    <Compile Include="Debugger\Commands\User\UserCommand.cs" />
+    <Compile Include="Debugger\Debugger.cs" />
     <Compile Include="Eager.cs" />
+    <Compile Include="Middleware\Bindings\IServerBinding.cs" />
+    <Compile Include="Middleware\Bindings\Polling.cs" />
+    <Compile Include="Middleware\Bindings\SocketIO.cs" />
     <Compile Include="Middleware\Configuration.cs" />
     <Compile Include="Middleware\Authentication.cs" />
     <Compile Include="Middleware\Communication.cs" />
-    <Compile Include="Middleware\Response.cs" />
     <Compile Include="Data\DPAPI.cs" />
     <Compile Include="Data\AES.cs" />
     <Compile Include="Data\Generate.cs" />
     <Compile Include="Data\Transform.cs" />
     <Compile Include="Data\RSA.cs" />
     <Compile Include="Log\Log.cs" />
+    <Compile Include="Modules\IEventProcessor.cs" />
+    <Compile Include="Modules\PolicyModule.cs" />
+    <Compile Include="Modules\Updater\UpdaterMessage.cs" />
     <Compile Include="Notification\Notification.cs" />
     <Compile Include="Bus\Bus.cs" />
     <Compile Include="Power\IPower.cs" />

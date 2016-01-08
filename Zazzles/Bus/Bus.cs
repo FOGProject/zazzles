@@ -19,6 +19,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using SuperWebSocket;
 using WebSocket4Net;
@@ -41,7 +42,9 @@ namespace Zazzles
             Log,
             Notification,
             Status,
-            Update
+            Update,
+            RemoteRX,
+            RemoteTX
         }
         /// <summary>
         ///     Protected channels cannot be globally emmited on by clients
@@ -49,7 +52,8 @@ namespace Zazzles
         private static readonly List<Channel> ProtectChannels = new List<Channel>()
         {
             Channel.Status,
-            Channel.Update
+            Channel.Update,
+            Channel.RemoteRX
         }; 
 
         /// <summary>
@@ -65,10 +69,10 @@ namespace Zazzles
         private const string LogName = "Bus";
         private const int Port = 1277;
 
-        private static readonly Dictionary<Channel, LinkedList<Action<dynamic>>> Registrar =
-            new Dictionary<Channel, LinkedList<Action<dynamic>>>();
+        private static readonly Dictionary<Channel, LinkedList<Action<JObject>>> Registrar =
+            new Dictionary<Channel, LinkedList<Action<JObject>>>();
         public static readonly HashSet<string> MessageQueue = new HashSet<string>(); 
-        private static object queueLock = new object();
+        private static object _queueLock = new object();
 
         private static bool _initialized;
         private static BusServer _server;
@@ -175,7 +179,7 @@ namespace Zazzles
 
             if (global)
             {
-                var transport = new JObject {{"channel", channel.ToString()}, {"data", data}};
+                var transport = new JObject { {"self", true}, {"channel", channel.ToString()}, {"data", data}};
                 if (channel != Channel.Log)
                     Log.Entry(LogName, transport.ToString());
                 SendMessage(transport.ToString());
@@ -192,7 +196,7 @@ namespace Zazzles
             {
                 var json = JObject.Parse(data);
                 foreach (var action in Registrar[channel])
-                    action.Invoke(json);
+                    Task.Factory.StartNew(() => action(json));
             }
             catch (Exception ex)
             {
@@ -206,7 +210,7 @@ namespace Zazzles
         /// </summary>
         /// <param name="channel">The channel to register within</param>
         /// <param name="action">The action (method) to register</param>
-        public static void Subscribe(Channel channel, Action<dynamic> action)
+        public static void Subscribe(Channel channel, Action<JObject> action)
         {
             if (action == null)
                 throw new ArgumentNullException(nameof(action));
@@ -214,7 +218,7 @@ namespace Zazzles
             Log.Entry(LogName, $"Registering {action.Method.Name} in channel {channel}");
 
             if (!Registrar.ContainsKey(channel))
-                Registrar.Add(channel, new LinkedList<Action<dynamic>>());
+                Registrar.Add(channel, new LinkedList<Action<JObject>>());
             if (Registrar[channel].Contains(action)) return;
 
             Registrar[channel].AddLast(action);
@@ -225,7 +229,7 @@ namespace Zazzles
         /// </summary>
         /// <param name="channel"></param>
         /// <param name="action"></param>
-        public static void Unsubscribe(Channel channel, Action<dynamic> action)
+        public static void Unsubscribe(Channel channel, Action<JObject> action)
         {
             if (action == null)
                 throw new ArgumentNullException(nameof(action));
@@ -241,7 +245,7 @@ namespace Zazzles
             if (clientSession == null)
                 throw new ArgumentNullException(nameof(clientSession));
 
-            lock (queueLock)
+            lock (_queueLock)
             {
                 foreach(var msg in MessageQueue)
                     clientSession.Send(msg);
@@ -275,6 +279,7 @@ namespace Zazzles
             {
                 dynamic transport = JObject.Parse(message);
 
+                transport.self = false;
                 var channel = (Channel) Enum.Parse(typeof (Channel), transport.channel.ToString());
                 if (_mode == Mode.Server && ProtectChannels.Contains(channel)) return;
 

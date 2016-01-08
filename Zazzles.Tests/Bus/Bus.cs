@@ -1,6 +1,6 @@
 ﻿/*
  * Zazzles : A cross platform service framework
- * Copyright (C) 2014-2015 FOG Project
+ * Copyright (C) 2014-2016 FOG Project
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,6 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+using System;
+using System.Threading;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 
@@ -25,20 +27,36 @@ namespace Zazzles.Tests.Bus
     [TestFixture]
     public class BusTests
     {
+        private AutoResetEvent _resetRevent;
+        private string _message = "";
+
         [SetUp]
         public void Init()
         {
+            _resetRevent = new AutoResetEvent(false);
             Zazzles.Bus.Subscribe(Zazzles.Bus.Channel.Debug, RecieveMessage);
         }
 
-        private string message = "";
 
-        private void RecieveMessage(dynamic data)
+        private void RecieveMessage(JObject data)
         {
-            message = data.message;
+            _message = data["message"].ToString();
+            _resetRevent.Set();
         }
 
         [Test]
+        public void NullEmit()
+        {
+            Assert.Throws<ArgumentNullException>(() => Zazzles.Bus.Emit(Zazzles.Bus.Channel.Debug, null));
+        }
+
+        [Test]
+        public void NullSubscribe()
+        {
+            Assert.Throws<ArgumentNullException>(() => Zazzles.Bus.Subscribe(Zazzles.Bus.Channel.Debug, null));
+        }
+
+        [Test, MaxTime(2000)]
         public void LocalEmit()
         {
             var expected = "HelloWorld@123$";
@@ -49,7 +67,8 @@ namespace Zazzles.Tests.Bus
             };
 
             Zazzles.Bus.Emit(Zazzles.Bus.Channel.Debug, data);
-			Assert.AreEqual(expected, message);
+            _resetRevent.WaitOne();
+            Assert.AreEqual(expected, _message);
         }
 
         [Test]
@@ -64,7 +83,8 @@ namespace Zazzles.Tests.Bus
 
             Zazzles.Bus.Unsubscribe(Zazzles.Bus.Channel.Debug, RecieveMessage);
             Zazzles.Bus.Emit(Zazzles.Bus.Channel.Debug, data);
-            Assert.AreNotEqual(expected, message);
+            Thread.Sleep(2000);
+            Assert.AreNotEqual(expected, _message);
         }
     }
 }

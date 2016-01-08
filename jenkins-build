@@ -1,0 +1,11 @@
+#!/bin/bash
+echo
+echo
+echo ============================
+echo Running Unix Build Script
+echo ============================
+
+mono ./.nuget/NuGet.exe restore ./
+xbuild ./Zazzles.sln /p:Platform="Any CPU" /p:Configuration=Release
+mono ./.nuget/NuGet.exe install NUnit.Runners -Version 2.6.4 -OutputDirectory ./testrunner
+nunit-console -xml=nunit-result.xml ./bin/Zazzles.Tests.dll

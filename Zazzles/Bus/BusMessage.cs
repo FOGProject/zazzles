@@ -17,34 +17,42 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-using System;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace Zazzles.Modules
+namespace Zazzles
 {
-    /// <summary>
-    ///     The base of all FOG Modules
-    /// </summary>
-    public abstract class AbstractModule<TMessageContainer> : IEventProcessor
+    public class BusMessage
     {
-        public abstract string Name { get; protected set; }
-        public abstract Settings.OSType Compatiblity { get; protected set; }
-        public abstract EventProcessorType Type { get; protected set; }
-
-        public virtual void ProcessEvent(JObject data)
+        /// <summary>
+        /// Who the message will be sent to
+        /// </summary>
+        public enum MessageScope
         {
-            if (!Settings.IsCompatible(Compatiblity))
-                throw new Exception($"{Name} is not compatible with {Settings.OS}");
-
-            var message = data.ToObject<TMessageContainer>();
-            OnEvent(message);
+            Local,
+            Server,
+            Individual,
+            Global
         }
+        
+        [JsonProperty(Required = Required.Always)]
+        public Bus.Channel Channel { get; private set; }
 
-        public EventProcessorType GetEventProcessorType()
+        [JsonProperty(Required = Required.Always)]
+        public JObject Data { get; private set; }
+
+        [JsonProperty(Required = Required.Always)]
+        public string Origin { get; private set; }
+
+        [JsonProperty(Required = Required.Always)]
+        public MessageScope Scope { get; private set; }
+
+        public BusMessage(Bus.Channel channel, JObject data, MessageScope scope)
         {
-            return Type;
+            Data = data;
+            Channel = channel;
+            Scope = scope;
+            Origin = "5";
         }
-
-        protected abstract void OnEvent(TMessageContainer message);
     }
 }

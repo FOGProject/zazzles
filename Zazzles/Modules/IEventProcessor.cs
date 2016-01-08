@@ -17,19 +17,20 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-using NUnit.Framework;
+using Newtonsoft.Json.Linq;
 
-namespace Zazzles.Tests.Data
+namespace Zazzles.Modules
 {
-    [TestFixture]
-    public class AESTests
+    public interface IEventProcessor
     {
-        [SetUp]
-        public void Init()
-        {
-            Log.Output = Log.Mode.Console;
-        }
+        void ProcessEvent(JObject data);
+        EventProcessorType GetEventProcessorType();
+    }
 
-        //TODO: Implement AES GCM test vectors
+    public enum EventProcessorType
+    {
+        Synchronous,
+        Asynchronous,
+        Policy
     }
 }

@@ -128,7 +128,7 @@ namespace Zazzles
             if (Settings.OS == Settings.OSType.Windows)
                 return;
 
-            ProcessHandler.Run("wall", "-n <<< \"Shutdown has been delayed by " + delayTime + " minutes\"");
+            ProcessHandler.Run("wall", $"-n <<< \"Shutdown has been delayed by {delayTime} minutes\"", true);
         }
 
         /// <summary>
@@ -220,7 +220,7 @@ namespace Zazzles
             // Notify all open consoles about the shutdown (for ssh users)
             if (Settings.OS == Settings.OSType.Windows) return;
 
-            ProcessHandler.Run("wall", "-n <<< \"Shutdown will occur in " + gracePeriod + " seconds\"");
+            ProcessHandler.Run("wall", $"-n <<< \"Shutdown will occur in {gracePeriod} seconds\"", true);
         }
 
         private static bool ShouldAbort()

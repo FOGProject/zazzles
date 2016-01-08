@@ -26,8 +26,9 @@ namespace Zazzles
 {
     public static class Notification
     {
-        private static object locker = new object();
-        private static volatile Dictionary<string, JObject> onGoingList = new Dictionary<string, JObject>();
+        private static object _recordLock = new object();
+        private static Dictionary<string, JObject> _onGoingList = new Dictionary<string, JObject>();
+        private static object _onGoingLock = new object();
 
         public static JObject ToJSON(string title, string message, string subjectID)
         {
@@ -50,16 +51,19 @@ namespace Zazzles
             if (data["subjectID"] == null)
                 throw new ArgumentException("A subjectID section in data must be provided!", nameof(data));
 
-            if (onGoingList.ContainsKey(data["subjectID"].ToString()))
+            lock (_onGoingLock)
             {
-                Bus.MessageQueue.Remove(onGoingList[data["subjectID"].ToString()].ToString());
-                onGoingList.Remove(data["subjectID"].ToString());
-            }
+                if (_onGoingList.ContainsKey(data["subjectID"].ToString()))
+                {
+                    Bus.MessageQueue.Remove(_onGoingList[data["subjectID"].ToString()].ToString());
+                    _onGoingList.Remove(data["subjectID"].ToString());
+                }
 
-            if (global && onGoing)
-            {
-                onGoingList.Add(data["subjectID"].ToString(), data);
-                Bus.MessageQueue.Add(data.ToString());
+                if (global && onGoing)
+                {
+                    _onGoingList.Add(data["subjectID"].ToString(), data);
+                    Bus.MessageQueue.Add(data.ToString());
+                }
             }
 
             if (global)
@@ -83,7 +87,7 @@ namespace Zazzles
             if(string.IsNullOrEmpty(title))
                 throw new ArgumentException("A title must be provided!", nameof(title));
 
-            lock (locker)
+            lock (_recordLock)
             {
                 var filePath = CalculateLogName();
 

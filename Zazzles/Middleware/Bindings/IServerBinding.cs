@@ -17,19 +17,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-using NUnit.Framework;
+using Newtonsoft.Json.Linq;
 
-namespace Zazzles.Tests.Data
+namespace Zazzles.Middleware.Bindings
 {
-    [TestFixture]
-    public class AESTests
+    internal interface IServerBinding
     {
-        [SetUp]
-        public void Init()
-        {
-            Log.Output = Log.Mode.Console;
-        }
-
-        //TODO: Implement AES GCM test vectors
+        bool Bind();
+        bool UnBind();
+        JObject Get(string url, JObject data);
+        JObject Post(string url, JObject data);
     }
 }
