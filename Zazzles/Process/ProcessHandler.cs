@@ -21,7 +21,6 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Reflection;
 
 namespace Zazzles
 {
@@ -90,28 +89,54 @@ namespace Zazzles
             if (param == null)
                 throw new ArgumentNullException(nameof(param));
 
-            stdout = null;
-
             // Re-write the param information to include mono
             param = $"mono {filePath} {param}";
             param = param.Trim();
 
-            var scriptLocation = Path.Combine(Path.GetTempPath(), Path.GetTempFileName());
 
-            if (!ExtractResource("RedirectGUI.sh", scriptLocation))
-                return -1;
+            // Create a process with /bin/bash as the FileName so that we can run multiple commands in one line
+            // This is needed for ensuring any GUIs will be rendered on the screen
+            var procInfo = new ProcessStartInfo
+            {
+                FileName = "/bin/bash",
+                UseShellExecute = false,
+                RedirectStandardInput = true,
+                RedirectStandardOutput = true
 
-            var chmod = Process.Start("chmod", "+x " + scriptLocation);
-            if (chmod == null)
-                return -1;
+            };
 
-            var exited = chmod.WaitForExit(5 * 1000);
-            if (!exited)
-                return -1;
+            Log.Debug(LogName, "Running process...");
+            Log.Debug(LogName, "--> Filepath:   " + procInfo.FileName);
+            Log.Debug(LogName, "--> Parameters: " + param);
 
-            filePath = scriptLocation;
+            stdout = null;
 
-            return Run(filePath, param, wait, out stdout);
+            using (var proc = new Process { StartInfo = procInfo })
+            {
+                proc.Start();
+
+                // Pipe any GUI to the first display
+                using (var sw = proc.StandardInput)
+                {
+                    if (sw.BaseStream.CanWrite)
+                    {
+                        sw.WriteLine("export DISPLAY=:0;" + param);
+                    }
+                }
+
+                if (wait)
+                {
+                    var rawOutput = proc.StandardOutput.ReadToEnd();
+                    proc.WaitForExit();
+                    stdout = SplitOutput(rawOutput);
+                }
+
+                if (!proc.HasExited)
+                    return -1;
+
+                Log.Entry(LogName, $"--> Exit Code = {proc.ExitCode}");
+                return proc.ExitCode;
+            }
         }
 
 
@@ -164,8 +189,8 @@ namespace Zazzles
                     proc.Start();
                     if (wait)
                     {
-                        proc.WaitForExit();
                         var rawOutput = proc.StandardOutput.ReadToEnd();
+                        proc.WaitForExit();
                         stdout = SplitOutput(rawOutput);
                     }
 
@@ -310,51 +335,6 @@ namespace Zazzles
         private static string[] SplitOutput(string output)
         {
             return output.Trim().Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
-        }
-
-
-        /// Extraction of resources for gui redirects
-
-        private static bool ExtractResource(string resource, string filePath, bool dos2Unix = true)
-        {
-            try
-            {
-                var assembly = Assembly.GetExecutingAssembly();
-                using (var input = assembly.GetManifestResourceStream(resource))
-                using (var output = File.Create(filePath))
-                {
-                    CopyStream(input, output);
-                }
-                if (dos2Unix)
-                    Dos2Unix(filePath);
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Log.Error(LogName, "Could not extract resource");
-                Log.Error(LogName, ex.Message);
-                return false;
-            }
-
-        }
-
-        private static void CopyStream(Stream input, Stream output)
-        {
-            byte[] buffer = new byte[8192];
-
-            int bytesRead;
-            while ((bytesRead = input.Read(buffer, 0, buffer.Length)) > 0)
-            {
-                output.Write(buffer, 0, bytesRead);
-            }
-        }
-
-        private static void Dos2Unix(string fileName)
-        {
-            var fileData = File.ReadAllText(fileName);
-            fileData = fileData.Replace("\r\n", "\n");
-            File.WriteAllText(fileName, fileData);
         }
     }
 }

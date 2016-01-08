@@ -38,7 +38,13 @@ namespace Zazzles.Tests.Process
             Log.Output = Log.Mode.Console;
 
             var loc = Path.GetDirectoryName(Assembly.GetExecutingAssembly().CodeBase);
+
+            // Windows has file:\\
             loc = loc.Replace(@"file:\", string.Empty);
+
+            // Unix has file:\
+            loc = loc.Replace(@"file:", string.Empty);
+
             TestEXEPath = Path.Combine(loc, IncludesDir, TestEXE);
         }
 
@@ -50,7 +56,7 @@ namespace Zazzles.Tests.Process
             {
                 "hello",
                 "12345",
-                "@-Q\\/"
+                "@-Q/_"
             };
 
             string[] stdout;
