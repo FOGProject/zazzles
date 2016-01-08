@@ -39,10 +39,10 @@ namespace Zazzles.Tests.Process
 
             var loc = Path.GetDirectoryName(Assembly.GetExecutingAssembly().CodeBase);
 
-            // Windows has file:\\
+            // Windows has file:\\ , and the first \ is not needed
             loc = loc.Replace(@"file:\", string.Empty);
 
-            // Unix has file:\
+            // Unix has file:/ , and the / is needed
             loc = loc.Replace(@"file:", string.Empty);
 
             TestEXEPath = Path.Combine(loc, IncludesDir, TestEXE);
