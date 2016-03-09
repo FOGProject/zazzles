@@ -1,6 +1,6 @@
 ﻿/*
  * Zazzles : A cross platform service framework
- * Copyright (C) 2014-2015 FOG Project
+ * Copyright (C) 2014-2016 FOG Project
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -27,7 +27,7 @@ namespace Zazzles.Modules.Updater
     public static class UpdaterHelper
     {
         private const string LogName = "UpdaterHelper";
-        
+
         public static void ApplyUpdate<TWindows, TMac, TLinux>(string processToKill)
             where TWindows : IUpdate
             where TMac : IUpdate

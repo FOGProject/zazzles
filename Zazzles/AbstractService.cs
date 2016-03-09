@@ -19,9 +19,8 @@
 
 
 using System;
-using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
-using Newtonsoft.Json.Linq;
 using Zazzles.Middleware;
 using Zazzles.Modules;
 
@@ -29,32 +28,27 @@ namespace Zazzles
 {
     public abstract class AbstractService
     {
-        private readonly Thread _eventWaiterThread;
-        private readonly Thread _policyAddThread;
-
-        private readonly Dictionary<string, IEventProcessor> _modules;
-        private readonly Queue<dynamic> _eventQueue;
-
-        private readonly object _modulesLock = new object();
-        private readonly object _eventQueueLock = new object(); 
-        private readonly AutoResetEvent _processQeueuEvent = new AutoResetEvent(false);
-
-        public string Name { get; protected set; }
-        protected int PolicyWaitTime = 60;
-
-        protected abstract Dictionary<string, IEventProcessor> GetModules();
-        protected abstract void Load();
-        protected abstract void Unload();
+        protected const int DefaultSleepTime = 60;
+        private readonly AbstractModule[] _modules;
+        private readonly Thread _moduleThread;
 
         protected AbstractService()
         {
-            _eventWaiterThread = new Thread(EventWaiter) { IsBackground = false };
-            _policyAddThread = new Thread(PolicyWaiter) { IsBackground = true };
+            _moduleThread = new Thread(ModuleLooper)
+            {
+                Priority = ThreadPriority.Normal,
+                IsBackground = false
+            };
 
             _modules = GetModules();
-            _eventQueue = new Queue<dynamic>();
             Name = "Service";
         }
+
+        // Basic variables every service needs
+        public string Name { get; protected set; }
+        protected abstract AbstractModule[] GetModules();
+        protected abstract void Load();
+        protected abstract void Unload();
 
         /// <summary>
         ///     Start the service
@@ -67,104 +61,63 @@ namespace Zazzles
                 Log.Error(Name, "ServerAddress not found! Exiting.");
                 return;
             }
-
-            Communication.BindServerToBus();
-            Bus.Subscribe(Bus.Channel.RemoteRX, ProcessEvent);
-
             Load();
-            _policyAddThread.Start();
-            _eventWaiterThread.Start();
+            _moduleThread.Start();
         }
 
-        private void PolicyWaiter()
+        /// <summary>
+        ///     Loop through all the modules until an update or shutdown is pending
+        /// </summary>
+        protected virtual void ModuleLooper()
         {
-            while (true)
-            {
-                lock (_eventQueueLock)
-                {
-                    lock (_modulesLock)
-                    {
-                        foreach (var key in _modules.Keys)
-                        {
-                            if (_modules[key].GetEventProcessorType() == EventProcessorType.Policy)
-                                continue;
-
-                            dynamic message = new JObject();
-                            message.module = key;
-
-                            _eventQueue.Enqueue(message);
-                        }
-                    }
-                }
-
-                Thread.Sleep(PolicyWaitTime * 1000);
-            } 
-        }
-
-        protected virtual void EventWaiter()
-        {
+            // Only run the service if there isn't a shutdown or update pending
             while (!Power.ShuttingDown && !Power.Updating)
             {
-                ProcessQueue();
-                Thread.Sleep(5 * 1000);
-            }
-        }
-
-        private void ProcessQueue()
-        {
-            dynamic message;
-
-            lock (_eventQueueLock)
-            {
-                if (_eventQueue.Count == 0)
-                    return;
-
-                message = _eventQueue.Dequeue();
-            }
-
-            RunModule(message.module, message.data);
-        }
-
-        private void RunModule(string id, JObject data)
-        {
-            try
-            {
-                IEventProcessor module;
-                lock (_modulesLock)
+                // Stop looping as soon as a shutdown or update pending
+                foreach (var module in _modules.TakeWhile(module => !Power.ShuttingDown && !Power.Updating))
                 {
-                    module = _modules[id];
+                    // Entry file formatting
+                    Log.NewLine();
+                    Log.PaddedHeader(module.Name);
+                    Log.Entry("Client-Info", $"Version: {Settings.Get("Version")}");
+
+                    try
+                    {
+                        module.Start();
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error(Name, ex);
+                    }
+
+                    // Entry file formatting
+                    Log.Divider();
+                    Log.NewLine();
+
+                    if (Power.Requested)
+                        break;
                 }
-                module.ProcessEvent(data);
-            }
-            catch (Exception ex)
-            {
-                Log.Error(Name, "Failed to run " + id);
-                Log.Error(Name, ex);
+
+                while (Power.Requested)
+                {
+                    Log.Entry(Name, "Power operation being requested, checking back in 30 seconds");
+                    Thread.Sleep(30 * 1000);
+                }
+
+                // Skip checking for sleep time if there is a shutdown or update pending
+                if (Power.ShuttingDown || Power.Updating) break;
+
+                // Once all modules have been run, sleep for the set time
+                var sleepTime = GetSleepTime() ?? DefaultSleepTime;
+                Log.Entry(Name, $"Sleeping for {sleepTime} seconds");
+                Thread.Sleep(sleepTime * 1000);
             }
         }
 
-        protected virtual void ProcessEvent(dynamic message)
-        {
-            if (message.module == null) return;
-
-            EventProcessorType type;
-            lock (_modulesLock)
-            {
-                if (!_modules.ContainsKey(message.module)) return;
-                type = _modules[message.module].GetType();
-            }
-
-            if (message.sync == null && type == EventProcessorType.Asynchronous)
-            {
-                RunModule(message.module, message.data);
-                return;
-            }
-
-            lock (_eventQueueLock)
-            {
-                _eventQueue.Enqueue(message);
-            }
-        }
+        /// <summary>
+        /// </summary>
+        /// <returns>The number of seconds to sleep between running each module</returns>
+        protected abstract int? GetSleepTime();
 
         /// <summary>
         ///     Stop the service
@@ -172,12 +125,7 @@ namespace Zazzles
         public virtual void Stop()
         {
             Log.Entry(Name, "Stop requested");
-
-            Communication.UnBindServerFromBus();
-            Bus.Unsubscribe(Bus.Channel.RemoteRX, ProcessEvent);
-
-            _policyAddThread.Abort();
-            _eventWaiterThread.Abort();
+            _moduleThread.Abort();
             Unload();
         }
     }

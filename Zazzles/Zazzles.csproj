@@ -174,9 +174,6 @@
     <Compile Include="Debugger\Commands\User\UserCommand.cs" />
     <Compile Include="Debugger\Debugger.cs" />
     <Compile Include="Eager.cs" />
-    <Compile Include="Middleware\Bindings\IServerBinding.cs" />
-    <Compile Include="Middleware\Bindings\Polling.cs" />
-    <Compile Include="Middleware\Bindings\SocketIO.cs" />
     <Compile Include="Middleware\Configuration.cs" />
     <Compile Include="Middleware\Authentication.cs" />
     <Compile Include="Middleware\Communication.cs" />
@@ -186,9 +183,7 @@
     <Compile Include="Data\Transform.cs" />
     <Compile Include="Data\RSA.cs" />
     <Compile Include="Log\Log.cs" />
-    <Compile Include="Modules\IEventProcessor.cs" />
-    <Compile Include="Modules\PolicyModule.cs" />
-    <Compile Include="Modules\Updater\UpdaterMessage.cs" />
+    <Compile Include="Middleware\Response.cs" />
     <Compile Include="Notification\Notification.cs" />
     <Compile Include="Bus\Bus.cs" />
     <Compile Include="Power\IPower.cs" />

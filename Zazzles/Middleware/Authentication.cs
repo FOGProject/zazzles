@@ -1,6 +1,6 @@
 ﻿/*
  * Zazzles : A cross platform service framework
- * Copyright (C) 2014-2015 FOG Project
+ * Copyright (C) 2014-2016 FOG Project
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,6 +20,7 @@
 using System;
 using System.IO;
 using System.Net;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Zazzles.Data;
 using RSA = Zazzles.Data.RSA;
@@ -32,6 +33,7 @@ namespace Zazzles.Middleware
     {
         private const string LogName = "Middleware::Authentication";
         private static byte[] Passkey;
+        public static byte[] TestPassKey;
 
         /// <summary>
         ///     Generate a random AES pass key and securely send it to the server
@@ -48,12 +50,14 @@ namespace Zazzles.Middleware
                 var certificate = new X509Certificate2(keyPath);
 
                 // Ensure the public key came from the pinned server
-                if (!RSA.IsFromCA(RSA.ServerCertificate(), certificate))
+                if (!Data.RSA.IsFromCA(Data.RSA.ServerCertificate(), certificate))
                     throw new Exception("Certificate is not from FOG CA");
                 Log.Entry(LogName, "Cert OK");
 
                 // Generate a random AES key
-                Passkey = AES.NewKey();
+                var aes = new AesCryptoServiceProvider();
+                aes.GenerateKey();
+                Passkey = aes.Key;
 
                 // Get the security token from the last handshake
                 var token = GetSecurityToken("token.dat");
@@ -61,20 +65,20 @@ namespace Zazzles.Middleware
                 var enKey = Transform.ByteArrayToHexString(RSA.Encrypt(certificate, Passkey));
                 var enToken = Transform.ByteArrayToHexString(RSA.Encrypt(certificate, token));
                 // Send the encrypted data to the server and get the response
-                //var response = Communication.Post("/management/index.php?sub=authorize",
-                //    $"sym_key={enKey}&token={enToken}&mac={Configuration.MACAddresses()}");
+                var response = Communication.Post("/management/index.php?sub=authorize",
+                    $"sym_key={enKey}&token={enToken}&mac={Configuration.MACAddresses()}");
 
                 // If the server accepted the token and AES key, save the new token
-                //if (!response.Error && response.Encrypted)
-               // {
-               //     Log.Entry(LogName, "Authenticated");
-               //     SetSecurityToken("token.dat", Transform.HexStringToByteArray(response.GetField("#token")));
-               //     return true;
-               // }
+                if (!response.Error && response.Encrypted)
+                {
+                    Log.Entry(LogName, "Authenticated");
+                    SetSecurityToken("token.dat", Transform.HexStringToByteArray(response.GetField("#token")));
+                    return true;
+                }
 
                 // If the server does not recognize the host, register it
-               // if (response.ReturnCode.Equals("#!ih"))
-               //     Communication.Contact($"/service/register.php?hostname={Dns.GetHostName()}", true);
+                if (response.ReturnCode.Equals("#!ih"))
+                    Communication.Contact($"/service/register.php?hostname={Dns.GetHostName()}", true);
             }
             catch (Exception ex)
             {
@@ -91,9 +95,6 @@ namespace Zazzles.Middleware
         /// <returns>The decrypted security token</returns>
         private static byte[] GetSecurityToken(string filePath)
         {
-            if (string.IsNullOrEmpty(filePath))
-                throw new ArgumentException("File path must be provided!", nameof(filePath));
-
             try
             {
                 var token = File.ReadAllBytes(filePath);
@@ -116,11 +117,6 @@ namespace Zazzles.Middleware
         /// <param name="token">The security token to encrypt and save</param>
         private static void SetSecurityToken(string filePath, byte[] token)
         {
-            if (string.IsNullOrEmpty(filePath))
-                throw new ArgumentException("File path must be provided!", nameof(filePath));
-            if (token == null)
-                throw new ArgumentNullException(nameof(token));
-
             try
             {
                 token = DPAPI.ProtectData(token, true);
@@ -134,26 +130,25 @@ namespace Zazzles.Middleware
         }
 
         /// <summary>
-        ///     Decrypts a server message using AES
+        ///     Decrypts a response using AES, filtering out encryption flags
         /// </summary>
         /// <param name="toDecode">The string to decrypt</param>
-        /// <param name="payload">The payload length</param>
         /// <returns>True if the server was contacted successfully</returns>
-        public static string Decrypt(string toDecode, int payload = 0)
+        public static string Decrypt(string toDecode)
         {
-            return AES.Decrypt(toDecode, Passkey, payload);
-        }
+            const string encryptedFlag = "#!en=";
+            const string encryptedFlag2 = "#!enkey=";
 
-        /// <summary>
-        ///     Encrypts a message for the server using AES
-        /// </summary>
-        /// <param name="toEncode">The string to encrypt</param>
-        /// <param name="payload">The non-secrete payload</param>
-        /// <returns>True if the server was contacted successfully</returns>
-        public static string Encrypt(string toEncode, byte[] payload = null)
-        {
-            return AES.Encrypt(toEncode, Passkey, payload);
-        }
+            if (toDecode.StartsWith(encryptedFlag2))
+            {
+                var decryptedResponse = toDecode.Substring(encryptedFlag2.Length);
+                toDecode = AES.Decrypt(decryptedResponse, TestPassKey ?? Passkey);
+                return toDecode;
+            }
+            if (!toDecode.StartsWith(encryptedFlag)) return toDecode;
 
+            var decrypted = toDecode.Substring(encryptedFlag.Length);
+            return AES.Decrypt(decrypted, TestPassKey ?? Passkey);
+        }
     }
 }

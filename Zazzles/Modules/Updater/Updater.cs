@@ -1,6 +1,6 @@
 ﻿/*
  * Zazzles : A cross platform service framework
- * Copyright (C) 2014-2015 FOG Project
+ * Copyright (C) 2014-2016 FOG Project
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -28,20 +28,44 @@ namespace Zazzles.Modules.Updater
     /// <summary>
     ///     Update the FOG Service
     /// </summary>
-    public sealed class ClientUpdater : AbstractModule<UpdaterMessage>
+    public class ClientUpdater : AbstractModule
     {
         private string[] _upgradeFiles;
-        public override string Name { get; protected set; }
-        public override sealed Settings.OSType Compatiblity { get; protected set; }
-        public override EventProcessorType Type { get; protected set; }
 
         public ClientUpdater(string[] upgradeFiles)
         {
             Name = "ClientUpdater";
-            Compatiblity = Settings.OSType.All;
-            Type = EventProcessorType.Synchronous;
+            this._upgradeFiles = upgradeFiles;
+        }
 
-            _upgradeFiles = upgradeFiles;
+        protected override void DoWork()
+        {
+            var serverVersion = Communication.GetRawResponse("/service/getversion.php?client");
+            var localVersion = Settings.Get("Version");
+            try
+            {
+                var updaterPath = Path.Combine(Settings.Location, "tmp", "SmartInstaller.exe");
+
+                if (File.Exists(updaterPath))
+                    File.Delete(updaterPath);
+
+                var server = int.Parse(serverVersion.Replace(".", ""));
+                var local = int.Parse(localVersion.Replace(".", ""));
+
+                if (server <= local) return;
+
+                // Ensure the update is authentic
+                Communication.DownloadFile("/client/" + "SmartInstaller.exe", updaterPath);
+                if (!IsAuthenticate(updaterPath)) return;
+
+                PrepareUpdateHelpers();
+                Power.Updating = true;
+            }
+            catch (Exception ex)
+            {
+                Log.Error(Name, "Unable to parse versions");
+                Log.Error(Name, ex);
+            }
         }
 
         private bool IsAuthenticate(string filePath)
@@ -83,35 +107,6 @@ namespace Zazzles.Modules.Updater
                     Log.Error(Name, "Unable to prepare file:" + file);
                     Log.Error(Name, ex);
                 }
-            }
-        }
-
-        protected override void OnEvent(UpdaterMessage message)
-        {
-            var localVersion = Settings.Get("Version");
-            try
-            {
-                var updaterPath = Path.Combine(Settings.Location, "tmp", "SmartInstaller.exe");
-
-                if (File.Exists(updaterPath))
-                    File.Delete(updaterPath);
-
-                var server = int.Parse(message.Version.Replace(".", ""));
-                var local = int.Parse(localVersion.Replace(".", ""));
-
-                if (server <= local) return;
-
-                // Ensure the update is authentic
-                Communication.DownloadFile(Configuration.ServerAddress + "/getclient", updaterPath);
-                if (!IsAuthenticate(updaterPath)) return;
-
-                PrepareUpdateHelpers();
-                Power.Updating = true;
-            }
-            catch (Exception ex)
-            {
-                Log.Error(Name, "Unable to parse versions");
-                Log.Error(Name, ex);
             }
         }
     }

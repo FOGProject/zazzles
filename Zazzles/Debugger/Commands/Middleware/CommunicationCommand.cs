@@ -37,7 +37,7 @@ namespace Zazzles.Debugger.Commands.Middleware
 
             if (args[0].Equals("response"))
             {
-                var response = Communication.GetText(args[1]);
+                var response = Communication.GetRawResponse(args[1]);
                 Log.Entry(LogName, "Response = " + response);
 
                 return true;

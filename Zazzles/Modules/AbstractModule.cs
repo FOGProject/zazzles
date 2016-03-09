@@ -17,34 +17,56 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-using System;
-using Newtonsoft.Json.Linq;
+using Zazzles.Middleware;
 
 namespace Zazzles.Modules
 {
     /// <summary>
     ///     The base of all FOG Modules
     /// </summary>
-    public abstract class AbstractModule<TMessageContainer> : IEventProcessor
+    public abstract class AbstractModule
     {
-        public abstract string Name { get; protected set; }
-        public abstract Settings.OSType Compatiblity { get; protected set; }
-        public abstract EventProcessorType Type { get; protected set; }
+        protected AbstractModule()
+        {
+            Name = "Generic Module";
+            EnabledURL = "/service/servicemodule-active.php";
+            Compatiblity = Settings.OSType.All;
+        }
 
-        public virtual void ProcessEvent(JObject data)
+        //Basic variables every module needs
+        public string Name { get; protected set; }
+        public string EnabledURL { get; protected set; }
+        public Settings.OSType Compatiblity { get; protected set; }
+
+        /// <summary>
+        ///     Called to Start the module. Filters out modules that are disabled on the server
+        /// </summary>
+        public void Start()
         {
             if (!Settings.IsCompatible(Compatiblity))
-                throw new Exception($"{Name} is not compatible with {Settings.OS}");
+            {
+                Log.Entry(Name, "Module is not compatible with " + Settings.OS);
+                return;
+            }
 
-            var message = data.ToObject<TMessageContainer>();
-            OnEvent(message);
+            Log.Entry(Name, "Running...");
+            if (IsEnabled())
+                DoWork();
         }
 
-        public EventProcessorType GetEventProcessorType()
+        /// <summary>
+        ///     Called after Start() filters out disabled modules. Contains the module's functionality
+        /// </summary>
+        protected abstract void DoWork();
+
+        /// <summary>
+        ///     Check if the module is enabled
+        /// </summary>
+        /// <returns>True if the module is enabled</returns>
+        public bool IsEnabled()
         {
-            return Type;
+            var moduleActiveResponse = Communication.GetResponse($"{EnabledURL}?moduleid={Name.ToLower()}", true);
+            return !moduleActiveResponse.Error;
         }
-
-        protected abstract void OnEvent(TMessageContainer message);
     }
 }
