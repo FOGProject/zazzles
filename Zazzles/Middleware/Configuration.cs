@@ -90,9 +90,7 @@ namespace Zazzles.Middleware
                      string.Join(":",
                          (from z in adapter.GetPhysicalAddress().GetAddressBytes() select z.ToString("X2")).ToArray())));
 
-                // Remove the first |
-                if (macs.Length > 0)
-                    macs = macs.Substring(1);
+                macs = macs.Trim('|');
             }
             catch (Exception ex)
             {

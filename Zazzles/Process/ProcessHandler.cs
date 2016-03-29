@@ -35,7 +35,7 @@ namespace Zazzles
         /// <param name="param">Parameters to run the EXE with</param>
         /// <param name="wait">Wait for the process to exit</param>
         /// <returns>The exit code of the process. Will be -1 if wait is false.</returns>
-        public static int RunClientEXE(string file, string param, bool wait)
+        public static int RunClientEXE(string file, string param, bool wait = true)
         {
             string[] stdout;
             return RunClientEXE(file, param, wait, out stdout);
@@ -64,7 +64,7 @@ namespace Zazzles
         /// <param name="param">Parameters to run the EXE with</param>
         /// <param name="wait">Wait for the process to exit</param>
         /// <returns>The exit code of the process. Will be -1 if wait is false.</returns>
-        public static int RunEXE(string filePath, string param, bool wait)
+        public static int RunEXE(string filePath, string param, bool wait = true)
         {
             string[] stdout;
             return RunEXE(filePath, param, wait, out stdout);
@@ -147,7 +147,7 @@ namespace Zazzles
         /// <param name="param">Parameters to run the process with</param>
         /// <param name="wait">Wait for the process to exit</param>
         /// <returns>The exit code of the process. Will be -1 if wait is false.</returns>
-        public static int Run(string filePath, string param, bool wait)
+        public static int Run(string filePath, string param, bool wait = true)
         {
             string[] stdout;
             return Run(filePath, param, wait, out stdout);

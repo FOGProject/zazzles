@@ -22,6 +22,7 @@ using System.IO;
 using System.Net;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using FOG.Handlers.Data;
 using Zazzles.Data;
 using RSA = Zazzles.Data.RSA;
 
