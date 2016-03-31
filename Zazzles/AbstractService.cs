@@ -17,7 +17,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-
 using System;
 using System.Linq;
 using System.Threading;
@@ -80,6 +79,7 @@ namespace Zazzles
                     Log.NewLine();
                     Log.PaddedHeader(module.Name);
                     Log.Entry("Client-Info", $"Version: {Settings.Get("Version")}");
+                    Log.Entry("Client-Info", $"OS:      {Settings.OS}");
 
                     try
                     {
