@@ -20,6 +20,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Zazzles.Data;
 using Zazzles.Middleware;
 
@@ -87,20 +88,41 @@ namespace Zazzles.Modules.Updater
         {
             var files = new List<string>
             {
-                "Zazzles.dll",
-                "Newtonsoft.Json.dll",
                 "settings.json",
                 "token.dat"
             };
 
             files.AddRange(_upgradeFiles);
 
+            var filePaths =
+                Directory.GetFiles(Settings.Location, "*.dll*", SearchOption.TopDirectoryOnly).Select(Path.GetFileName);
+
+            files.AddRange(filePaths);
+
             foreach (var file in files)
             {
                 try
                 {
-                    File.Copy(Path.Combine(Settings.Location, file),
-                        Path.Combine(Settings.Location, "tmp", file), true);
+                    //File.Copy(Path.Combine(Settings.Location, file),
+                    //    Path.Combine(Settings.Location, "tmp", file), true);
+
+                    var src = Path.Combine(Settings.Location, file);
+                    var target = Path.Combine(Settings.Location, "tmp", file);
+
+                    if(File.Exists(target))
+                        File.Delete(target);
+
+                    using (var inf = new FileStream(src, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                    using (var outf = new FileStream(target, FileMode.Create))
+                    {
+                        int b;
+                        while ((b = inf.ReadByte()) != -1)
+                            outf.WriteByte((byte)b);
+
+                        inf.Close();
+                        outf.Close();
+                    }
+
                 }
                 catch (Exception ex)
                 {
