@@ -1,6 +1,6 @@
 ﻿/*
  * Zazzles : A cross platform service framework
- * Copyright (C) 2014-2015 FOG Project
+ * Copyright (C) 2014-2016 FOG Project
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,6 +19,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using Newtonsoft.Json.Linq;
 
@@ -67,12 +68,16 @@ namespace Zazzles
                     string[] stdout;
                     ProcessHandler.Run("uname", "", true, out stdout);
 
-                    if (stdout != null && stdout.Length > 1)
-                        if (stdout[0].ToLower().StartsWith("darwin"))
+                    if (stdout != null)
+                    {
+                        var kerInfo = string.Join(" ", stdout).Trim().ToLower();
+                        if (kerInfo.Contains("darwin"))
                         {
                             OS = OSType.Mac;
                             break;
                         }
+                    }
+
 
                     OS = OSType.Linux;
                     break;
