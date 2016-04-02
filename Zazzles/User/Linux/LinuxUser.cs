@@ -1,6 +1,6 @@
 ﻿/*
  * Zazzles : A cross platform service framework
- * Copyright (C) 2014-2015 FOG Project
+ * Copyright (C) 2014-2016 FOG Project
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -52,7 +52,7 @@ namespace Zazzles.UserComponents
                 }
             }
 
-            return usersInfo.Select(userInfo => userInfo.Substring(0, userInfo.IndexOf(" "))).ToList();
+            return usersInfo.Select(userInfo => userInfo.Substring(0, userInfo.IndexOf(" "))).Distinct().ToList();
         }
 
         public int GetInactivityTime()
