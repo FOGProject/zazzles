@@ -1,6 +1,6 @@
 ﻿/*
  * Zazzles : A cross platform service framework
- * Copyright (C) 2014-2015 FOG Project
+ * Copyright (C) 2014-2016 FOG Project
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -55,6 +55,7 @@ namespace Zazzles
         public static long MaxSize { get; set; }
         public static Mode Output { get; set; }
         private static object locker = new object();
+        
 
         static Log()
         {
@@ -191,6 +192,8 @@ namespace Zazzles
                 case Mode.Quiet:
                     break;
                 case Mode.Console:
+                    Console.ForegroundColor = ConsoleColor.White;
+
                     if (level == Level.Error)
                         Console.BackgroundColor = ConsoleColor.Red;
                     if (level == Level.Debug)
@@ -198,6 +201,7 @@ namespace Zazzles
 
                     Console.Write(text);
                     Console.BackgroundColor = ConsoleColor.Black;
+            
                     break;
                 default:
                     try
