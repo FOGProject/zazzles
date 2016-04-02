@@ -1,6 +1,6 @@
 ﻿/*
  * Zazzles : A cross platform service framework
- * Copyright (C) 2014-2015 FOG Project
+ * Copyright (C) 2014-2016 FOG Project
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -53,7 +53,8 @@ namespace Zazzles
             }
             catch (Exception ex)
             {
-                Log.Error(LogName, $"Could not retrieve {keyPath}{keyName}");
+                keyPath = keyPath.TrimEnd('\\');
+                Log.Error(LogName, $"Could not retrieve {keyPath}\\{keyName}");
                 Log.Error(LogName, ex);
             }
             return null;
@@ -86,7 +87,8 @@ namespace Zazzles
             }
             catch (Exception ex)
             {
-                Log.Error(LogName, $"Could not set {keyPath}{keyName}");
+                keyPath = keyPath.TrimEnd('\\');
+                Log.Error(LogName, $"Could not set {keyPath}\\{keyName}");
                 Log.Error(LogName, ex);
             }
 
