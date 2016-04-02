@@ -134,7 +134,7 @@ namespace Zazzles
                 if (!proc.HasExited)
                     return -1;
 
-                Log.Entry(LogName, $"--> Exit Code = {proc.ExitCode}");
+                Log.Debug(LogName, $"--> Exit Code = {proc.ExitCode}");
                 return proc.ExitCode;
             }
         }
@@ -197,7 +197,7 @@ namespace Zazzles
                     if (!proc.HasExited)
                         return -1;
 
-                    Log.Entry(LogName, $"--> Exit Code = {proc.ExitCode}");
+                    Log.Debug(LogName, $"--> Exit Code = {proc.ExitCode}");
                     return proc.ExitCode;
                 }
             }
