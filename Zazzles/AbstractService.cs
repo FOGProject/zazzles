@@ -73,7 +73,7 @@ namespace Zazzles
             while (!Power.ShuttingDown && !Power.Updating)
             {
                 // Stop looping as soon as a shutdown or update pending
-                foreach (var module in _modules.TakeWhile(module => !Power.ShuttingDown && !Power.Updating))
+                foreach (var module in _modules.TakeWhile(module => !Power.Requested && !Power.ShuttingDown && !Power.Updating))
                 {
                     // Entry file formatting
                     Log.NewLine();
