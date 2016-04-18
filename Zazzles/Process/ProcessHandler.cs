@@ -90,7 +90,13 @@ namespace Zazzles
                 throw new ArgumentNullException(nameof(param));
 
             // Re-write the param information to include mono
-            param = $"mono {filePath} {param}";
+            var monoPath = Settings.Get("Runtime");
+            var runTime = "mono";
+
+            if (monoPath != null)
+                runTime = Path.Combine(monoPath, runTime);
+
+            param = $"{runTime} {filePath} {param}";
             param = param.Trim();
 
 
