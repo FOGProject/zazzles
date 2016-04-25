@@ -48,7 +48,6 @@ namespace Zazzles
             try
             {
                 _data = JObject.Parse(File.ReadAllText(_file));
-                Log.Entry(LogName, _data.ToString());
             }
             catch (Exception ex)
             {
