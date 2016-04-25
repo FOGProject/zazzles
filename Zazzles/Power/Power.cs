@@ -1,6 +1,6 @@
 ﻿/*
  * Zazzles : A cross platform service framework
- * Copyright (C) 2014-2015 FOG Project
+ * Copyright (C) 2014-2016 FOG Project
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -166,6 +166,8 @@ namespace Zazzles
             Log.Entry(LogName, "Creating shutdown request");
             Log.Entry(LogName, "Parameters: " + parameters);
 
+            ShuttingDown = true;
+
             _instance.CreateTask(parameters);
         }
 
@@ -175,9 +177,8 @@ namespace Zazzles
             // If no user is logged in, skip trying to notify users
             if (!User.AnyLoggedIn())
             {
-                Log.Debug(LogName,"No user is logged in. Though you know what? I don't believe you. So I'm going to pretend someone is logged in.");
-                //CreateTask(parameters);
-                //return;
+                CreateTask(parameters);
+                return;
             }
 
             // Check if a task is already in progress
@@ -187,6 +188,7 @@ namespace Zazzles
                 return;
             }
 
+            Requested = true;
             delayed = false;
 
             // Load the grace period from Settings or use the default one
@@ -219,7 +221,6 @@ namespace Zazzles
 
             // Notify all open consoles about the shutdown (for ssh users)
             if (Settings.OS == Settings.OSType.Windows) return;
-
             ProcessHandler.Run("wall", $"-n <<< \"Shutdown will occur in {gracePeriod} seconds\"", true);
         }
 

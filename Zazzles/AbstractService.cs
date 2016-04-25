@@ -93,9 +93,6 @@ namespace Zazzles
                     // Entry file formatting
                     Log.Divider();
                     Log.NewLine();
-
-                    if (Power.Requested)
-                        break;
                 }
 
                 while (Power.Requested)
