@@ -48,11 +48,11 @@ namespace Zazzles.UserComponents
                 while (!process.StandardOutput.EndOfStream)
                 {
                     var user = process.StandardOutput.ReadLine();
-                    if (!usersInfo.Contains(user)) usersInfo.Add(user);
+                    if (!usersInfo.Contains(user) && !string.IsNullOrWhiteSpace(user)) usersInfo.Add(user);
                 }
             }
 
-            return usersInfo.Select(userInfo => userInfo.Substring(0, userInfo.IndexOf(" "))).Distinct().ToList();
+            return usersInfo.Distinct().ToList();
         }
 
         public int GetInactivityTime()
