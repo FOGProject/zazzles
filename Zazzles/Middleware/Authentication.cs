@@ -22,9 +22,12 @@ using System.IO;
 using System.Net;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
 using FOG.Handlers.Data;
 using Zazzles.Data;
+using System.Timers;
 using RSA = Zazzles.Data.RSA;
+using Timer = System.Timers.Timer;
 
 // ReSharper disable InconsistentNaming
 
@@ -35,6 +38,23 @@ namespace Zazzles.Middleware
         private const string LogName = "Middleware::Authentication";
         private static byte[] Passkey;
         public static byte[] TestPassKey;
+        private static AutoResetEvent CanAuth;
+        private static Timer EventTimer;
+
+        static Authentication()
+        {
+            CanAuth = new AutoResetEvent(true);
+            EventTimer = new Timer();
+
+            EventTimer.Elapsed += onTimerEnd;
+            EventTimer.AutoReset = false;
+            EventTimer.Interval = 2*60*1000;
+        }
+
+        private static void onTimerEnd(object sender, ElapsedEventArgs elapsedEventArgs)
+        {
+            CanAuth.Set();
+        }
 
         /// <summary>
         ///     Generate a random AES pass key and securely send it to the server
@@ -44,6 +64,10 @@ namespace Zazzles.Middleware
         {
             try
             {
+                Log.Entry(LogName, "Waiting for authentication timeout to pass");
+                CanAuth.WaitOne();
+                EventTimer.Start();
+
                 // Obtain a public key from the server
                 var keyPath = Path.Combine(Settings.Location, "tmp", "public.cer");
                 Communication.DownloadFile("/management/other/ssl/srvpublic.crt", keyPath);
