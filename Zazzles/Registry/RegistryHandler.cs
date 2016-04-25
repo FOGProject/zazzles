@@ -66,8 +66,9 @@ namespace Zazzles
         /// <param name="keyPath">The path to the registry key</param>
         /// <param name="keyName">The name of the registry key</param>
         /// <param name="value">The value to set the key to</param>
+        /// <param name="verbose">Log exceptions</param>
         /// <returns>True if successful</returns>
-        public static bool SetRegistryValue(string keyPath, string keyName, string value)
+        public static bool SetRegistryValue(string keyPath, string keyName, string value, bool verbose = true)
         {
             if (string.IsNullOrEmpty(keyPath))
                 throw new ArgumentException("Key Path must be provided!", nameof(keyPath));
@@ -87,6 +88,9 @@ namespace Zazzles
             }
             catch (Exception ex)
             {
+                if (!verbose)
+                    return false;
+
                 keyPath = keyPath.TrimEnd('\\');
                 Log.Error(LogName, $"Could not set {keyPath}\\{keyName}");
                 Log.Error(LogName, ex);
