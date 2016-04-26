@@ -24,7 +24,7 @@ namespace Zazzles.Modules
     /// <summary>
     ///     The base of all FOG Modules
     /// </summary>
-    public abstract class AbstractModule
+    public abstract class AbstractModule<T> : IModule
     {
         protected AbstractModule()
         {
@@ -47,13 +47,27 @@ namespace Zazzles.Modules
                 return;
             }
 
+            Log.Entry(Name, "Parsing data...");
+            var msg = ConvertData(data);
+
             Log.Entry(Name, "Running...");
-            DoWork(data);
+            DoWork(data, msg);
+        }
+
+        public string GetName()
+        {
+            return Name;
         }
 
         /// <summary>
         ///     Called after Start() filters out disabled modules. Contains the module's functionality
         /// </summary>
-        protected abstract void DoWork(Response data);
+        protected abstract void DoWork(Response response, T msg);
+
+        private T ConvertData(Response data)
+        {
+            var obj = data.Data.ToObject<T>();
+            return obj;
+        }
     }
 }

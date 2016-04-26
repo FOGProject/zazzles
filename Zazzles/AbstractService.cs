@@ -20,7 +20,6 @@
 using System;
 using System.Linq;
 using System.Threading;
-using Newtonsoft.Json.Linq;
 using Zazzles.Middleware;
 using Zazzles.Modules;
 
@@ -29,7 +28,7 @@ namespace Zazzles
     public abstract class AbstractService
     {
         protected const int DefaultSleepTime = 60;
-        private readonly AbstractModule[] _modules;
+        private readonly IModule[] _modules;
         private readonly Thread _moduleThread;
 
         protected AbstractService()
@@ -47,7 +46,7 @@ namespace Zazzles
         // Basic variables every service needs
         public string Name { get; protected set; }
         protected Response LoopData;
-        protected abstract AbstractModule[] GetModules();
+        protected abstract IModule[] GetModules();
         protected abstract Response GetLoopData();
         protected abstract void Load();
         protected abstract void Unload();
@@ -82,13 +81,13 @@ namespace Zazzles
                 {
                     // Entry file formatting
                     Log.NewLine();
-                    Log.PaddedHeader(module.Name);
+                    Log.PaddedHeader(module.GetName());
                     Log.Entry("Client-Info", $"Version: {Settings.Get("Version")}");
                     Log.Entry("Client-Info", $"OS:      {Settings.OS}");
 
                     try
                     {
-                        module.Start(LoopData.GetSubResponse(module.Name));
+                        module.Start(LoopData.GetSubResponse(module.GetName()));
                     }
                     catch (Exception ex)
                     {

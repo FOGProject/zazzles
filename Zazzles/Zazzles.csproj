@@ -175,6 +175,8 @@
     <Compile Include="Data\RSA.cs" />
     <Compile Include="Log\Log.cs" />
     <Compile Include="Middleware\Response.cs" />
+    <Compile Include="Modules\IModule.cs" />
+    <Compile Include="Modules\Updater\UpdateMessage.cs" />
     <Compile Include="Notification\Notification.cs" />
     <Compile Include="Bus\Bus.cs" />
     <Compile Include="Power\IPower.cs" />

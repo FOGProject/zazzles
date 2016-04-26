@@ -21,7 +21,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Newtonsoft.Json.Linq;
 using Zazzles.Data;
 using Zazzles.Middleware;
 
@@ -30,7 +29,7 @@ namespace Zazzles.Modules.Updater
     /// <summary>
     ///     Update the FOG Service
     /// </summary>
-    public class ClientUpdater : AbstractModule
+    public class ClientUpdater : AbstractModule<UpdateMessage>
     {
         private string[] _upgradeFiles;
 
@@ -40,10 +39,10 @@ namespace Zazzles.Modules.Updater
             this._upgradeFiles = upgradeFiles;
         }
 
-        protected override void DoWork(Response data)
+        protected override void DoWork(Response data, UpdateMessage msg)
         {
             var localVersion = Settings.Get("Version");
-            var serverVersion = data.GetField("version");
+            var serverVersion = msg.Version;
 
             if (string.IsNullOrWhiteSpace(serverVersion))
             {
