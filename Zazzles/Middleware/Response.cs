@@ -19,9 +19,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Newtonsoft.Json.Linq;
-using Zazzles.Data;
 
 namespace Zazzles.Middleware
 {
@@ -72,6 +70,14 @@ namespace Zazzles.Middleware
             }
         }
 
+        public Response(JObject data, bool encrypted)
+        {
+            Data = data;
+            Encrypted = encrypted;
+            ReturnCode = GetField("code");
+            Error = !ReturnCode.ToLower().Equals(SuccessCode);
+        }
+
         public Response(bool error, JObject data, string returnCode, bool encrypted)
         {
             Error = error;
@@ -111,6 +117,13 @@ namespace Zazzles.Middleware
         public bool IsFieldValid(string id)
         {
             return !string.IsNullOrEmpty(GetField(id));
+        }
+
+        public Response GetSubResponse(string id)
+        {
+            var jEntry = Data[id];
+            var entry = jEntry.ToObject<JObject>();
+            return new Response(entry, Encrypted);
         }
 
         /// <summary>

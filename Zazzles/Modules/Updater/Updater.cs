@@ -40,15 +40,16 @@ namespace Zazzles.Modules.Updater
             this._upgradeFiles = upgradeFiles;
         }
 
-        protected override void DoWork(JObject data)
+        protected override void DoWork(Response data)
         {
             var localVersion = Settings.Get("Version");
-            if (data["version"] == null)
+            var serverVersion = data.GetField("version");
+
+            if (string.IsNullOrWhiteSpace(serverVersion))
             {
                 Log.Error(Name, "No version provided by server");
                 return;
             }
-            var serverVersion = data["version"].ToString();
 
             try
             {

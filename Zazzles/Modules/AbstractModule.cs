@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-using Newtonsoft.Json.Linq;
+using Zazzles.Middleware;
 
 namespace Zazzles.Modules
 {
@@ -39,7 +39,7 @@ namespace Zazzles.Modules
         /// <summary>
         ///     Called to Start the module. Filters out modules that are not compatible
         /// </summary>
-        public void Start(JObject data)
+        public void Start(Response data)
         {
             if (!Settings.IsCompatible(Compatiblity))
             {
@@ -54,6 +54,6 @@ namespace Zazzles.Modules
         /// <summary>
         ///     Called after Start() filters out disabled modules. Contains the module's functionality
         /// </summary>
-        protected abstract void DoWork(JObject data);
+        protected abstract void DoWork(Response data);
     }
 }

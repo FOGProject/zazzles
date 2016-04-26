@@ -46,9 +46,9 @@ namespace Zazzles
 
         // Basic variables every service needs
         public string Name { get; protected set; }
-        protected JObject LoopData;
+        protected Response LoopData;
         protected abstract AbstractModule[] GetModules();
-        protected abstract JObject GetLoopData();
+        protected abstract Response GetLoopData();
         protected abstract void Load();
         protected abstract void Unload();
 
@@ -88,7 +88,7 @@ namespace Zazzles
 
                     try
                     {
-                        module.Start(LoopData[module.Name].Value<JObject>());
+                        module.Start(LoopData.GetSubResponse(module.Name));
                     }
                     catch (Exception ex)
                     {
