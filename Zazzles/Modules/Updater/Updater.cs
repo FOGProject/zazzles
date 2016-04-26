@@ -21,6 +21,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Newtonsoft.Json.Linq;
 using Zazzles.Data;
 using Zazzles.Middleware;
 
@@ -39,10 +40,16 @@ namespace Zazzles.Modules.Updater
             this._upgradeFiles = upgradeFiles;
         }
 
-        protected override void DoWork()
+        protected override void DoWork(JObject data)
         {
-            var serverVersion = Communication.GetRawResponse("/service/getversion.php?client");
             var localVersion = Settings.Get("Version");
+            if (data["version"] == null)
+            {
+                Log.Error(Name, "No version provided by server");
+                return;
+            }
+            var serverVersion = data["version"].ToString();
+
             try
             {
                 var updaterPath = Path.Combine(Settings.Location, "tmp", "SmartInstaller.exe");

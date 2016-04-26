@@ -98,7 +98,7 @@ namespace Zazzles.Middleware
         public static string GetRawResponse(string postfix)
         {
             //ID the service as the new one
-            postfix += ((postfix.Contains(".php?") ? "&" : "?") + "newService=1");
+            postfix += ((postfix.Contains(".php?") ? "&" : "?") + "newService=1&json=1");
 
             Log.Entry(LogName, "URL: " + Configuration.ServerAddress + postfix);
 
@@ -192,7 +192,7 @@ namespace Zazzles.Middleware
         public static bool Contact(string postfix)
         {
             //ID the service as the new one
-            postfix += ((postfix.Contains(".php?") ? "&" : "?") + "newService=1");
+            postfix += ((postfix.Contains(".php?") ? "&" : "?") + "newService=1&json=1");
 
             Log.Entry(LogName, $"URL: {Configuration.ServerAddress}{postfix}");
 

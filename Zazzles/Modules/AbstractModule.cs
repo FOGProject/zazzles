@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-using Zazzles.Middleware;
+using Newtonsoft.Json.Linq;
 
 namespace Zazzles.Modules
 {
@@ -29,19 +29,17 @@ namespace Zazzles.Modules
         protected AbstractModule()
         {
             Name = "Generic Module";
-            EnabledURL = "/service/servicemodule-active.php";
             Compatiblity = Settings.OSType.All;
         }
 
         //Basic variables every module needs
         public string Name { get; protected set; }
-        public string EnabledURL { get; protected set; }
         public Settings.OSType Compatiblity { get; protected set; }
 
         /// <summary>
-        ///     Called to Start the module. Filters out modules that are disabled on the server
+        ///     Called to Start the module. Filters out modules that are not compatible
         /// </summary>
-        public void Start()
+        public void Start(JObject data)
         {
             if (!Settings.IsCompatible(Compatiblity))
             {
@@ -50,23 +48,12 @@ namespace Zazzles.Modules
             }
 
             Log.Entry(Name, "Running...");
-            if (IsEnabled())
-                DoWork();
+            DoWork(data);
         }
 
         /// <summary>
         ///     Called after Start() filters out disabled modules. Contains the module's functionality
         /// </summary>
-        protected abstract void DoWork();
-
-        /// <summary>
-        ///     Check if the module is enabled
-        /// </summary>
-        /// <returns>True if the module is enabled</returns>
-        public bool IsEnabled()
-        {
-            var moduleActiveResponse = Communication.GetResponse($"{EnabledURL}?moduleid={Name.ToLower()}", true);
-            return !moduleActiveResponse.Error;
-        }
+        protected abstract void DoWork(JObject data);
     }
 }

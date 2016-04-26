@@ -20,6 +20,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json.Linq;
 using Zazzles.Data;
 
 namespace Zazzles.Middleware
@@ -58,23 +59,11 @@ namespace Zazzles.Middleware
         public Response(string rawData, bool encrypted)
         {
             Encrypted = encrypted;
-            var data = rawData.Split('\n'); //Split the response at every new line
-            var parsedData = new Dictionary<string, string>();
             try
             {
-                //Get and set the error boolean
-                var returnCode = data[0];
-                ReturnCode = returnCode;
-                Error = !returnCode.ToLower().Trim().StartsWith(SuccessCode);
-
-                //Loop through each line returned and if it contains an '=' add it to the dictionary
-                foreach (var element in data.Where(element => element.Contains("=")))
-                {
-                    parsedData.Add(element.Substring(0, element.IndexOf("=")).Trim(),
-                        element.Substring(element.IndexOf("=") + 1).Trim());
-                }
-
-                Data = parsedData;
+                Data = JObject.Parse(rawData);
+                ReturnCode = GetField("code");
+                Error = !ReturnCode.ToLower().Equals(SuccessCode);
             }
             catch (Exception ex)
             {
@@ -83,7 +72,7 @@ namespace Zazzles.Middleware
             }
         }
 
-        public Response(bool error, Dictionary<string, string> data, string returnCode, bool encrypted)
+        public Response(bool error, JObject data, string returnCode, bool encrypted)
         {
             Error = error;
             Data = data;
@@ -94,39 +83,15 @@ namespace Zazzles.Middleware
         public Response()
         {
             Error = true;
-            Data = new Dictionary<string, string>();
+            Data = new JObject();
             ReturnCode = "";
             Encrypted = false;
         }
 
         public bool Error { get; set; }
         public bool Encrypted { get; private set; }
-        public Dictionary<string, string> Data { get; set; }
+        public JObject Data { get; set; }
         public string ReturnCode { get; set; }
-
-        /// <summary>
-        ///     Parse a Response for an array of objects
-        /// </summary>
-        /// <param name="identifier">The string identifier infront of the elements</param>
-        /// <param name="base64Decode">Whether the elements should be base64 decoded</param>
-        /// <returns>A List of the elements matching the identifier</returns>
-        public List<string> GetList(string identifier, bool base64Decode)
-        {
-            Log.Debug(LogName, "Parsing List...");
-
-            var items = Data.Keys.Where(key => key.Contains(identifier)).Select(key =>
-                base64Decode
-                    ? Transform.DecodeBase64(GetField(key))
-                    : GetField(key))
-                .ToList();
-
-            foreach (var value in items)
-            {
-                Log.Debug(LogName, "--> " + value);
-            }
-
-            return items;
-        }
 
         /// <summary>
         ///     Return the value stored at a specified key
@@ -135,7 +100,7 @@ namespace Zazzles.Middleware
         /// <returns>The value stored at key ID, if the ID is not present, return null</returns>
         public string GetField(string id)
         {
-            return Data.ContainsKey(id) ? Data[id] : "";
+            return Data[id] != null ? Data[id].ToString() : "";
         }
 
         /// <summary>
@@ -154,7 +119,7 @@ namespace Zazzles.Middleware
         public void PrettyPrint()
         {
             Log.Entry(LogName, "Printing values...");
-            foreach (var key in Data.Keys)
+            foreach (var key in Data.Values())
                 Log.Entry(LogName, "--> " + key + " = " + Data[key]);
         }
     }

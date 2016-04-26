@@ -20,6 +20,7 @@
 using System;
 using System.Linq;
 using System.Threading;
+using Newtonsoft.Json.Linq;
 using Zazzles.Middleware;
 using Zazzles.Modules;
 
@@ -45,7 +46,9 @@ namespace Zazzles
 
         // Basic variables every service needs
         public string Name { get; protected set; }
+        protected JObject LoopData;
         protected abstract AbstractModule[] GetModules();
+        protected abstract JObject GetLoopData();
         protected abstract void Load();
         protected abstract void Unload();
 
@@ -72,6 +75,8 @@ namespace Zazzles
             // Only run the service if there isn't a shutdown or update pending
             while (!Power.ShuttingDown && !Power.Updating)
             {
+                LoopData = GetLoopData();
+
                 // Stop looping as soon as a shutdown or update pending
                 foreach (var module in _modules.TakeWhile(module => !Power.Requested && !Power.ShuttingDown && !Power.Updating))
                 {
@@ -83,7 +88,7 @@ namespace Zazzles
 
                     try
                     {
-                        module.Start();
+                        module.Start(LoopData[module.Name].Value<JObject>());
                     }
                     catch (Exception ex)
                     {
