@@ -20,6 +20,8 @@
 using System;
 using System.Linq;
 using System.Threading;
+using System.Web.UI.WebControls;
+using Newtonsoft.Json.Linq;
 using Zazzles.Middleware;
 using Zazzles.Modules;
 
@@ -56,6 +58,8 @@ namespace Zazzles
         /// </summary>
         public virtual void Start()
         {
+            Log.NewLine();
+            Log.Entry(Name, "Starting service");
             // Only start if a valid server address is present
             if (string.IsNullOrEmpty(Configuration.ServerAddress))
             {
@@ -71,10 +75,13 @@ namespace Zazzles
         /// </summary>
         protected virtual void ModuleLooper()
         {
+            Log.NewLine();
+
             // Only run the service if there isn't a shutdown or update pending
             while (!Power.ShuttingDown && !Power.Updating)
             {
-                LoopData = GetLoopData();
+                LoopData = GetLoopData() ?? new Response();
+                LoopData.PrettyPrint();
 
                 // Stop looping as soon as a shutdown or update pending
                 foreach (var module in _modules.TakeWhile(module => !Power.Requested && !Power.ShuttingDown && !Power.Updating))
@@ -87,7 +94,9 @@ namespace Zazzles
 
                     try
                     {
-                        module.Start(LoopData.GetSubResponse(module.GetName()));
+                        var subResponse = LoopData.GetSubResponse(module.GetName().ToLower());
+                        subResponse?.PrettyPrint();
+                        module.Start(subResponse);
                     }
                     catch (Exception ex)
                     {

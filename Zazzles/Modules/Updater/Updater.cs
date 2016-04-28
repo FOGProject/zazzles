@@ -57,10 +57,26 @@ namespace Zazzles.Modules.Updater
                 if (File.Exists(updaterPath))
                     File.Delete(updaterPath);
 
-                var server = int.Parse(serverVersion.Replace(".", ""));
-                var local = int.Parse(localVersion.Replace(".", ""));
+                var server = serverVersion.Split('.');
+                var local = localVersion.Split('.');
+                var needUpgrade = false;
 
-                if (server <= local) return;
+                for (var i = 0; i < server.Length; i++)
+                {
+                    var serverSection = int.Parse(server[i]);
+                    var localSection = int.Parse(local[i]);
+
+                    if (localSection > serverSection)
+                        return;
+
+                    if (serverSection > localSection)
+                    {
+                        needUpgrade = true;
+                        break;
+                    }
+                }
+
+                if (!needUpgrade) return;
 
                 // Ensure the update is authentic
                 Communication.DownloadFile("/client/" + "SmartInstaller.exe", updaterPath);

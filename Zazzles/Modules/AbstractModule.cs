@@ -66,6 +66,8 @@ namespace Zazzles.Modules
 
         private T ConvertData(Response data)
         {
+            if (data == null) return default(T);
+
             var obj = data.Data.ToObject<T>();
             return obj;
         }

@@ -90,19 +90,19 @@ namespace Zazzles.Middleware
                 var enKey = Transform.ByteArrayToHexString(RSA.Encrypt(certificate, Passkey));
                 var enToken = Transform.ByteArrayToHexString(RSA.Encrypt(certificate, token));
                 // Send the encrypted data to the server and get the response
-                var response = Communication.Post("/management/index.php?sub=authorize",
+                var response = Communication.Post("/management/index.php?sub=requestClientInfo&authorize&newService",
                     $"sym_key={enKey}&token={enToken}&mac={Configuration.MACAddresses()}");
 
                 // If the server accepted the token and AES key, save the new token
                 if (!response.Error && response.Encrypted)
                 {
                     Log.Entry(LogName, "Authenticated");
-                    SetSecurityToken("token.dat", Transform.HexStringToByteArray(response.GetField("#token")));
+                    SetSecurityToken("token.dat", Transform.HexStringToByteArray(response.GetField("token")));
                     return true;
                 }
 
                 // If the server does not recognize the host, register it
-                if (response.ReturnCode.Equals("#!ih"))
+                if (response.ReturnCode.Equals("ih"))
                     Communication.Contact($"/service/register.php?hostname={Dns.GetHostName()}", true);
             }
             catch (Exception ex)

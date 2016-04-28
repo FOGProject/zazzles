@@ -115,9 +115,10 @@ namespace Zazzles
 
         public static void Debug(string caller, string message)
         {
-            #if DEBUG
+
+#if DEBUG
             Entry(Level.Debug, caller, message);
-            #endif
+#endif
         }
 
         /// <summary>
@@ -185,7 +186,8 @@ namespace Zazzles
             if (text == null)
                 throw new ArgumentNullException(nameof(text));
 
-            Bus.Emit(Bus.Channel.Log, MessageToJSON(text));
+            if(level != Level.Debug)
+                Bus.Emit(Bus.Channel.Log, MessageToJSON(text));
 
             switch (Output)
             {

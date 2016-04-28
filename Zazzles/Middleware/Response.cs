@@ -29,29 +29,29 @@ namespace Zazzles.Middleware
     public class Response
     {
         private const string LogName = "Middleware::Response";
-        public const string SuccessCode = "#!ok";
+        public const string SuccessCode = "ok";
 
         public static readonly Dictionary<string, string> Codes = new Dictionary<string, string>
         {
             {SuccessCode, "Success"},
-            {"#!db", "Database error"},
-            {"#!im", "Invalid MAC address format"},
-            {"#!ihc", "Invalid host certificate"},
-            {"#!ih", "Invalid host"},
-            {"#!il", "Invalid login"},
-            {"#!it", "Invalid task"},
-            {"#!nvp", "Invalid Printer"},
-            {"#!ng", "Module is disabled globally on the FOG server"},
-            {"#!nh", "Module is disabled on the host"},
-            {"#!um", "Unknown module ID"},
-            {"#!ns", "No snapins"},
-            {"#!nj", "No jobs"},
-            {"#!np", "No Printers"},
-            {"#!na", "No actions"},
-            {"#!nf", "No updates"},
-            {"#!time", "Invalid time"},
-            {"#!ist", "Invalid security token"},
-            {"#!er", "General error"}
+            {"db", "Database error"},
+            {"im", "Invalid MAC address format"},
+            {"ihc", "Invalid host certificate"},
+            {"ih", "Invalid host"},
+            {"il", "Invalid login"},
+            {"it", "Invalid task"},
+            {"nvp", "Invalid Printer"},
+            {"ng", "Module is disabled globally on the FOG server"},
+            {"nh", "Module is disabled on the host"},
+            {"um", "Unknown module ID"},
+            {"ns", "No snapins"},
+            {"nj", "No jobs"},
+            {"np", "No Printers"},
+            {"na", "No actions"},
+            {"nf", "No updates"},
+            {"time", "Invalid time"},
+            {"ist", "Invalid security token"},
+            {"er", "General error"}
         };
 
         public Response(string rawData, bool encrypted)
@@ -60,8 +60,8 @@ namespace Zazzles.Middleware
             try
             {
                 Data = JObject.Parse(rawData);
-                ReturnCode = GetField("code");
-                Error = !ReturnCode.ToLower().Equals(SuccessCode);
+                ReturnCode = GetField("error");
+                Error = !ReturnCode.ToLower().Equals(SuccessCode) && !string.IsNullOrEmpty(ReturnCode);
             }
             catch (Exception ex)
             {
@@ -74,8 +74,8 @@ namespace Zazzles.Middleware
         {
             Data = data;
             Encrypted = encrypted;
-            ReturnCode = GetField("code");
-            Error = !ReturnCode.ToLower().Equals(SuccessCode);
+            ReturnCode = GetField("error");
+            Error = !ReturnCode.ToLower().Equals(SuccessCode) && !string.IsNullOrEmpty(ReturnCode);
         }
 
         public Response(bool error, JObject data, string returnCode, bool encrypted)
@@ -121,9 +121,17 @@ namespace Zazzles.Middleware
 
         public Response GetSubResponse(string id)
         {
-            var jEntry = Data[id];
-            var entry = jEntry.ToObject<JObject>();
-            return new Response(entry, Encrypted);
+            try
+            {
+                var jEntry = Data[id];
+                var entry = jEntry.ToObject<JObject>();
+                return new Response(entry, Encrypted);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+
         }
 
         /// <summary>
@@ -131,9 +139,7 @@ namespace Zazzles.Middleware
         /// </summary>
         public void PrettyPrint()
         {
-            Log.Entry(LogName, "Printing values...");
-            foreach (var key in Data.Values())
-                Log.Entry(LogName, "--> " + key + " = " + Data[key]);
+            Log.Entry(LogName, Data.ToString());
         }
     }
 }

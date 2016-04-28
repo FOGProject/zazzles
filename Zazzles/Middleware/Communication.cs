@@ -19,7 +19,6 @@
 
 using System;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Text;
 
@@ -41,27 +40,16 @@ namespace Zazzles.Middleware
             try
             {
                 var rawResponse = GetRawResponse(postfix);
-                Log.Debug(LogName, "Raw: " + rawResponse);
                 var encrypted = rawResponse.StartsWith("#!en");
-                Log.Debug(LogName, "ENCRYPTED: " + encrypted);
 
                 if (encrypted)
                     rawResponse = Authentication.Decrypt(rawResponse);
 
-                //See if the return code is known
-                var messageFound = false;
-                foreach (
-                    var returnMessage in
-                        Response.Codes.Keys.Where(returnMessage => rawResponse.StartsWith(returnMessage)))
+                if (string.IsNullOrEmpty(rawResponse))
                 {
-                    messageFound = true;
-                    Log.Entry(LogName, $"Response: {Response.Codes[returnMessage]}");
-                    break;
+                    Log.Error(LogName, "No response recieved");
+                    return new Response();
                 }
-
-                if (!messageFound)
-                    Log.Entry(LogName, $"Unknown Response: {rawResponse.Replace("\n", "")}");
-
 
                 if (!rawResponse.StartsWith("#!ihc")) return new Response(rawResponse, encrypted);
 
@@ -97,8 +85,14 @@ namespace Zazzles.Middleware
         /// <returns>The unparsed response</returns>
         public static string GetRawResponse(string postfix)
         {
-            //ID the service as the new one
-            postfix += ((postfix.Contains(".php?") ? "&" : "?") + "newService=1&json=1");
+            if (!postfix.Contains("newService"))
+            {
+                postfix += ((postfix.Contains(".php?") ? "&" : "?") + "newService");
+            }
+            if (!postfix.Contains("json"))
+            {
+                postfix += ((postfix.Contains(".php?") ? "&" : "?") + "json");
+            }
 
             Log.Entry(LogName, "URL: " + Configuration.ServerAddress + postfix);
 
@@ -141,7 +135,6 @@ namespace Zazzles.Middleware
 
                 // Get the response.
                 var response = request.GetResponse();
-                Log.Debug(LogName, "Post response = " + ((HttpWebResponse)response).StatusDescription);
                 dataStream = response.GetResponseStream();
 
                 // Open the stream using a StreamReader for easy access.
@@ -153,25 +146,10 @@ namespace Zazzles.Middleware
                 dataStream?.Close();
                 response.Close();
 
-                Log.Debug(LogName, rawResponse);
-
                 var encrypted = rawResponse.StartsWith("#!en");
 
                 if (encrypted)
                     rawResponse = Authentication.Decrypt(rawResponse);
-
-                var messageFound = false;
-                foreach (
-                    var returnMessage in
-                        Response.Codes.Keys.Where(returnMessage => rawResponse.StartsWith(returnMessage)))
-                {
-                    messageFound = true;
-                    Log.Entry(LogName, $"Response: {Response.Codes[returnMessage]}");
-                    break;
-                }
-
-                if (!messageFound)
-                    Log.Entry(LogName, $"Unknown Response: {rawResponse.Replace("\n", "")}");
 
                 return new Response(rawResponse, encrypted);
             }
@@ -191,11 +169,6 @@ namespace Zazzles.Middleware
         /// <returns>True if the server was contacted successfully</returns>
         public static bool Contact(string postfix)
         {
-            //ID the service as the new one
-            postfix += ((postfix.Contains(".php?") ? "&" : "?") + "newService=1&json=1");
-
-            Log.Entry(LogName, $"URL: {Configuration.ServerAddress}{postfix}");
-
             try
             {
                 GetRawResponse(postfix);
@@ -243,7 +216,7 @@ namespace Zazzles.Middleware
         /// <returns>True if successful</returns>
         public static bool DownloadExternalFile(string url, string filePath)
         {
-            Log.Entry(LogName, $"URL: {url}");
+            Log.Entry(LogName, $"Download: {url}");
 
             if (string.IsNullOrEmpty(url) || string.IsNullOrEmpty(filePath))
             {

@@ -21,6 +21,6 @@ namespace Zazzles.Modules.Updater
 {
     public class UpdateMessage
     {
-        public string Version { get; private set; }
+        public string Version;
     }
 }
