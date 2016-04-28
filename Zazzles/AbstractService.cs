@@ -20,8 +20,6 @@
 using System;
 using System.Linq;
 using System.Threading;
-using System.Web.UI.WebControls;
-using Newtonsoft.Json.Linq;
 using Zazzles.Middleware;
 using Zazzles.Modules;
 
@@ -30,11 +28,14 @@ namespace Zazzles
     public abstract class AbstractService
     {
         protected const int DefaultSleepTime = 60;
+        protected const int MinSleepTime = 30;
+
         private readonly IModule[] _modules;
         private readonly Thread _moduleThread;
 
         protected AbstractService()
         {
+            Log.Entry("entry", "Creating obj");
             _moduleThread = new Thread(ModuleLooper)
             {
                 Priority = ThreadPriority.Normal,
@@ -81,7 +82,6 @@ namespace Zazzles
             while (!Power.ShuttingDown && !Power.Updating)
             {
                 LoopData = GetLoopData() ?? new Response();
-                LoopData.PrettyPrint();
 
                 // Stop looping as soon as a shutdown or update pending
                 foreach (var module in _modules.TakeWhile(module => !Power.Requested && !Power.ShuttingDown && !Power.Updating))
@@ -89,13 +89,13 @@ namespace Zazzles
                     // Entry file formatting
                     Log.NewLine();
                     Log.PaddedHeader(module.GetName());
-                    Log.Entry("Client-Info", $"Version: {Settings.Get("Version")}");
-                    Log.Entry("Client-Info", $"OS:      {Settings.OS}");
+                    Log.Entry("Client-Info", $"Client Version: {Settings.Get("Version")}");
+                    Log.Entry("Client-Info", $"Client OS:      {Settings.OS}");
+                    Log.Entry("Client-Info", $"Server Version: {Settings.Get("server-version")}");
 
                     try
                     {
                         var subResponse = LoopData.GetSubResponse(module.GetName().ToLower());
-                        subResponse?.PrettyPrint();
                         module.Start(subResponse);
                     }
                     catch (Exception ex)

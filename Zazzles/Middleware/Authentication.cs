@@ -85,7 +85,20 @@ namespace Zazzles.Middleware
                 Passkey = aes.Key;
 
                 // Get the security token from the last handshake
-                var token = GetSecurityToken("token.dat");
+                var tokenPath = Path.Combine(Settings.Location, "token.dat");
+
+                try
+                {
+                    if (!File.Exists(tokenPath) && File.Exists("token.dat"))
+                    {
+                        File.Copy("token.dat", tokenPath);
+                    }
+                }
+                catch (Exception)
+                {
+                }
+
+                var token = GetSecurityToken(tokenPath);
                 // Encrypt the security token and AES key using the public key
                 var enKey = Transform.ByteArrayToHexString(RSA.Encrypt(certificate, Passkey));
                 var enToken = Transform.ByteArrayToHexString(RSA.Encrypt(certificate, token));
@@ -97,7 +110,7 @@ namespace Zazzles.Middleware
                 if (!response.Error && response.Encrypted)
                 {
                     Log.Entry(LogName, "Authenticated");
-                    SetSecurityToken("token.dat", Transform.HexStringToByteArray(response.GetField("token")));
+                    SetSecurityToken(tokenPath, Transform.HexStringToByteArray(response.GetField("token")));
                     return true;
                 }
 

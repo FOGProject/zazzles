@@ -47,10 +47,7 @@ namespace Zazzles.Modules
                 return;
             }
 
-            Log.Entry(Name, "Parsing data...");
             var msg = ConvertData(data);
-
-            Log.Entry(Name, "Running...");
             DoWork(data, msg);
         }
 

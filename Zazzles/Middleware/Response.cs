@@ -62,6 +62,11 @@ namespace Zazzles.Middleware
                 Data = JObject.Parse(rawData);
                 ReturnCode = GetField("error");
                 Error = !ReturnCode.ToLower().Equals(SuccessCode) && !string.IsNullOrEmpty(ReturnCode);
+
+                if (!Error)
+                    ReturnCode = SuccessCode;
+
+                PrintStatus();
             }
             catch (Exception ex)
             {
@@ -76,6 +81,10 @@ namespace Zazzles.Middleware
             Encrypted = encrypted;
             ReturnCode = GetField("error");
             Error = !ReturnCode.ToLower().Equals(SuccessCode) && !string.IsNullOrEmpty(ReturnCode);
+            if (!Error)
+                ReturnCode = SuccessCode;
+
+            PrintStatus();
         }
 
         public Response(bool error, JObject data, string returnCode, bool encrypted)
@@ -84,14 +93,21 @@ namespace Zazzles.Middleware
             Data = data;
             ReturnCode = returnCode;
             Encrypted = encrypted;
+            PrintStatus();
         }
 
         public Response()
         {
             Error = true;
             Data = new JObject();
-            ReturnCode = "";
+            ReturnCode = SuccessCode;
             Encrypted = false;
+            PrintStatus();
+        }
+
+        private void PrintStatus()
+        {
+            Log.Entry(LogName, Codes.ContainsKey(ReturnCode) ? Codes[ReturnCode] : ReturnCode);
         }
 
         public bool Error { get; set; }
