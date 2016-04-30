@@ -19,6 +19,7 @@
 
 using System;
 using System.IO;
+using System.Text;
 using Newtonsoft.Json.Linq;
 
 namespace Zazzles
@@ -49,14 +50,13 @@ namespace Zazzles
         }
 
         private const long DefaultMaxLogSize = 502400;
-        private const int HeaderLength = 78;
+        public const int HeaderLength = 78;
         private const string LogName = "Log";
         public static string FilePath { get; set; }
         public static long MaxSize { get; set; }
         public static Mode Output { get; set; }
         private static object locker = new object();
         
-
         static Log()
         {
             Output = Mode.File;
@@ -121,6 +121,46 @@ namespace Zazzles
 #endif
         }
 
+        public static void Action(string action)
+        {
+            var builder = new StringBuilder(action);
+
+            for (var i = action.Length; i < HeaderLength-6; i++)
+            {
+                builder.Append(".");
+            }
+
+            Write(builder.ToString());
+        }
+
+        public static void ActionResult(bool success)
+        {
+            if(success)
+                ActionPass();
+            else
+                ActionFail();
+        }
+
+        /// <summary>
+        /// Log a colored [Pass]
+        /// </summary>
+        public static void ActionPass()
+        {
+            Write("[");
+            Write("Pass", ConsoleColor.Green);
+            WriteLine("]");
+        }
+
+        /// <summary>
+        /// Log a colored [Fail]
+        /// </summary>
+        public static void ActionFail()
+        {
+            Write("[");
+            Write("Fail", ConsoleColor.Red);
+            WriteLine("]");
+        }
+
         /// <summary>
         ///     Write a new line to the log
         /// </summary>
@@ -148,18 +188,20 @@ namespace Zazzles
 
             var headerSize = (double) ((HeaderLength - text.Length))/2;
 
+            var builder = new StringBuilder();
+
             // Construct the first section
-            var output = "";
             for (var i = 0; i < (int) Math.Ceiling(headerSize); i++)
-                output += "-";
+                builder.Append("-");
 
             // Add the text
-            output += text;
+            builder.Append(text);
 
             // Construct the last section
             for (var i = 0; i < ((int) Math.Floor(headerSize)); i++)
-                output += "-";
-            WriteLine(output);
+                builder.Append("-");
+
+            WriteLine(builder.ToString());
         }
 
         /// <summary>
@@ -181,7 +223,8 @@ namespace Zazzles
         /// </summary>
         /// <param name="level">The logging level</param>
         /// <param name="text">The text to write</param>
-        public static void Write(Level level, string text)
+        /// <param name="color">The color of the text if in Console mode, White will use the default color</param>
+        public static void Write(Level level, string text, ConsoleColor color = ConsoleColor.White)
         {
             if (text == null)
                 throw new ArgumentNullException(nameof(text));
@@ -194,7 +237,10 @@ namespace Zazzles
                 case Mode.Quiet:
                     break;
                 case Mode.Console:
-                    Console.ForegroundColor = ConsoleColor.White;
+                    Console.ResetColor();
+
+                    if(color != ConsoleColor.White)
+                        Console.ForegroundColor = color;
 
                     if (level == Level.Error)
                         Console.BackgroundColor = ConsoleColor.Red;
@@ -202,7 +248,6 @@ namespace Zazzles
                         Console.BackgroundColor = ConsoleColor.Blue;
 
                     Console.Write(text);
-                    Console.BackgroundColor = ConsoleColor.Black;
             
                     break;
                 default:
@@ -249,21 +294,23 @@ namespace Zazzles
         ///     Write text to the log
         /// </summary>
         /// <param name="text">The text to write</param>
-        public static void Write(string text)
+        /// <param name="color">The color of the text if in Console mode</param>
+        public static void Write(string text, ConsoleColor color = ConsoleColor.White)
         {
-            Write(Level.Normal, text);
+            Write(Level.Normal, text, color);
         }
 
         /// <summary>
         ///     Write a line to the log
         /// </summary>
         /// <param name="line">The line to write</param>
-        public static void WriteLine(string line)
+        /// <param name="color">The color of the text if in Console mode</param>
+        public static void WriteLine(string line, ConsoleColor color = ConsoleColor.White)
         {
             if (line == null)
                 throw new ArgumentNullException(nameof(line));
 
-            Write(line + "\r\n");
+            Write(line + "\r\n", color);
         }
 
         /// <summary>
@@ -271,12 +318,13 @@ namespace Zazzles
         /// </summary>
         /// <param name="line">The line to write</param>
         /// <param name="level">The logging level</param>
-        public static void WriteLine(Level level, string line)
+        /// <param name="color">The color of the text if in Console mode</param>
+        public static void WriteLine(Level level, string line, ConsoleColor color = ConsoleColor.White)
         {
             if (line == null)
                 throw new ArgumentNullException(nameof(line));
 
-            Write(level, line + "\r\n");
+            Write(level, line + "\r\n", color);
         }
 
         public static void UnhandledException(object sender, UnhandledExceptionEventArgs ex)

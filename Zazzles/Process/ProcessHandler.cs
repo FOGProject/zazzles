@@ -34,11 +34,12 @@ namespace Zazzles
         /// <param name="file">The name of the EXE to run</param>
         /// <param name="param">Parameters to run the EXE with</param>
         /// <param name="wait">Wait for the process to exit</param>
+        /// <param name="log">Log errors</param>
         /// <returns>The exit code of the process. Will be -1 if wait is false.</returns>
-        public static int RunClientEXE(string file, string param, bool wait = true)
+        public static int RunClientEXE(string file, string param, bool wait = true, bool log = true)
         {
             string[] stdout;
-            return RunClientEXE(file, param, wait, out stdout);
+            return RunClientEXE(file, param, wait, out stdout, log);
         }
 
         /// <summary>
@@ -48,13 +49,14 @@ namespace Zazzles
         /// <param name="param">Parameters to run the EXE with</param>
         /// <param name="stdout">An array to place stdout, split by lines</param>
         /// <param name="wait">Wait for the process to exit</param>
+        /// <param name="log">Log errors</param>
         /// <returns>The exit code of the process. Will be -1 if wait is false.</returns>
-        public static int RunClientEXE(string file, string param, bool wait, out string[] stdout)
+        public static int RunClientEXE(string file, string param, bool wait, out string[] stdout, bool log = true)
         {
             if (string.IsNullOrEmpty(file))
                 throw new ArgumentException("File name must be provided!", nameof(file));
 
-            return RunEXE(Path.Combine(Settings.Location, file), param, wait, out stdout);
+            return RunEXE(Path.Combine(Settings.Location, file), param, wait, out stdout, log);
         }
 
         /// <summary>
@@ -63,11 +65,12 @@ namespace Zazzles
         /// <param name="filePath">The path of the EXE to run</param>
         /// <param name="param">Parameters to run the EXE with</param>
         /// <param name="wait">Wait for the process to exit</param>
+        /// <param name="log">Log errors</param>
         /// <returns>The exit code of the process. Will be -1 if wait is false.</returns>
-        public static int RunEXE(string filePath, string param, bool wait = true)
+        public static int RunEXE(string filePath, string param, bool wait = true, bool log = true)
         {
             string[] stdout;
-            return RunEXE(filePath, param, wait, out stdout);
+            return RunEXE(filePath, param, wait, out stdout, log);
         }
 
         /// <summary>
@@ -77,12 +80,13 @@ namespace Zazzles
         /// <param name="param">Parameters to run the EXE with</param>
         /// <param name="stdout">An array to place stdout, split by lines</param>
         /// <param name="wait">Wait for the process to exit</param>
+        /// <param name="log">Log errors</param>
         /// <returns>The exit code of the process. Will be -1 if wait is false.</returns>
-        public static int RunEXE(string filePath, string param, bool wait, out string[] stdout)
+        public static int RunEXE(string filePath, string param, bool wait, out string[] stdout, bool log = true)
         {
             // If the current OS is Windows, simply run the process
             if (Settings.OS == Settings.OSType.Windows)
-                return Run(filePath, param, wait, out stdout);
+                return Run(filePath, param, wait, out stdout, log);
 
             if (string.IsNullOrEmpty(filePath))
                 throw new ArgumentException("File path must be provided!", nameof(filePath));
@@ -152,11 +156,12 @@ namespace Zazzles
         /// <param name="filePath">The path of the executable to run</param>
         /// <param name="param">Parameters to run the process with</param>
         /// <param name="wait">Wait for the process to exit</param>
+        /// <param name="log">Log errors</param>
         /// <returns>The exit code of the process. Will be -1 if wait is false.</returns>
-        public static int Run(string filePath, string param, bool wait = true)
+        public static int Run(string filePath, string param, bool wait = true, bool log = true)
         {
             string[] stdout;
-            return Run(filePath, param, wait, out stdout);
+            return Run(filePath, param, wait, out stdout, log);
         }
 
         /// <summary>
@@ -166,8 +171,9 @@ namespace Zazzles
         /// <param name="param">Parameters to run the process with</param>
         /// <param name="stdout">An array to place stdout, split by lines</param>
         /// <param name="wait">Wait for the process to exit</param>
+        /// <param name="log">Log errors</param>
         /// <returns>The exit code of the process. Will be -1 if wait is false.</returns>
-        public static int Run(string filePath, string param, bool wait, out string[] stdout)
+        public static int Run(string filePath, string param, bool wait, out string[] stdout, bool log = true)
         {
             if (string.IsNullOrEmpty(filePath))
                 throw new ArgumentException("File path must be provided!", nameof(filePath));
@@ -185,7 +191,8 @@ namespace Zazzles
                 UseShellExecute = false,
                 FileName = filePath,
                 Arguments = param,
-                RedirectStandardOutput = true
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
             };
 
             try
@@ -209,6 +216,8 @@ namespace Zazzles
             }
             catch (Exception ex)
             {
+                if (!log) return -1;
+
                 Log.Error(LogName, "Unable to run process");
                 Log.Error(LogName, ex);
             }
