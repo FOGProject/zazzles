@@ -30,7 +30,7 @@ namespace Zazzles.UserComponents
 
         public List<string> GetUsersLoggedIn()
         {
-            var usersInfo = new HashSet<string>();
+            var usersInfo = new List<string>();
 
             using (var process = new Process
             {
@@ -48,11 +48,19 @@ namespace Zazzles.UserComponents
                 while (!process.StandardOutput.EndOfStream)
                 {
                     var user = process.StandardOutput.ReadLine();
-                    if (!usersInfo.Contains(user) && !string.IsNullOrWhiteSpace(user)) usersInfo.Add(user);
+                    if (!string.IsNullOrWhiteSpace(user)) usersInfo.Add(user);
                 }
             }
 
-            return usersInfo.Distinct().ToList();
+            usersInfo = usersInfo.Distinct().ToList();
+
+            for (var i = 0; i < usersInfo.Count; i++)
+            {
+                var splitUser = usersInfo[i].Split(null);
+                usersInfo[i] = splitUser[0];
+            }
+
+            return usersInfo;
         }
 
         public int GetInactivityTime()
