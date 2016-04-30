@@ -52,13 +52,12 @@ namespace Zazzles.UserComponents
                 }
             }
 
-            usersInfo = usersInfo.Distinct().ToList();
-
             for (var i = 0; i < usersInfo.Count; i++)
             {
                 var splitUser = usersInfo[i].Split(null);
                 usersInfo[i] = splitUser[0];
             }
+            usersInfo = usersInfo.Distinct().ToList();
 
             return usersInfo;
         }
