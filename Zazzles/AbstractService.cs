@@ -100,6 +100,7 @@ namespace Zazzles
                     }
                     catch (Exception ex)
                     {
+                        Log.Error(Name, "Unable to run module");
                         Log.Error(Name, ex);
                     }
 

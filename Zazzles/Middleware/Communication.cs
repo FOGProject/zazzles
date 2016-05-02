@@ -41,7 +41,6 @@ namespace Zazzles.Middleware
             {
                 var rawResponse = GetRawResponse(postfix);
                 var encrypted = rawResponse.StartsWith("#!en");
-
                 if (encrypted)
                     rawResponse = Authentication.Decrypt(rawResponse);
 
@@ -150,7 +149,6 @@ namespace Zazzles.Middleware
 
                 if (encrypted)
                     rawResponse = Authentication.Decrypt(rawResponse);
-
                 return new Response(rawResponse, encrypted);
             }
             catch (Exception ex)

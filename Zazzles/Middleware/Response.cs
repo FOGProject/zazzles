@@ -143,8 +143,11 @@ namespace Zazzles.Middleware
                 var entry = jEntry.ToObject<JObject>();
                 return new Response(entry, Encrypted);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Log.Error(LogName, "Unable to get subsection");
+                Log.Error(LogName, ex);
+
                 return null;
             }
 
