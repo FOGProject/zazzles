@@ -109,7 +109,7 @@ namespace Zazzles
                     Log.NewLine();
                 }
 
-                while (Power.Requested)
+                while (Power.Requested && !Power.ShuttingDown)
                 {
                     Log.Entry(Name, "Power operation being requested, checking back in 30 seconds");
                     Thread.Sleep(30 * 1000);
