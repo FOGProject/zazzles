@@ -35,8 +35,8 @@ namespace Zazzles
 
         protected AbstractService()
         {
-            Log.Entry("entry", "Creating obj");
-            _moduleThread = new Thread(ModuleLooper)
+            Log.Entry("Entry", "Creating obj");
+            _moduleThread = new Thread(BootStrapModules)
             {
                 Priority = ThreadPriority.Normal,
                 IsBackground = false
@@ -67,8 +67,13 @@ namespace Zazzles
                 Log.Error(Name, "ServerAddress not found! Exiting.");
                 return;
             }
-            Load();
             _moduleThread.Start();
+        }
+
+        private void BootStrapModules()
+        {
+            Load();
+            ModuleLooper();
         }
 
         /// <summary>
