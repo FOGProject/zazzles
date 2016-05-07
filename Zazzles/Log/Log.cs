@@ -59,9 +59,11 @@ namespace Zazzles
         
         static Log()
         {
+            // Suppress settings errors on initialization
+            Output = Mode.Quiet;
+            FilePath = Path.Combine(Settings.Location, "zazzles.log");
             Output = Mode.File;
 
-            FilePath = Path.Combine(Settings.Location, "zazzles.log");
             MaxSize = DefaultMaxLogSize;
         }
 

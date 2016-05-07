@@ -38,22 +38,15 @@ namespace Zazzles
         private const string LogName = "Settings";
         private static string _file;
         private static JObject _data = new JObject();
+        public static OSType OS { get; }
+        public static string Location { get; }
 
         static Settings()
         {
             Location = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             Log.Debug(LogName, "Location --> " + Location);
             _file = Path.Combine(Location, "settings.json");
-            try
-            {
-                _data = JObject.Parse(File.ReadAllText(_file));
-            }
-            catch (Exception ex)
-            {
-                _data = new JObject();
-                Log.Error(LogName, "Unable to load settings");
-                Log.Error(LogName, ex);
-            }
+            Reload();
 
             var pid = Environment.OSVersion.Platform;
 
@@ -84,9 +77,6 @@ namespace Zazzles
                     break;
             }
         }
-
-        public static OSType OS { get; }
-        public static string Location { get; }
 
         /// <summary>
         ///     Check if the current OS is compatible with the given type
@@ -125,7 +115,15 @@ namespace Zazzles
         /// </summary>
         public static void Reload()
         {
-            _data = JObject.Parse(File.ReadAllText(_file));
+            try
+            {
+                _data = JObject.Parse(File.ReadAllText(_file));
+            }
+            catch (Exception ex)
+            {
+                Log.Error(LogName, "Could not load settings");
+                Log.Error(LogName, ex);
+            }
         }
 
         /// <summary>

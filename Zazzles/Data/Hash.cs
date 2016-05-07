@@ -183,7 +183,11 @@ namespace Zazzles.Data
 
             try
             {
-                return !File.Exists(filePath) ? null : HashBytes(alg, File.ReadAllBytes(filePath));
+                using (var stream = new BufferedStream(File.OpenRead(filePath), 1200000))
+                {
+                    var checksum = alg.ComputeHash(stream);
+                    return BitConverter.ToString(checksum).Replace("-", "");
+                }
             }
             catch (Exception ex)
             {
