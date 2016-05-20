@@ -27,8 +27,8 @@ namespace Zazzles
 {
     public abstract class AbstractService
     {
-        protected const int DefaultSleepTime = 60;
-        protected const int MinSleepTime = 30;
+        protected const int DEFAULT_SLEEP_TIME = 60;
+        protected const int MIN_SLEEP_TIME = 30;
 
         private readonly IModule[] _modules;
         private readonly Thread _moduleThread;
@@ -124,7 +124,7 @@ namespace Zazzles
                 if (Power.ShuttingDown || Power.Updating) break;
 
                 // Once all modules have been run, sleep for the set time
-                var sleepTime = GetSleepTime() ?? DefaultSleepTime;
+                var sleepTime = GetSleepTime() ?? DEFAULT_SLEEP_TIME;
                 Log.Entry(Name, $"Sleeping for {sleepTime} seconds");
                 Thread.Sleep(sleepTime * 1000);
             }

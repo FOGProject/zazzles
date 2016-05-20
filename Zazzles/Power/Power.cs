@@ -193,8 +193,8 @@ namespace Zazzles
             try
             {
                 if (gracePeriod == -1)
-                    gracePeriod = (!string.IsNullOrEmpty(Settings.Get("gracePeriod")))
-                        ? int.Parse(Settings.Get("gracePeriod"))
+                    gracePeriod = (!string.IsNullOrEmpty(Settings.Get("PromptTime")))
+                        ? int.Parse(Settings.Get("PromptTime"))
                         : DefaultGracePeriod;
             }
             catch (Exception)
