@@ -1,6 +1,6 @@
 ﻿/*
  * Zazzles : A cross platform service framework
- * Copyright (C) 2014-2015 FOG Project
+ * Copyright (C) 2014-2016 FOG Project
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -71,8 +71,6 @@ namespace Zazzles
 
         private static readonly Dictionary<Channel, LinkedList<Action<JObject>>> Registrar =
             new Dictionary<Channel, LinkedList<Action<JObject>>>();
-        public static readonly HashSet<string> MessageQueue = new HashSet<string>(); 
-        private static object _queueLock = new object();
 
         private static bool _initialized;
         private static BusServer _server;
@@ -244,12 +242,6 @@ namespace Zazzles
         {
             if (clientSession == null)
                 throw new ArgumentNullException(nameof(clientSession));
-
-            lock (_queueLock)
-            {
-                foreach(var msg in MessageQueue)
-                    clientSession.Send(msg);
-            }
         }
         
         /// <summary>
