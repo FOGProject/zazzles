@@ -160,6 +160,7 @@
     <Compile Include="Debugger\Commands\Middleware\CommunicationCommand.cs" />
     <Compile Include="Debugger\Commands\Middleware\ConfigurationCommand.cs" />
     <Compile Include="Debugger\Commands\Middleware\MiddlewareCommand.cs" />
+    <Compile Include="Debugger\Commands\Notification\NotificationCommand.cs" />
     <Compile Include="Debugger\Commands\Process\ProcessCommand.cs" />
     <Compile Include="Debugger\Commands\Settings\SettingsCommand.cs" />
     <Compile Include="Debugger\Commands\User\UserCommand.cs" />

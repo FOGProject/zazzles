@@ -22,6 +22,7 @@ using System.Linq;
 using Zazzles.Debugger.Commands;
 using Zazzles.Debugger.Commands.CBus;
 using Zazzles.Debugger.Commands.Middleware;
+using Zazzles.Debugger.Commands.Notification;
 using Zazzles.Debugger.Commands.Process;
 using Zazzles.Debugger.Commands.Settings;
 using Zazzles.Debugger.Commands.User;
@@ -35,6 +36,7 @@ namespace Zazzles.Debugger
         {
             {"bus", new BusCommand()},
             {"middleware", new MiddlewareCommand()},
+            {"notfiication", new NotificationCommand()},
             {"process", new ProcessCommand()},
             {"settings", new SettingsCommand()},
             {"user", new UserCommand()}
