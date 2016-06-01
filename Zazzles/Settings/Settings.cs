@@ -44,7 +44,6 @@ namespace Zazzles
         static Settings()
         {
             Location = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            Log.Debug(LogName, "Location --> " + Location);
             _file = Path.Combine(Location, "settings.json");
             Reload();
 
