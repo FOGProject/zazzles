@@ -48,7 +48,7 @@ namespace Zazzles.UserComponents
                 while (!process.StandardOutput.EndOfStream)
                 {
                     var user = process.StandardOutput.ReadLine();
-                    if (!string.IsNullOrWhiteSpace(user)) usersInfo.Add(user);
+                    if (string.IsNullOrWhiteSpace(user)) usersInfo.Add(user);
                 }
             }
 
@@ -58,6 +58,7 @@ namespace Zazzles.UserComponents
                 usersInfo[i] = splitUser[0];
             }
             usersInfo = usersInfo.Distinct().ToList();
+            usersInfo.Remove("wtmp");
 
             return usersInfo;
         }
