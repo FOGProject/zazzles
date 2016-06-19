@@ -61,7 +61,7 @@ namespace Zazzles.Middleware
             {
                 Data = JObject.Parse(rawData);
                 ReturnCode = GetField("error");
-                Error = !ReturnCode.ToLower().Equals(SuccessCode) && !string.IsNullOrEmpty(ReturnCode);
+                Error = !ReturnCode.Equals(SuccessCode, StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(ReturnCode);
 
                 if (!Error)
                     ReturnCode = SuccessCode;
@@ -80,7 +80,7 @@ namespace Zazzles.Middleware
             Data = data;
             Encrypted = encrypted;
             ReturnCode = GetField("error");
-            Error = !ReturnCode.ToLower().Equals(SuccessCode) && !string.IsNullOrEmpty(ReturnCode);
+            Error = !ReturnCode.Equals(SuccessCode, StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(ReturnCode);
             if (!Error)
                 ReturnCode = SuccessCode;
 

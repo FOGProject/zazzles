@@ -87,7 +87,6 @@ namespace Zazzles
             while (!Power.ShuttingDown && !Power.Updating)
             {
                 LoopData = GetLoopData() ?? new Response();
-
                 // Stop looping as soon as a shutdown or update pending
                 foreach (var module in _modules.TakeWhile(module => !Power.Requested && !Power.ShuttingDown && !Power.Updating))
                 {
@@ -101,6 +100,9 @@ namespace Zazzles
                     try
                     {
                         var subResponse = LoopData.GetSubResponse(module.GetName().ToLower());
+                        if (subResponse == null)
+                            continue;
+
                         module.Start(subResponse);
                     }
                     catch (Exception ex)

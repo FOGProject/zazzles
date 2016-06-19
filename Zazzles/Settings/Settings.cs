@@ -68,7 +68,6 @@ namespace Zazzles
                         }
                     }
 
-
                     OS = OSType.Linux;
                     break;
                 default:
