@@ -160,6 +160,7 @@ namespace Zazzles
             if (parameters == null)
                 throw new ArgumentNullException(nameof(parameters));
 
+            ShuttingDown = true;
             shouldAbortFunc = null;
             requestData = new JObject();
 
