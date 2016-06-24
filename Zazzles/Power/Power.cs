@@ -167,6 +167,12 @@ namespace Zazzles
             Log.Entry(LogName, "Parameters: " + parameters);
 
             _instance.CreateTask(parameters);
+
+            dynamic json = new JObject();
+            json.action = "shuttingdown";
+            Bus.Emit(Bus.Channel.Power, json, true);
+
+            Requested = false;
             ShuttingDown = true;
         }
 
@@ -257,13 +263,6 @@ namespace Zazzles
                 if (ShouldAbort()) return;
 
                 CreateTask(requestData.command.ToString());
-
-                dynamic json = new JObject();
-                json.action = "shuttingdown";
-                Bus.Emit(Bus.Channel.Power, json, true);
-
-                Requested = false;
-                ShuttingDown = true;
             }
             catch (Exception ex)
             {
