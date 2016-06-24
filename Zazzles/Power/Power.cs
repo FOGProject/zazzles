@@ -160,7 +160,6 @@ namespace Zazzles
             if (parameters == null)
                 throw new ArgumentNullException(nameof(parameters));
 
-            ShuttingDown = true;
             shouldAbortFunc = null;
             requestData = new JObject();
 
@@ -168,6 +167,7 @@ namespace Zazzles
             Log.Entry(LogName, "Parameters: " + parameters);
 
             _instance.CreateTask(parameters);
+            ShuttingDown = true;
         }
 
         public static void QueueShutdown(string parameters, ShutdownOptions options = ShutdownOptions.Abort, string message = null,
