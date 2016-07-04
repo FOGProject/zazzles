@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+using System;
 using Zazzles.Middleware;
 
 namespace Zazzles.Modules
@@ -47,7 +48,17 @@ namespace Zazzles.Modules
                 return;
             }
 
-            var msg = ConvertData(data);
+            T msg;
+            try
+            {
+                msg = ConvertData(data);
+            }
+            catch (Exception ex)
+            {
+                Log.Error(Name, $"Data conversion using the DataContract {typeof (T)} failed");
+                Log.Error(Name, ex);
+                return;
+            }
             DoWork(data, msg);
         }
 

@@ -68,6 +68,11 @@ namespace Zazzles
         public static bool Requested { get; private set; }
         public static bool Updating { get; set; }
 
+        public static bool IsActionPending()
+        {
+            return ShuttingDown || Updating || Requested;
+        }
+
         private static void ParseBus(dynamic data)
         {
             if (data.action == null)

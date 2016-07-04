@@ -30,27 +30,26 @@ namespace Zazzles
         protected const int DEFAULT_SLEEP_TIME = 60;
         protected const int MIN_SLEEP_TIME = 30;
 
-        private readonly IModule[] _modules;
         private readonly Thread _moduleThread;
 
         protected AbstractService()
         {
-            Log.Entry("Entry", "Creating obj");
+            Name = "Service";
+
+            Log.Entry("Zazzles", "Creating main thread");
             _moduleThread = new Thread(BootStrapModules)
             {
                 Priority = ThreadPriority.Normal,
                 IsBackground = false
             };
 
-            _modules = GetModules();
-            Name = "Service";
+            Log.Entry("Zazzles", "Service construction complete");
         }
 
-        // Basic variables every service needs
         public string Name { get; protected set; }
         protected Response LoopData;
-        protected abstract IModule[] GetModules();
         protected abstract Response GetLoopData();
+        protected abstract IModule[] GetModules();
         protected abstract void Load();
         protected abstract void Unload();
 
@@ -84,11 +83,13 @@ namespace Zazzles
             Log.NewLine();
 
             // Only run the service if there isn't a shutdown or update pending
+            // However, keep looping if a power operation is only Requested as
+            // the request may be aborted
             while (!Power.ShuttingDown && !Power.Updating)
             {
                 LoopData = GetLoopData() ?? new Response();
                 // Stop looping as soon as a shutdown or update pending
-                foreach (var module in _modules.TakeWhile(module => !Power.Requested && !Power.ShuttingDown && !Power.Updating))
+                foreach (var module in GetModules().TakeWhile(module => !Power.IsActionPending()))
                 {
                     // Entry file formatting
                     Log.NewLine();
