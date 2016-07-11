@@ -96,7 +96,7 @@ namespace Zazzles
                     Log.PaddedHeader(module.GetName());
                     Log.Entry("Client-Info", $"Client Version: {Settings.Get("Version")}");
                     Log.Entry("Client-Info", $"Client OS:      {Settings.OS}");
-                    Log.Entry("Client-Info", $"Server Version: {Settings.Get("server-version")}");
+                    Log.Entry("Client-Info", $"Server Version: {Settings.Get("ServerVersion")}");
 
                     try
                     {
