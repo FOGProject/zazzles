@@ -69,11 +69,8 @@ namespace Zazzles.Modules.Updater
 
         public static bool Updating()
         {
-            var fileFound = false;
-            foreach (var fileName in Directory.GetFiles(AppDomain.CurrentDomain.BaseDirectory)
-                .Where(fileName => fileName.EndsWith("updating.info")))
-                fileFound = true;
-
+            var updateFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "updating.info");
+            var fileFound = File.Exists(updateFile);
             Thread.Sleep(10 * 1000);
 
             return fileFound;

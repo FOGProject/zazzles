@@ -238,11 +238,7 @@ namespace Zazzles
         {
             if (shouldAbortFunc == null || !shouldAbortFunc()) return false;
             Log.Entry(LogName, "Shutdown aborted by calling module");
-
-            dynamic abortJson = new JObject();
-            abortJson.action = "abort";
-            shouldAbortFunc = null;
-            Bus.Emit(Bus.Channel.Power, abortJson, true);
+            AbortShutdown();
             return true;
         }
 
@@ -340,6 +336,11 @@ namespace Zazzles
             _timer.Stop();
             _timer.Close();
             _timer = null;
+
+            dynamic abortJson = new JObject();
+            abortJson.action = "abort";
+            shouldAbortFunc = null;
+            Bus.Emit(Bus.Channel.Power, abortJson, true);
 
             Notification.Emit(
              "Shutdown Aborted",
