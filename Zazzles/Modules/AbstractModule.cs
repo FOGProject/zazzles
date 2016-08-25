@@ -27,15 +27,16 @@ namespace Zazzles.Modules
     /// </summary>
     public abstract class AbstractModule<T> : IModule
     {
+        public string Name { get; protected set; }
+        public Settings.OSType Compatiblity { get; protected set; }
+        public bool ShutdownFriendly { get; protected set; } 
+
         protected AbstractModule()
         {
             Name = "Generic Module";
             Compatiblity = Settings.OSType.All;
+            ShutdownFriendly = true;
         }
-
-        //Basic variables every module needs
-        public string Name { get; protected set; }
-        public Settings.OSType Compatiblity { get; protected set; }
 
         /// <summary>
         ///     Called to Start the module. Filters out modules that are not compatible
@@ -45,6 +46,12 @@ namespace Zazzles.Modules
             if (!Settings.IsCompatible(Compatiblity))
             {
                 Log.Entry(Name, "Module is not compatible with " + Settings.OS);
+                return;
+            }
+
+            if (!ShutdownFriendly && Power.Requested)
+            {
+                Log.Entry(Name, "A power operation is pending, aborting module");
                 return;
             }
 

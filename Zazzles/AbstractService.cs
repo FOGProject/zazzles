@@ -89,7 +89,7 @@ namespace Zazzles
             {
                 LoopData = GetLoopData() ?? new Response();
                 // Stop looping as soon as a shutdown or update pending
-                foreach (var module in GetModules().TakeWhile(module => !Power.IsActionPending()))
+                foreach (var module in GetModules().TakeWhile(module => !Power.ShuttingDown && !Power.Updating))
                 {
                     // Entry file formatting
                     Log.NewLine();
@@ -115,12 +115,6 @@ namespace Zazzles
                     // Entry file formatting
                     Log.Divider();
                     Log.NewLine();
-                }
-
-                while (Power.Requested && !Power.ShuttingDown)
-                {
-                    Log.Entry(Name, "Power operation being requested, checking back in 30 seconds");
-                    Thread.Sleep(30 * 1000);
                 }
 
                 // Skip checking for sleep time if there is a shutdown or update pending
