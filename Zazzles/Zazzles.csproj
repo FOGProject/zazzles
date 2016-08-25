@@ -154,6 +154,7 @@
     <Compile Include="Bus\BusClient.cs" />
     <Compile Include="Bus\BusServer.cs" />
     <Compile Include="Data\Hash.cs" />
+    <Compile Include="Data\Time.cs" />
     <Compile Include="Debugger\Commands\CBus\BusCommand.cs" />
     <Compile Include="Debugger\Commands\ICommand.cs" />
     <Compile Include="Debugger\Commands\Middleware\AuthenticationCommand.cs" />

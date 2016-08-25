@@ -20,6 +20,7 @@
 using System;
 using System.Timers;
 using Newtonsoft.Json.Linq;
+using Zazzles.Data;
 using Zazzles.PowerComponents;
 
 namespace Zazzles
@@ -38,35 +39,38 @@ namespace Zazzles
         }
 
         private const string LogName = "Power";
-        private const int DefaultGracePeriod = 60;
+        private const int DefaultGracePeriod = 10;
+        public const int MaxDelayTime = 8*60;
+        private static int AggregatedDelayTime = 0;
+
         // Variables needed for aborting a shutdown
         private static Timer _timer;
-        private static bool delayed;
-        private static dynamic requestData = new JObject();
-        private static Func<bool> shouldAbortFunc;
-        private static readonly IPower _instance;
+        private static bool _delayed;
+        private static dynamic _requestData = new JObject();
+        private static Func<bool> _shouldAbortFunc;
+        private static readonly IPower Instance;
+
+        public static bool ShuttingDown { get; private set; }
+        public static bool Requested { get; private set; }
+        public static bool Updating { get; set; }
 
         static Power()
         {
             switch (Settings.OS)
             {
                 case Settings.OSType.Mac:
-                    _instance = new MacPower();
+                    Instance = new MacPower();
                     break;
                 case Settings.OSType.Linux:
-                    _instance = new LinuxPower();
+                    Instance = new LinuxPower();
                     break;
                 default:
-                    _instance = new WindowsPower();
+                    Instance = new WindowsPower();
                     break;
             }
 
             Bus.Subscribe(Bus.Channel.Power, ParseBus);
         }
-
-        public static bool ShuttingDown { get; private set; }
-        public static bool Requested { get; private set; }
-        public static bool Updating { get; set; }
 
         public static bool IsActionPending()
         {
@@ -83,49 +87,61 @@ namespace Zazzles
 
             if (action.Equals("abort"))
                 AbortShutdown();
-            else if (action.Equals("shuttingdown"))
+            else if (action.Equals("shuttingdown") && Bus.GetCurrentMode() == Bus.Mode.Client)
                 ShuttingDown = true;
             else if (action.Equals("help"))
                 HelpShutdown(data);
             else if (action.Equals("delay"))
                 DelayShutdown(data);
+            else if (action.Equals("now"))
+                ExecutePendingShutdown();
             else if (action.Equals("request"))
                 Requested = true;
         }
 
+        private static void ExecutePendingShutdown()
+        {
+            if (_timer == null)
+                return;
+
+            _timer.Stop();
+            TimerElapsed(null, null);
+        }
+
         private static void DelayShutdown(dynamic data)
         {
+            if (data.delay == null)
+                return;
+            int delayTime = data.delay;
+            var friendlyDelayTime = Time.FormatMinutes(delayTime);
+
+            var suggestedDelayAggregate = AggregatedDelayTime + delayTime;
+            if (suggestedDelayAggregate > MaxDelayTime)
+            {
+                Log.Error(LogName, $"Requested delay of {friendlyDelayTime} exceeds the maximum total delay of {Time.FormatMinutes(MaxDelayTime)}");
+                return;
+            }
+
+            AggregatedDelayTime = suggestedDelayAggregate;
+
+
             if (_timer != null)
             {
                 _timer.Stop();
                 _timer.Dispose();
             }
 
-            if (data.delay == null)
-                return;
-
-            //DelayTime is in minutes
-            int delayTime;
-
-            try
-            {
-                delayTime = (int) data.delay;
-            }
-            catch (Exception)
-            {
-                return;
-            }
-
             if (delayTime < 1)
                 return;
 
-            Log.Entry(LogName, "Delayed power action by " + delayTime + " minutes");
+
+            Log.Entry(LogName, $"Delayed power action by {friendlyDelayTime}");
 
             Notification.Emit(
                "Shutdown Delayed",
-               "Shutdown has been delayed for " + delayTime + " minutes");
+               $"Shutdown has been delayed for {friendlyDelayTime}");
 
-            delayed = true;
+            _delayed = true;
             _timer = new Timer(delayTime*1000*60);
             _timer.Elapsed += TimerElapsed;
             _timer.Start();
@@ -133,7 +149,7 @@ namespace Zazzles
             if (Settings.OS == Settings.OSType.Windows)
                 return;
 
-            ProcessHandler.Run("wall", $"-n <<< \"Shutdown has been delayed by {delayTime} minutes\"", true);
+            ProcessHandler.Run("wall", $"-n <<< \"Shutdown has been delayed by {friendlyDelayTime} \"", true);
         }
 
         /// <summary>
@@ -165,13 +181,13 @@ namespace Zazzles
             if (parameters == null)
                 throw new ArgumentNullException(nameof(parameters));
 
-            shouldAbortFunc = null;
-            requestData = new JObject();
+            _shouldAbortFunc = null;
+            _requestData = new JObject();
 
             Log.Entry(LogName, "Creating shutdown request");
             Log.Entry(LogName, "Parameters: " + parameters);
 
-            _instance.CreateTask(parameters);
+            Instance.CreateTask(parameters);
 
             dynamic json = new JObject();
             json.action = "shuttingdown";
@@ -199,7 +215,8 @@ namespace Zazzles
             }
 
             Requested = true;
-            delayed = false;
+            _delayed = false;
+            AggregatedDelayTime = 0;
 
             // Load the grace period from Settings or use the default one
             try
@@ -207,24 +224,25 @@ namespace Zazzles
                 if (gracePeriod == -1)
                     gracePeriod = (!string.IsNullOrEmpty(Settings.Get("PromptTime")))
                         ? int.Parse(Settings.Get("PromptTime"))
-                        : DefaultGracePeriod;
+                        : DefaultGracePeriod*60;
             }
             catch (Exception)
             {
-                gracePeriod = DefaultGracePeriod;
+                gracePeriod = DefaultGracePeriod*60;
             }
 
             // Generate the request data
             Log.Entry(LogName, $"Creating shutdown command in {gracePeriod} seconds");
 
-            requestData = new JObject();
-            requestData.action = "request";
-            requestData.period = gracePeriod;
-            requestData.options = options;
-            requestData.command = parameters;
-            requestData.message = message ?? "This computer needs to perform maintenance.";
+            _requestData = new JObject();
+            _requestData.action = "request";
+            _requestData.period = gracePeriod;
+            _requestData.options = options;
+            _requestData.command = parameters;
+            _requestData.aggregatedDelayTime = AggregatedDelayTime;
+            _requestData.message = message ?? "This computer needs to perform maintenance.";
 
-            Bus.Emit(Bus.Channel.Power, requestData, true);
+            Bus.Emit(Bus.Channel.Power, _requestData, true);
             _timer = new Timer(gracePeriod*1000);
             _timer.Elapsed += TimerElapsed;
             _timer.Start();
@@ -236,7 +254,7 @@ namespace Zazzles
 
         private static bool ShouldAbort()
         {
-            if (shouldAbortFunc == null || !shouldAbortFunc()) return false;
+            if (_shouldAbortFunc == null || !_shouldAbortFunc()) return false;
             Log.Entry(LogName, "Shutdown aborted by calling module");
             AbortShutdown();
             return true;
@@ -246,24 +264,24 @@ namespace Zazzles
         {
             try
             {
-                if (delayed)
+                if (_delayed)
                 {
                     _timer.Dispose();
 
                     string message = null;
 
-                    if (requestData.message != null)
-                        message = requestData.message.ToString();
+                    if (_requestData.message != null)
+                        message = _requestData.message.ToString();
 
                     if (ShouldAbort()) return;
 
-                    QueueShutdown(requestData.command.ToString(), ShutdownOptions.None, message, (int) requestData.period);
+                    QueueShutdown(_requestData.command.ToString(), ShutdownOptions.None, message, (int) _requestData.period);
                     return;
                 }
 
                 if (ShouldAbort()) return;
 
-                CreateTask(requestData.command.ToString());
+                CreateTask(_requestData.command.ToString());
             }
             catch (Exception ex)
             {
@@ -275,26 +293,26 @@ namespace Zazzles
         public static void Shutdown(string comment, ShutdownOptions options = ShutdownOptions.Abort, string message = null,
             int seconds = 0)
         {
-            _instance.Shutdown(comment, options, message, seconds);
+            Instance.Shutdown(comment, options, message, seconds);
         }
 
         public static void Restart(string comment, ShutdownOptions options = ShutdownOptions.Abort, string message = null,
             int seconds = 0)
         {
-            _instance.Restart(comment, options, message, seconds);
+            Instance.Restart(comment, options, message, seconds);
         }
 
         public static void Shutdown(string comment, Func<bool> abortCheckFunc, ShutdownOptions options = ShutdownOptions.Abort,
             string message = null, int seconds = 0)
         {
-            shouldAbortFunc = abortCheckFunc;
+            _shouldAbortFunc = abortCheckFunc;
             Shutdown(comment, options, message, seconds);
         }
 
         public static void Restart(string comment, Func<bool> abortCheckFunc, ShutdownOptions options = ShutdownOptions.Abort,
             string message = null, int seconds = 0)
         {
-            shouldAbortFunc = abortCheckFunc;
+            _shouldAbortFunc = abortCheckFunc;
             Restart(comment, options, message, seconds);
         }
 
@@ -303,7 +321,7 @@ namespace Zazzles
         /// </summary>
         public static void LogOffUser()
         {
-            _instance.LogOffUser();
+            Instance.LogOffUser();
         }
 
         /// <summary>
@@ -311,7 +329,7 @@ namespace Zazzles
         /// </summary>
         public static void Hibernate()
         {
-            _instance.Hibernate();
+            Instance.Hibernate();
         }
 
         /// <summary>
@@ -319,7 +337,7 @@ namespace Zazzles
         /// </summary>
         public static void LockWorkStation()
         {
-            _instance.LockWorkStation();
+            Instance.LockWorkStation();
         }
 
         /// <summary>
@@ -330,6 +348,7 @@ namespace Zazzles
             Log.Entry(LogName, "Aborting shutdown");
             ShuttingDown = false;
             Requested = false;
+            AggregatedDelayTime = 0;
 
             if (_timer == null) return;
 
@@ -339,7 +358,7 @@ namespace Zazzles
 
             dynamic abortJson = new JObject();
             abortJson.action = "abort";
-            shouldAbortFunc = null;
+            _shouldAbortFunc = null;
             Bus.Emit(Bus.Channel.Power, abortJson, true);
 
             Notification.Emit(

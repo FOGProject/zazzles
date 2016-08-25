@@ -87,6 +87,11 @@ namespace Zazzles
             Initializesocket();
         }
 
+        public static Mode GetCurrentMode()
+        {
+            return _mode;
+        }
+
         /// <summary>
         ///     Initiate the socket that connects to all other FOG bus instances
         ///     It MUST be assumed that this socket is compromised
