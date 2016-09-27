@@ -31,65 +31,71 @@ namespace Zazzles.Modules.Updater
     /// </summary>
     public class ClientUpdater : AbstractModule<UpdateMessage>
     {
-        private string[] _upgradeFiles;
+        public enum BusActions
+        {
+            Start,
+            Stop
+        }
+        private readonly string[] _upgradeFiles;
+        private const string RemoteDownloadUrl = "/client/SmartInstaller.exe";
 
         public ClientUpdater(string[] upgradeFiles)
         {
             Name = "ClientUpdater";
+            ShutdownFriendly = false;
             this._upgradeFiles = upgradeFiles;
         }
 
         protected override void DoWork(Response data, UpdateMessage msg)
         {
-            var localVersion = Settings.Get("Version");
-            var serverVersion = msg.Version;
-
-            if (string.IsNullOrWhiteSpace(serverVersion))
+            if (string.IsNullOrWhiteSpace(msg.Version))
             {
                 Log.Error(Name, "No version provided by server");
                 return;
             }
 
-            try
+            var updaterPath = Path.Combine(Settings.Location, "tmp", "SmartInstaller.exe");
+            if (File.Exists(updaterPath))
+                File.Delete(updaterPath);
+
+            if (!NeedUpgrade(msg.Version))
             {
-                var updaterPath = Path.Combine(Settings.Location, "tmp", "SmartInstaller.exe");
+                Log.Entry(Name, "No update needed");
+                return;
+            }
 
-                if (File.Exists(updaterPath))
-                    File.Delete(updaterPath);
+            Communication.DownloadFile(RemoteDownloadUrl, updaterPath);
+            if (!IsAuthenticate(updaterPath))
+                return;
 
-                var server = serverVersion.Split('.');
-                var local = localVersion.Split('.');
-                var needUpgrade = false;
+            PrepareUpdateHelpers();
+            Power.State = Power.Status.Updating;
+        }
 
-                for (var i = 0; i < server.Length; i++)
+        private static bool NeedUpgrade(string serverVersion)
+        {
+            const char versionDelimeter = '.';
+            var localVersion = Settings.Get("Version");
+            var server = serverVersion.Split(versionDelimeter);
+            var local = localVersion.Split(versionDelimeter);
+            var needUpgrade = false;
+
+            for (var i = 0; i < server.Length; i++)
+            {
+                var serverSection = int.Parse(server[i]);
+                var localSection = int.Parse(local[i]);
+
+                if (localSection > serverSection)
+                    return false;
+
+                if (serverSection > localSection)
                 {
-                    var serverSection = int.Parse(server[i]);
-                    var localSection = int.Parse(local[i]);
-
-                    if (localSection > serverSection)
-                        return;
-
-                    if (serverSection > localSection)
-                    {
-                        needUpgrade = true;
-                        break;
-                    }
+                    needUpgrade = true;
+                    break;
                 }
-
-                if (!needUpgrade) return;
-
-                // Ensure the update is authentic
-                Communication.DownloadFile("/client/" + "SmartInstaller.exe", updaterPath);
-                if (!IsAuthenticate(updaterPath)) return;
-
-                PrepareUpdateHelpers();
-                Power.Updating = true;
             }
-            catch (Exception ex)
-            {
-                Log.Error(Name, "Unable to parse versions");
-                Log.Error(Name, ex);
-            }
+
+            return needUpgrade;
         }
 
         private bool IsAuthenticate(string filePath)
@@ -106,7 +112,10 @@ namespace Zazzles.Modules.Updater
             return false;
         }
 
-        //Prepare the downloaded update
+        /// <summary>
+        /// Move the needed upgrading files into a temporary directory
+        /// so that they won't be touched during the update process
+        /// </summary>
         private void PrepareUpdateHelpers()
         {
             var files = new List<string>
@@ -117,41 +126,45 @@ namespace Zazzles.Modules.Updater
 
             files.AddRange(_upgradeFiles);
 
-            var filePaths =
-                Directory.GetFiles(Settings.Location, "*.dll*", SearchOption.TopDirectoryOnly).Select(Path.GetFileName);
-
+            var filePaths = Directory.GetFiles(Settings.Location, "*.dll*", SearchOption.TopDirectoryOnly)
+                .Select(Path.GetFileName);
             files.AddRange(filePaths);
 
             foreach (var file in files)
             {
-                try
+                var src = Path.Combine(Settings.Location, file);
+                var target = Path.Combine(Settings.Location, "tmp", file);
+                SafeFileCopy(src, target);
+            }
+        }
+
+        /// <summary>
+        /// Perform a byte-for-byte copy of each file inorder to circumvent OS-specific file locks
+        /// </summary>
+        /// <param name="src">The filepath of the source file</param>
+        /// <param name="dst">The filepath of the destination file</param>
+        private void SafeFileCopy(string src, string dst)
+        {
+            if (File.Exists(dst))
+                File.Delete(dst);
+
+            try
+            {
+                using (var inf = new FileStream(src, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                using (var outf = new FileStream(dst, FileMode.Create))
                 {
-                    //File.Copy(Path.Combine(Settings.Location, file),
-                    //    Path.Combine(Settings.Location, "tmp", file), true);
+                    int b;
+                    while ((b = inf.ReadByte()) != -1)
+                        outf.WriteByte((byte)b);
 
-                    var src = Path.Combine(Settings.Location, file);
-                    var target = Path.Combine(Settings.Location, "tmp", file);
-
-                    if(File.Exists(target))
-                        File.Delete(target);
-
-                    using (var inf = new FileStream(src, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                    using (var outf = new FileStream(target, FileMode.Create))
-                    {
-                        int b;
-                        while ((b = inf.ReadByte()) != -1)
-                            outf.WriteByte((byte)b);
-
-                        inf.Close();
-                        outf.Close();
-                    }
-
+                    inf.Close();
+                    outf.Close();
                 }
-                catch (Exception ex)
-                {
-                    Log.Error(Name, "Unable to prepare file:" + file);
-                    Log.Error(Name, ex);
-                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(Name, "Unable to copy file");
+                Log.Error(Name, ex);
             }
         }
     }

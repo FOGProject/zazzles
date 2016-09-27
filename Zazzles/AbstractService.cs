@@ -27,10 +27,22 @@ namespace Zazzles
 {
     public abstract class AbstractService
     {
-        protected const int DEFAULT_SLEEP_TIME = 60;
-        protected const int MIN_SLEEP_TIME = 30;
+        protected static readonly int DefaultSleepTime = 60;
+
+        #if DEBUG
+        protected static readonly int MinSleepTime = 10;
+        #else
+        protected static readonly int MinSleepTime = 30;
+        #endif
 
         private readonly Thread _moduleThread;
+
+        public string Name { get; protected set; }
+        protected Response LoopData;
+        protected abstract Response GetLoopData();
+        protected abstract IModule[] GetModules();
+        protected abstract void Load();
+        protected abstract void Unload();
 
         protected AbstractService()
         {
@@ -45,13 +57,6 @@ namespace Zazzles
 
             Log.Entry("Zazzles", "Service construction complete");
         }
-
-        public string Name { get; protected set; }
-        protected Response LoopData;
-        protected abstract Response GetLoopData();
-        protected abstract IModule[] GetModules();
-        protected abstract void Load();
-        protected abstract void Unload();
 
         /// <summary>
         ///     Start the service
@@ -85,11 +90,11 @@ namespace Zazzles
             // Only run the service if there isn't a shutdown or update pending
             // However, keep looping if a power operation is only Requested as
             // the request may be aborted
-            while (!Power.ShuttingDown && !Power.Updating)
+            while (Power.State != Power.Status.ShuttingDown && Power.State != Power.Status.Updating)
             {
                 LoopData = GetLoopData() ?? new Response();
                 // Stop looping as soon as a shutdown or update pending
-                foreach (var module in GetModules().TakeWhile(module => !Power.ShuttingDown && !Power.Updating))
+                foreach (var module in GetModules().TakeWhile(module => Power.State != Power.Status.ShuttingDown && Power.State != Power.Status.Updating))
                 {
                     // Entry file formatting
                     Log.NewLine();
@@ -118,10 +123,10 @@ namespace Zazzles
                 }
 
                 // Skip checking for sleep time if there is a shutdown or update pending
-                if (Power.ShuttingDown || Power.Updating) break;
+                if (Power.State == Power.Status.ShuttingDown || Power.State == Power.Status.Updating) break;
 
                 // Once all modules have been run, sleep for the set time
-                var sleepTime = GetSleepTime() ?? DEFAULT_SLEEP_TIME;
+                var sleepTime = GetSleepTime() ?? DefaultSleepTime;
                 Log.Entry(Name, $"Sleeping for {sleepTime} seconds");
                 Thread.Sleep(sleepTime * 1000);
             }

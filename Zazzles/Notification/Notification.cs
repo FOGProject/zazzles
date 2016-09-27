@@ -18,26 +18,23 @@
  */
 
 using System;
-using Newtonsoft.Json.Linq;
+using Zazzles.DataContracts;
 
 namespace Zazzles
 {
     public static class Notification
     {
-        public static JObject ToJSON(string title, string message)
-        {
-            dynamic json = new JObject();
-            json.title = title;
-            json.message = message;
-            return json;
-        }
-
         public static void Emit(string title, string message, bool onGoing = false, bool global = true)
         {
-            Emit(ToJSON(title, message), onGoing, global);
+            var notification = new NotificationTransport() {
+                Title = title,
+                Message = message
+            };
+            Emit(notification, global);
         }
 
-        public static void Emit(JObject data, bool onGoing = false, bool global = true)
+
+        public static void Emit(NotificationTransport data, bool global = true)
         {
             if (data == null)
                 throw new ArgumentNullException(nameof(data));

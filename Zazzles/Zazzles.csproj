@@ -153,6 +153,13 @@
     <Compile Include="AbstractService.cs" />
     <Compile Include="Bus\BusClient.cs" />
     <Compile Include="Bus\BusServer.cs" />
+    <Compile Include="DataContracts\BusTransport.cs" />
+    <Compile Include="DataContracts\UpdateTransport.cs" />
+    <Compile Include="DataContracts\NotificationTransport.cs" />
+    <Compile Include="DataContracts\PowerExecuteNowRequest.cs" />
+    <Compile Include="DataContracts\PowerAbortRequest.cs" />
+    <Compile Include="DataContracts\PowerDelayRequest.cs" />
+    <Compile Include="DataContracts\PowerAction.cs" />
     <Compile Include="Data\Hash.cs" />
     <Compile Include="Data\Time.cs" />
     <Compile Include="Debugger\Commands\CBus\BusCommand.cs" />

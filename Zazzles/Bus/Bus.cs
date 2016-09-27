@@ -19,11 +19,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using SuperWebSocket;
 using WebSocket4Net;
 using Zazzles.BusComponents;
+using Zazzles.DataContracts;
 
 namespace Zazzles
 {
@@ -39,28 +41,28 @@ namespace Zazzles
         {
             Debug,
             Power,
+            PowerRequest,
             Log,
             Notification,
             Status,
             Update,
-            RemoteRX,
-            RemoteTX
         }
+
         /// <summary>
         ///     Protected channels cannot be globally emmited on by clients
         /// </summary>
-        private static readonly List<Channel> ProtectChannels = new List<Channel>()
-        {
-            Channel.Status,
-            Channel.Update,
-            Channel.RemoteRX
-        }; 
-
+        private static readonly ReadOnlyCollection<Channel> ProtectedChannels = 
+            new ReadOnlyCollection<Channel>(new[]
+            {
+                Channel.Power,
+                Channel.Status,
+                Channel.Update,
+            });
+         
         /// <summary>
-        ///     The role of this bus instance. This is only needed for IPC. Note that the Server bus must be initialized before a
-        ///     client bus.
+        ///     The role of this bus instance. This is only needed for IPC.
         /// </summary>
-        public enum Mode
+        public enum Role
         {
             Server,
             Client
@@ -68,28 +70,26 @@ namespace Zazzles
 
         private const string LogName = "Bus";
         private const int Port = 1277;
+        private static bool _initialized;
+        private static BusServer _server;
+        private static BusClient _client;
+        private static Role _mode = Role.Client;
 
         private static readonly Dictionary<Channel, LinkedList<Action<JObject>>> Registrar =
             new Dictionary<Channel, LinkedList<Action<JObject>>>();
 
-        private static bool _initialized;
-        private static BusServer _server;
-        private static BusClient _client;
-        private static Mode _mode = Mode.Client;
-
-        /// <summary>
-        ///     Set the mode of the bus instance. Upon calling this method, the IPC interface will initialize.
-        /// </summary>
-        /// <param name="mode"></param>
-        public static void SetMode(Mode mode)
+        public static Role Mode
         {
-            _mode = mode;
-            Initializesocket();
-        }
-
-        public static Mode GetCurrentMode()
-        {
-            return _mode;
+            get
+            {
+                return _mode;
+            }
+            set
+            {
+                Dispose();
+                _mode = value;
+                Initializesocket();
+            }
         }
 
         /// <summary>
@@ -100,40 +100,31 @@ namespace Zazzles
         /// <returns></returns>
         private static void Initializesocket()
         {
-            switch (_mode)
+            try
             {
-                case Mode.Server:
-                    // Attempt to become the socket server
-                    try
-                    {
+                switch (_mode)
+                {
+                    case Role.Server:
                         _server = new BusServer();
                         _server.Socket.NewMessageReceived += socket_RecieveMessage;
                         _server.Socket.NewSessionConnected += client_connect;
                         _server.Start();
                         Log.Entry(LogName, "Became bus server");
                         _initialized = true;
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Error(LogName, "Could not enter socket");
-                        Log.Error(LogName, ex);
-                    }
-                    break;
-                case Mode.Client:
-                    try
-                    {
+                        break;
+                    case Role.Client:
                         _client = new BusClient(Port);
                         _client.Socket.MessageReceived += socket_RecieveMessage;
                         _client.Start();
                         Log.Entry(LogName, "Became bus client");
                         _initialized = true;
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Error(LogName, "Could not enter socket");
-                        Log.Error(LogName, ex);
-                    }
-                    break;
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(LogName, "Could not enter socket");
+                Log.Error(LogName, ex);
             }
         }
 
@@ -146,13 +137,20 @@ namespace Zazzles
             if (msg == null)
                 throw new ArgumentNullException(nameof(msg));
 
-            if (!_initialized) Initializesocket();
-            if (!_initialized) return;
+            if (!_initialized)
+                Initializesocket();
+            if (!_initialized)
+                return;
 
-            if (_server != null)
-                _server.Send(msg);
-            else if (_client != null)
-                _client.Send(msg);
+            switch (Mode)
+            {
+                case Role.Server:
+                    _server?.Send(msg);
+                    break;
+                case Role.Client:
+                    _client?.Send(msg);
+                    break;
+            }
         }
 
         /// <summary>
@@ -161,55 +159,59 @@ namespace Zazzles
         /// <param name="channel">The channel to emit on</param>
         /// <param name="data">The data to send</param>
         /// <param name="global">Should the data be sent to other processes</param>
-        public static void Emit(Channel channel, JObject data, bool global = false)
-        {
-            if(data == null)
-                throw new ArgumentNullException(nameof(data));
-
-            Emit(channel, data.ToString(), global);
-        }
-
-        /// <summary>
-        ///     Emit a message to all listeners
-        /// </summary>
-        /// <param name="channel">The channel to emit on</param>
-        /// <param name="data">The data to send</param>
-        /// <param name="global">Should the data be sent to other processes</param>
-        private static void Emit(Channel channel, string data, bool global = false)
+        public static void Emit(Channel channel, object data, bool global = false)
         {
             if (data == null)
                 throw new ArgumentNullException(nameof(data));
 
-            if (global)
-            {
-                var transport = new JObject { {"self", true}, {"channel", channel.ToString()}, {"data", data}};
-                if (channel != Channel.Log)
-                    Log.Entry(LogName, transport.ToString());
-                SendMessage(transport.ToString());
-
-                // If this bus instance is a client, wait for the event to be bounced-back before processing
-                if (_client != null)
-                    return;
-            }
-            if (channel != Channel.Log)
-                Log.Entry(LogName, "Emmiting message on channel: " + channel);
-
-            if (!Registrar.ContainsKey(channel)) return;
-            try
-            {
-                var json = JObject.Parse(data);
-                foreach (var action in Registrar[channel])
-                    Task.Factory.StartNew(() => action(json));
-            }
-            catch (Exception ex)
-            {
-                Log.Error(LogName, "Unable to parse data");
-                Log.Error(LogName, ex);
-            }
+            Emit(channel, JObject.FromObject(data), global);
         }
 
         /// <summary>
-        ///     Register an action with a channel. When a message is recieved on this channel, the method will be called.
+        ///     Emit a message to all listeners
+        /// </summary>
+        /// <param name="channel">The channel to emit on</param>
+        /// <param name="data">The data to send</param>
+        /// <param name="global">Should the data be sent to other processes</param>
+        private static void Emit(Channel channel, JObject data, bool global = false)
+        {
+            if (data == null)
+                throw new ArgumentNullException(nameof(data));
+
+            // If the emission is global, wrap the data in a BusTransport object
+            // and emit the wrapper
+            if (global)
+            {
+                var transport = new BusTransport()
+                {
+                    Self = true, Channel = channel, Data = data
+                };
+
+                var transportJSON = JObject.FromObject(transport).ToString();
+
+                if (channel != Channel.Log)
+                    Log.Debug(LogName, transportJSON);
+
+                SendMessage(transportJSON);
+
+                // If this bus instance is a client, wait for the event to be bounced-back before processing
+                if (Mode == Role.Client)
+                    return;
+            }
+
+            if (channel != Channel.Log)
+                Log.Entry(LogName, $"Emmiting message on channel: {channel}");
+
+            if (!Registrar.ContainsKey(channel))
+                return;
+
+            foreach (var action in Registrar[channel])
+                Task.Factory.StartNew(() => action(data));
+        }
+
+        /// <summary>
+        ///     Register an action with a channel. When a message is recieved on this channel, 
+        ///     the method will be called.
         /// </summary>
         /// <param name="channel">The channel to register within</param>
         /// <param name="action">The action (method) to register</param>
@@ -248,7 +250,7 @@ namespace Zazzles
             if (clientSession == null)
                 throw new ArgumentNullException(nameof(clientSession));
         }
-        
+
         /// <summary>
         ///     Called when the server socket recieves a message
         ///     It will replay the message to all other instances, including the original sender unless told otherwise
@@ -274,13 +276,13 @@ namespace Zazzles
         {
             try
             {
-                dynamic transport = JObject.Parse(message);
+                var transport = JObject.Parse(message).ToObject<BusTransport>();
+                transport.Self = false;
 
-                transport.self = false;
-                var channel = (Channel) Enum.Parse(typeof (Channel), transport.channel.ToString());
-                if (_mode == Mode.Server && ProtectChannels.Contains(channel)) return;
+                if (Mode == Role.Server && ProtectedChannels.Contains(transport.Channel))
+                    return;
 
-                Emit(channel, transport.data.ToString(), transport.bounce != null && !transport.bounce);
+                Emit(Channel.Debug, transport.Data.ToString());
             }
             catch (Exception ex)
             {
@@ -293,13 +295,15 @@ namespace Zazzles
         {
             if (!_initialized) return;
 
-            switch (_mode)
+            switch (Mode)
             {
-                case Mode.Client:
+                case Role.Client:
                     _client.Stop();
+                    _client = null;
                     break;
-                case Mode.Server:
+                case Role.Server:
                     _server.Stop();
+                    _server = null;
                     break;
             }
         }

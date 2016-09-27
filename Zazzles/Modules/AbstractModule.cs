@@ -49,7 +49,7 @@ namespace Zazzles.Modules
                 return;
             }
 
-            if (!ShutdownFriendly && Power.Requested)
+            if (!ShutdownFriendly && Power.State == Power.Status.OperationRequested)
             {
                 Log.Entry(Name, "A power operation is pending, aborting module");
                 return;

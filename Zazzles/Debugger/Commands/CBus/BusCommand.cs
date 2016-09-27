@@ -37,12 +37,12 @@ namespace Zazzles.Debugger.Commands.CBus
             {
                 if (args[1].Equals("server"))
                 {
-                    Bus.SetMode(Bus.Mode.Server);
+                    Bus.Mode = Bus.Role.Server;
                     return true;
                 }
                 if (args[1].Equals("client"))
                 {
-                    Bus.SetMode(Bus.Mode.Client);
+                    Bus.Mode = Bus.Role.Client;
                     return true;
                 }
             }

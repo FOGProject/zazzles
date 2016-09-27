@@ -31,6 +31,11 @@ namespace Zazzles.Middleware
         private const string LogName = "Middleware::Response";
         public const string SuccessCode = "ok";
 
+        public bool Error { get; set; }
+        public bool Encrypted { get; private set; }
+        public JObject Data { get; set; }
+        public string ReturnCode { get; set; }
+
         public static readonly Dictionary<string, string> Codes = new Dictionary<string, string>
         {
             {SuccessCode, "Success"},
@@ -109,11 +114,6 @@ namespace Zazzles.Middleware
         {
             Log.Entry(LogName, Codes.ContainsKey(ReturnCode) ? Codes[ReturnCode] : ReturnCode);
         }
-
-        public bool Error { get; set; }
-        public bool Encrypted { get; private set; }
-        public JObject Data { get; set; }
-        public string ReturnCode { get; set; }
 
         /// <summary>
         ///     Return the value stored at a specified key

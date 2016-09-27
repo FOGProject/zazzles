@@ -38,8 +38,8 @@ namespace Zazzles.Middleware
         private const string LogName = "Middleware::Authentication";
         private static byte[] Passkey;
         public static byte[] TestPassKey;
-        private static AutoResetEvent CanAuth;
-        private static Timer EventTimer;
+        private static readonly AutoResetEvent CanAuth;
+        private static readonly Timer EventTimer;
 
         static Authentication()
         {
@@ -48,7 +48,13 @@ namespace Zazzles.Middleware
 
             EventTimer.Elapsed += onTimerEnd;
             EventTimer.AutoReset = false;
-            EventTimer.Interval = 2*60*1000;
+
+            #if DEBUG
+            EventTimer.Interval = 1000;
+            #else
+            EventTimer.Interval = 2 * 60 * 1000;
+            #endif
+
         }
 
         private static void onTimerEnd(object sender, ElapsedEventArgs elapsedEventArgs)
@@ -75,7 +81,7 @@ namespace Zazzles.Middleware
                 var certificate = new X509Certificate2(keyPath);
 
                 // Ensure the public key came from the pinned server
-                if (!Data.RSA.IsFromCA(Data.RSA.ServerCertificate(), certificate))
+                if (!RSA.IsFromCA(RSA.ServerCertificate(), certificate))
                     throw new Exception("Certificate is not from FOG CA");
                 Log.Entry(LogName, "Cert OK");
 
@@ -103,7 +109,7 @@ namespace Zazzles.Middleware
                 var enKey = Transform.ByteArrayToHexString(RSA.Encrypt(certificate, Passkey));
                 var enToken = Transform.ByteArrayToHexString(RSA.Encrypt(certificate, token));
                 // Send the encrypted data to the server and get the response
-                var response = Communication.Post("/management/index.php?sub=requestClientInfo&authorize&newService",
+                var response = Communication.Post("/management/index.php?sub=requestClientInfo&authorize",
                     $"sym_key={enKey}&token={enToken}&mac={Configuration.MACAddresses()}");
 
                 // If the server accepted the token and AES key, save the new token
@@ -174,8 +180,8 @@ namespace Zazzles.Middleware
         /// <returns>True if the server was contacted successfully</returns>
         public static string Decrypt(string toDecode)
         {
-            const string encryptedFlag = "#!en=";
-            const string encryptedFlag2 = "#!enkey=";
+            const string encryptedFlag = Communication.EncryptedFlag + "=";
+            const string encryptedFlag2 = Communication.LegacyEncryptedFlag + "=";
 
             if (toDecode.StartsWith(encryptedFlag2))
             {

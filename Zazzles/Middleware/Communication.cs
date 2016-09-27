@@ -29,6 +29,10 @@ namespace Zazzles.Middleware
     public static class Communication
     {
         private const string LogName = "Middleware::Communication";
+        public const string OutOfSyncFlag = "#!ihc";
+        public const string EncryptedFlag = "#!en";
+        public const string LegacyEncryptedFlag = "#!enkey";
+        public const string Apiv3Flag = "newService&json";
 
         /// <summary>
         ///     Get the parsed response of a server url
@@ -40,7 +44,7 @@ namespace Zazzles.Middleware
             try
             {
                 var rawResponse = GetRawResponse(postfix);
-                var encrypted = rawResponse.StartsWith("#!en");
+                var encrypted = rawResponse.StartsWith(EncryptedFlag);
                 if (encrypted)
                     rawResponse = Authentication.Decrypt(rawResponse);
 
@@ -50,7 +54,7 @@ namespace Zazzles.Middleware
                     return new Response();
                 }
 
-                if (!rawResponse.StartsWith("#!ihc")) return new Response(rawResponse, encrypted);
+                if (!rawResponse.StartsWith(OutOfSyncFlag)) return new Response(rawResponse, encrypted);
 
                 return Authentication.HandShake() ? GetResponse(postfix) : new Response();
             }
@@ -84,16 +88,12 @@ namespace Zazzles.Middleware
         /// <returns>The unparsed response</returns>
         public static string GetRawResponse(string postfix)
         {
-            if (!postfix.Contains("newService"))
+            if (!postfix.Contains(Apiv3Flag))
             {
-                postfix += ((postfix.Contains(".php?") ? "&" : "?") + "newService");
-            }
-            if (!postfix.Contains("json"))
-            {
-                postfix += ((postfix.Contains(".php?") ? "&" : "?") + "json");
+                postfix = AppendToUrl(postfix, Apiv3Flag);
             }
 
-            Log.Entry(LogName, "URL: " + Configuration.ServerAddress + postfix);
+            Log.Entry(LogName, $"URL: {Configuration.ServerAddress}{postfix}");
 
             var webRequest = WebRequest.Create(Configuration.ServerAddress + postfix);
 
@@ -114,7 +114,12 @@ namespace Zazzles.Middleware
         /// <returns>The response of the server</returns>
         public static Response Post(string postfix, string param)
         {
-            Log.Entry(LogName, "POST URL: " + Configuration.ServerAddress + postfix);
+            if (!postfix.Contains(Apiv3Flag))
+            {
+                postfix = AppendToUrl(postfix, Apiv3Flag);
+            }
+
+            Log.Entry(LogName, $"POST URL: {Configuration.ServerAddress}{postfix}");
 
             try
             {
@@ -145,7 +150,7 @@ namespace Zazzles.Middleware
                 dataStream?.Close();
                 response.Close();
 
-                var encrypted = rawResponse.StartsWith("#!en");
+                var encrypted = rawResponse.StartsWith(EncryptedFlag);
 
                 if (encrypted)
                     rawResponse = Authentication.Decrypt(rawResponse);
@@ -190,9 +195,21 @@ namespace Zazzles.Middleware
         public static bool Contact(string postfix, bool appendMAC)
         {
             if (appendMAC)
-                postfix += ((postfix.Contains(".php?") ? "&" : "?") + "mac=" + Configuration.MACAddresses());
+                postfix = AppendToUrl(postfix, $"mac={Configuration.MACAddresses()}");
 
             return Contact(postfix);
+        }
+
+        /// <summary>
+        /// Append a string to the URL (built for PHP)
+        /// </summary>
+        /// <param name="url">The current URL</param>
+        /// <param name="toAppend">The string to append</param>
+        /// <returns></returns>
+        public static string AppendToUrl(string url, string toAppend)
+        {
+            url += ((url.Contains(".php?") ? "&" : "?") + toAppend);
+            return url;
         }
 
         /// <summary>

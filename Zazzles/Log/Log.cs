@@ -117,10 +117,9 @@ namespace Zazzles
 
         public static void Debug(string caller, string message)
         {
-
-#if DEBUG
+            #if DEBUG
             Entry(Level.Debug, caller, message);
-#endif
+            #endif
         }
 
         public static void Action(string action)

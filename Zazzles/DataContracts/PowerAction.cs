@@ -1,6 +1,6 @@
 ﻿/*
  * Zazzles : A cross platform service framework
- * Copyright (C) 2014-2015 FOG Project
+ * Copyright (C) 2014-2016 FOG Project
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,19 +17,16 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-
-using Zazzles.Middleware;
-
-namespace Zazzles
+namespace Zazzles.DataContracts
 {
-    public static class Eager
+    public class PowerAction
     {
-        public static void Initalize()
-        {
-            #pragma warning disable 642
-            if (Power.State == Power.Status.Updating) ;
-            if (Configuration.TestMAC != null) ;
-            #pragma warning restore 642
-        }
+        public static readonly string Action = Power.BusStatusUpdates.ShutdownRequested.ToString();
+        public Power.ShutdownOptions Option;
+        public Power.Actions Type;
+        public int PromptTime;
+        public int AggregatedDelayTime;
+        public string Command;
+        public string Message;
     }
 }
