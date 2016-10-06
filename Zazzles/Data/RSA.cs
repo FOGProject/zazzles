@@ -22,12 +22,15 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using Mono.Security.Authenticode;
 
 namespace Zazzles.Data
 {
     public static class RSA
     {
         private const string LogName = "Data::RSA";
+        const string OID_AUTHORITY_KEY_IDENTIFIER = "2.5.29.35";
+
 
         /// <summary>
         ///     Encrypt data using RSA
@@ -99,78 +102,6 @@ namespace Zazzles.Data
 
             var rsa = (RSACryptoServiceProvider) cert.PrivateKey;
             return rsa.Decrypt(data, false);
-        }
-
-        /// <summary>
-        ///     Validate that certificate came from a specific CA
-        ///     http://stackoverflow.com/a/17225510/4732290
-        /// </summary>
-        /// <param name="authority">The CA certificate</param>
-        /// <param name="certificate">The certificate to validate</param>
-        /// <returns>True if the certificate came from the authority</returns>
-        public static bool IsFromCA(X509Certificate2 authority, X509Certificate2 certificate)
-        {
-            if (authority == null)
-                throw new ArgumentNullException(nameof(authority));
-            if (certificate == null)
-                throw new ArgumentNullException(nameof(certificate));
-
-            Log.Debug(LogName, "Attempting to verify authenticity of certificate...");
-            Log.Debug(LogName, "Authority: " + authority);
-            Log.Debug(LogName, "Cert: " + certificate);
-
-            try
-            {
-                var chain = new X509Chain
-                {
-                    ChainPolicy =
-                    {
-                        RevocationMode = X509RevocationMode.NoCheck,
-                        RevocationFlag = X509RevocationFlag.ExcludeRoot,
-                        VerificationTime = DateTime.Now,
-                        UrlRetrievalTimeout = new TimeSpan(0, 0, 0)
-                    }
-                };
-
-                // This part is very important. You're adding your known root here.
-                // It doesn't have to be in the computer store at all. Neither certificates do.
-                chain.ChainPolicy.ExtraStore.Add(authority);
-
-                var isChainValid = chain.Build(certificate);
-
-                if (!isChainValid)
-                {
-                    var errors = chain.ChainStatus
-                        .Select(x => $"{x.StatusInformation.Trim()} ({x.Status})")
-                        .ToArray();
-                    var certificateErrorsString = "Unknown errors.";
-
-                    if (errors.Length > 0)
-                        certificateErrorsString = string.Join(", ", errors);
-
-                    Log.Error(LogName, "Certificate validation failed");
-                    Log.Error(LogName,
-                        "Trust chain did not complete to the known authority anchor. Errors: " + certificateErrorsString);
-                    return false;
-                }
-
-                // This piece makes sure it actually matches your known root
-                if (
-                    chain.ChainElements.Cast<X509ChainElement>()
-                        .Any(x => x.Certificate.Thumbprint == authority.Thumbprint))
-                    return true;
-
-                Log.Error(LogName, "Certificate validation failed");
-                Log.Error(LogName,
-                    "Trust chain did not complete to the known authority anchor. Thumbprints did not match.");
-                return false;
-            }
-            catch (Exception ex)
-            {
-                Log.Error(LogName, "Could not verify certificate is from CA");
-                Log.Error(LogName, ex);
-                return false;
-            }
         }
 
         /// <summary>
@@ -271,5 +202,200 @@ namespace Zazzles.Data
 
             return false;
         }
+
+        public static bool IsAuthenticodeValid(string filePath, X509Certificate2 authority)
+        {
+            if (string.IsNullOrEmpty(filePath))
+                throw new ArgumentException("File path must be provided!", nameof(filePath));
+
+            var signingCertificate = ExtractDigitalSignature(filePath);
+            var chainValid = IsFromCA(authority, signingCertificate);
+            if (!chainValid)
+                return false;
+
+            // Since X509VerificationFlags.IgnoreNotTimeValid was set during chain validation,
+            // we must manually validate the time. This is due to limitations in the .NET x509 api
+            // Strictly check the authority and enforce it's lifespan
+            var validationTime = DateTime.Now;
+            if (authority.NotBefore >= validationTime || authority.NotAfter <= validationTime)
+            {
+                Log.Error(LogName, "Certificate validation failed");
+                Log.Error(LogName, "Certificate authority is no longer valid at current time");
+                return false;
+            }
+
+            var validTimestamp = IsTimestampValid(filePath);
+
+            // Under no circumstance is the signing certificate valid
+            // if it came from the future.
+            if (signingCertificate.NotBefore >= validationTime)
+            {
+                Log.Error(LogName, "Certificate validation failed");
+                Log.Error(LogName, "Certificate was commissioned in the future; Please verify your clock is set correctly");
+                return false;
+            }
+
+            // Only allow an expired certificate through if the binary also contained a valid timestamp
+            if (signingCertificate.NotAfter <= validationTime && !validTimestamp)
+            {
+                Log.Error(LogName, "Certificate validation failed");
+                Log.Error(LogName, "Certificate has expired and the PE file was not timestamped");
+                return false;
+            }
+
+
+            return true;
+        }
+
+        /// <summary>
+        ///     Validate that certificate came from a specific CA
+        /// </summary>
+        /// <param name="authority">The CA certificate</param>
+        /// <param name="certificate">The certificate to validate</param>
+        /// <returns>True if the certificate came from the authority</returns>
+        public static bool IsFromCA(X509Certificate2 authority, X509Certificate2 certificate)
+        {
+            if (authority == null)
+                throw new ArgumentNullException(nameof(authority));
+            if (certificate == null)
+                throw new ArgumentNullException(nameof(certificate));
+
+            var chain = new X509Chain
+            {
+                ChainPolicy =
+                    {
+                        RevocationMode = X509RevocationMode.NoCheck,
+                        RevocationFlag = X509RevocationFlag.ExcludeRoot,
+                        VerificationFlags = X509VerificationFlags.IgnoreNotTimeValid,
+                        VerificationTime = DateTime.Now,
+                        UrlRetrievalTimeout = new TimeSpan(0, 0, 0)
+                    }
+            };
+
+            chain.ChainPolicy.ExtraStore.Add(authority);
+            var builds = PrettyChainValidation(certificate, chain);
+            if (!builds) return false;
+
+            var correctOrigin = chain.ChainElements.Cast<X509ChainElement>().Any(x => x.Certificate.Thumbprint == authority.Thumbprint);
+            if (!correctOrigin)
+            {
+                Log.Error(LogName, "Certificate validation failed");
+                Log.Error(LogName, "Trust chain did not complete to the known authority anchor. Thumbprints did not match.");
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        ///     Validate that certificate came from a specific CA
+        /// </summary>
+        /// <returns>True if the certificate came from the authority</returns>
+        public static bool PrettyChainValidation(X509Certificate2 cert, X509Chain chain)
+        {
+            if (chain == null)
+                throw new ArgumentNullException(nameof(chain));
+            try
+            {
+                var isChainValid = chain.Build(cert);
+                if (isChainValid) return true;
+
+                var errors = chain.ChainStatus.Select(x => $"{x.StatusInformation.Trim()} ({x.Status})").ToArray();
+                var chainErrors = "Unknown errors.";
+
+                if (errors.Length > 0)
+                    chainErrors = string.Join(", ", errors);
+
+                Log.Error(LogName, "Certificate validation failed");
+                Log.Error(LogName, $"Trust chain did not complete to the known authority anchor. Errors: {chainErrors}");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Log.Error(LogName, "Could not validate X509 chain");
+                Log.Error(LogName, ex);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="filePath"></param>
+        /// <sources>
+        /// https://tools.ietf.org/html/rfc5280
+        /// https://www.gnutls.org/manual/html_node/X_002e509-extensions.html
+        /// http://www.alvestrand.no/objectid/2.5.29.35.html
+        /// </sources>
+        /// <returns></returns>
+        public static bool IsTimestampValid(string filePath)
+        {
+            var deformatter = new AuthenticodeDeformatter(filePath);
+            var timestampPresent = (deformatter.SigningCertificate != null);
+            if (!timestampPresent)
+                return false;
+
+            // Convert the mono x509Certificate to the pure .NET version
+            // and then generate a cert store in memory of all certificates needed
+            // to validate the timestamp
+            var signingCert = new X509Certificate2(deformatter.SigningCertificate.RawData);
+            var store = new X509Store(StoreName.Root, StoreLocation.LocalMachine);
+            store.Open(OpenFlags.ReadOnly);
+            var chainStore = BuildCertChainStore(signingCert, store);
+            store.Close();
+
+            // Perform 
+            var chain = new X509Chain
+            {
+                ChainPolicy =
+                    {
+                        RevocationMode = X509RevocationMode.Offline,
+                        RevocationFlag = X509RevocationFlag.EntireChain,
+                        VerificationTime = DateTime.Now,
+                        UrlRetrievalTimeout = new TimeSpan(0, 1, 0)
+                    }
+            };
+            chain.ChainPolicy.ExtraStore.AddRange(chainStore);
+            var builds = PrettyChainValidation(signingCert, chain);
+
+            return builds; 
+        }
+
+        private static X509Certificate2Collection BuildCertChainStore(X509Certificate2 cert, X509Store store)
+        {
+            if (cert == null)
+                throw new ArgumentNullException(nameof(cert));
+            if (store == null)
+                throw new ArgumentNullException(nameof(store));
+
+            var collection = new X509Certificate2Collection();
+            var authorityKey = ExtractX509Extension(cert, OID_AUTHORITY_KEY_IDENTIFIER);
+
+            var matches = store.Certificates.Find(X509FindType.FindBySubjectKeyIdentifier, authorityKey.RawData, true);
+            foreach (var match in matches)
+            {
+                collection.Add(match);
+                collection.AddRange(BuildCertChainStore(match, store));
+            }
+
+            return collection;
+
+        }
+
+        private static AsnEncodedData ExtractX509Extension(X509Certificate2 cert, string oid)
+        {
+            if (cert == null)
+                throw new ArgumentNullException(nameof(cert));
+
+            foreach (var extension in cert.Extensions)
+            {
+                if (extension.Oid.Value != oid) continue;
+                var asndata = new AsnEncodedData(extension.Oid, extension.RawData);
+                return asndata;
+            }
+
+            return null;
+        }
+
     }
 }
