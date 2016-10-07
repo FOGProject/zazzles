@@ -19,6 +19,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using SuperWebSocket;
@@ -46,15 +47,16 @@ namespace Zazzles
             RemoteRX,
             RemoteTX
         }
+
         /// <summary>
         ///     Protected channels cannot be globally emmited on by clients
         /// </summary>
-        private static readonly List<Channel> ProtectChannels = new List<Channel>()
+        private static readonly IList<Channel> ProtectedChannels = new ReadOnlyCollection<Channel>(new List<Channel>
         {
             Channel.Status,
             Channel.Update,
             Channel.RemoteRX
-        }; 
+        });
 
         /// <summary>
         ///     The role of this bus instance. This is only needed for IPC. Note that the Server bus must be initialized before a
@@ -278,7 +280,7 @@ namespace Zazzles
 
                 transport.self = false;
                 var channel = (Channel) Enum.Parse(typeof (Channel), transport.channel.ToString());
-                if (_mode == Mode.Server && ProtectChannels.Contains(channel)) return;
+                if (_mode == Mode.Server && ProtectedChannels.Contains(channel)) return;
 
                 Emit(channel, transport.data.ToString(), transport.bounce != null && !transport.bounce);
             }
