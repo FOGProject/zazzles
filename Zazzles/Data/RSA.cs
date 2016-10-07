@@ -1,6 +1,6 @@
 ﻿/*
  * Zazzles : A cross platform service framework
- * Copyright (C) 2014-2015 FOG Project
+ * Copyright (C) 2014-2016 FOG Project
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -29,8 +29,7 @@ namespace Zazzles.Data
     public static class RSA
     {
         private const string LogName = "Data::RSA";
-        const string OID_AUTHORITY_KEY_IDENTIFIER = "2.5.29.35";
-
+        private const string OidAuthorityKeyIdentifier = "2.5.29.35";
 
         /// <summary>
         ///     Encrypt data using RSA
@@ -203,19 +202,31 @@ namespace Zazzles.Data
             return false;
         }
 
+        /// <summary>
+        /// Check if an authenticode on an PE file is both valid and originates from a specified certificate authority
+        /// </summary>
+        /// <param name="filePath">The location of the PE file</param>
+        /// <param name="authority">The certificate authority to validate against</param>
+        /// <returns>True if the PE file was signed by the CA, and the signature's lifespan is still valid</returns>
         public static bool IsAuthenticodeValid(string filePath, X509Certificate2 authority)
         {
             if (string.IsNullOrEmpty(filePath))
                 throw new ArgumentException("File path must be provided!", nameof(filePath));
+            if (authority == null)
+                throw new ArgumentNullException(nameof(authority));
 
+            // Ensure the PE binary was signed by the CA
+            // We don't care about it's lifespan yet
             var signingCertificate = ExtractDigitalSignature(filePath);
             var chainValid = IsFromCA(authority, signingCertificate);
             if (!chainValid)
                 return false;
 
-            // Since X509VerificationFlags.IgnoreNotTimeValid was set during chain validation,
-            // we must manually validate the time. This is due to limitations in the .NET x509 api
-            // Strictly check the authority and enforce it's lifespan
+            // Since X509VerificationFlags.IgnoreNotTimeValid was set during chain validation during
+            // the above steps we must manually validate the time. This is due to limitations in the 
+            // .NET X509 api.
+            // The authority's validity must be strictly enforced. If the certificate is not yet active
+            // or is expired then the PE file's authenticode should automatically be flagged as invalid
             var validationTime = DateTime.Now;
             if (authority.NotBefore >= validationTime || authority.NotAfter <= validationTime)
             {
@@ -226,8 +237,7 @@ namespace Zazzles.Data
 
             var validTimestamp = IsTimestampValid(filePath);
 
-            // Under no circumstance is the signing certificate valid
-            // if it came from the future.
+            // Under no circumstance is the signing certificate valid if it came from the future.
             if (signingCertificate.NotBefore >= validationTime)
             {
                 Log.Error(LogName, "Certificate validation failed");
@@ -235,7 +245,8 @@ namespace Zazzles.Data
                 return false;
             }
 
-            // Only allow an expired certificate through if the binary also contained a valid timestamp
+            // If the signing certificate is expired, the authenticode is valid if and only if
+            // it also contains a valid timestamp
             if (signingCertificate.NotAfter <= validationTime && !validTimestamp)
             {
                 Log.Error(LogName, "Certificate validation failed");
@@ -243,12 +254,15 @@ namespace Zazzles.Data
                 return false;
             }
 
-
             return true;
         }
 
         /// <summary>
-        ///     Validate that certificate came from a specific CA
+        ///  Validate that certificate came from a specific Certificate Authority
+        ///  An X509 Chain validation will occur, ignoring certificate expirations
+        ///  and also ignoring any revocations
+        ///  TODO: Provide revocation checks for FOG CA  
+        ///  TODO: Add support for intermediate CAs
         /// </summary>
         /// <param name="authority">The CA certificate</param>
         /// <param name="certificate">The certificate to validate</param>
@@ -276,6 +290,9 @@ namespace Zazzles.Data
             var builds = PrettyChainValidation(certificate, chain);
             if (!builds) return false;
 
+            // If the chain validates, check that one of the certificates 
+            // in the chain matches the authority's thumbprint
+            // this will ensure the authority is present in the X509Chain
             var correctOrigin = chain.ChainElements.Cast<X509ChainElement>().Any(x => x.Certificate.Thumbprint == authority.Thumbprint);
             if (!correctOrigin)
             {
@@ -288,8 +305,11 @@ namespace Zazzles.Data
         }
 
         /// <summary>
-        ///     Validate that certificate came from a specific CA
+        /// Check if a certificate properly validates using a provided X509Chain
+        /// Also log out meaningfull errors on failed validation
         /// </summary>
+        /// <param name="cert">The certificate to validate</param>
+        /// <param name="chain">The X509 chain policy used to validate</param>
         /// <returns>True if the certificate came from the authority</returns>
         public static bool PrettyChainValidation(X509Certificate2 cert, X509Chain chain)
         {
@@ -319,32 +339,39 @@ namespace Zazzles.Data
         }
 
         /// <summary>
-        /// 
+        /// Check if a PE file has a valid authenticode timestamp
         /// </summary>
-        /// <param name="filePath"></param>
+        /// <param name="filePath">The path to the PE file to check</param>
         /// <sources>
         /// https://tools.ietf.org/html/rfc5280
         /// https://www.gnutls.org/manual/html_node/X_002e509-extensions.html
         /// http://www.alvestrand.no/objectid/2.5.29.35.html
         /// </sources>
-        /// <returns></returns>
+        /// <returns>True if a timestamp is present and is valid (includes revocation checks)</returns>
         public static bool IsTimestampValid(string filePath)
         {
-            var deformatter = new AuthenticodeDeformatter(filePath);
-            var timestampPresent = (deformatter.SigningCertificate != null);
-            if (!timestampPresent)
-                return false;
+            if (string.IsNullOrEmpty(filePath))
+                throw new ArgumentException("Filepath to PE file must be provided!", nameof(filePath));
 
-            // Convert the mono x509Certificate to the pure .NET version
-            // and then generate a cert store in memory of all certificates needed
-            // to validate the timestamp
-            var signingCert = new X509Certificate2(deformatter.SigningCertificate.RawData);
+            // Use Mono's version of the X509 API to form authenticode extraction
+            // Standard .NET does not yet have the capability to parse this data yet
+            // Once Mono parses out the timestamper's certificate, convert it to a native
+            // X509Certificate2 to allow the rest of the RSA API to use the native
+            // implementation
+            var deformatter = new AuthenticodeDeformatter(filePath);
+            if (deformatter.SigningCertificate == null)
+                return false;
+            var timestamperCert = new X509Certificate2(deformatter.SigningCertificate.RawData);
+
+            // Gather the needed certificates to validate the timestamper's validity
             var store = new X509Store(StoreName.Root, StoreLocation.LocalMachine);
             store.Open(OpenFlags.ReadOnly);
-            var chainStore = BuildCertChainStore(signingCert, store);
+            var chainStore = BuildCertChainStore(timestamperCert, store);
             store.Close();
 
-            // Perform 
+            // Perform a chain validation using the certificate list generated
+            // The entire chain should be checked for revocations using offline cache 
+            // inorder to speed up the process
             var chain = new X509Chain
             {
                 ChainPolicy =
@@ -356,11 +383,17 @@ namespace Zazzles.Data
                     }
             };
             chain.ChainPolicy.ExtraStore.AddRange(chainStore);
-            var builds = PrettyChainValidation(signingCert, chain);
+            var chainBuilds = PrettyChainValidation(timestamperCert, chain);
 
-            return builds; 
+            return chainBuilds; 
         }
 
+        /// <summary>
+        /// Build a certificate list containing all certificates needed to perform a chain validate of the {cert} param
+        /// </summary>
+        /// <param name="cert">The certificate that needs to be validated</param>
+        /// <param name="store">An opened X509Store to extract keys from</param>
+        /// <return></return>
         private static X509Certificate2Collection BuildCertChainStore(X509Certificate2 cert, X509Store store)
         {
             if (cert == null)
@@ -369,8 +402,14 @@ namespace Zazzles.Data
                 throw new ArgumentNullException(nameof(store));
 
             var collection = new X509Certificate2Collection();
-            var authorityKey = ExtractX509Extension(cert, OID_AUTHORITY_KEY_IDENTIFIER);
 
+            // Calculate which certificate issued the given {cert} param
+            // Do this by extracting the Authority Key Identifier and searching
+            // the store for certificates with an identical Subject Key Identifier
+            // For all matches (though there should only be one), repeat the process
+            // until no matches are found. This will ensure certificates for the entire
+            // chain are selected
+            var authorityKey = ExtractX509Extension(cert, OidAuthorityKeyIdentifier);
             var matches = store.Certificates.Find(X509FindType.FindBySubjectKeyIdentifier, authorityKey.RawData, true);
             foreach (var match in matches)
             {
@@ -382,10 +421,18 @@ namespace Zazzles.Data
 
         }
 
+        /// <summary>
+        /// Extract an X509 extension matching the specified oid
+        /// </summary>
+        /// <param name="cert"></param>
+        /// <param name="oid">The oid to filter by</param>
+        /// <returns>An asn data wrapper or null if no match was found</returns>
         private static AsnEncodedData ExtractX509Extension(X509Certificate2 cert, string oid)
         {
             if (cert == null)
                 throw new ArgumentNullException(nameof(cert));
+            if (string.IsNullOrEmpty(oid))
+                throw new ArgumentException("Oid must be provided!", nameof(oid));
 
             foreach (var extension in cert.Extensions)
             {
