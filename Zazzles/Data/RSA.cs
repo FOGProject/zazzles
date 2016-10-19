@@ -385,7 +385,22 @@ namespace Zazzles.Data
             chain.ChainPolicy.ExtraStore.AddRange(chainStore);
             var chainBuilds = PrettyChainValidation(timestamperCert, chain);
 
-            return chainBuilds; 
+            if (!chainBuilds)
+                return false;
+
+            var peSigner = ExtractDigitalSignature(filePath);
+            if (peSigner.NotAfter <= deformatter.Timestamp)
+            {
+                Log.Error(LogName, "Binary was timestamped after the signer expired");
+                return false;
+            }
+            if (peSigner.NotBefore >= deformatter.Timestamp)
+            {
+                Log.Error(LogName, "Binary was timestamped before the signer became valid");
+                return false;
+            }
+
+            return true;
         }
 
         /// <summary>
