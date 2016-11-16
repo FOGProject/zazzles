@@ -1,7 +1,7 @@
 # Zazzles
 
 ## Concept
-Zazzles is a cross platform server<->client framework designed for the [FOG Client](https://github.com/FOGProject/fog-client).
+Zazzles is an opinionated cross platform server<->client framework designed for the [FOG Client](https://github.com/FOGProject/fog-client).
 
 ## Development
 [![Stories in progress](https://badge.waffle.io/FOGProject/zazzles.svg?label=In%20Progress&title=Issues%20In%20Progress)](http://waffle.io/FOGProject/zazzles)
