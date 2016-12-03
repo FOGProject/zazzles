@@ -104,6 +104,10 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Mono.Security, Version=4.0.0.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
+      <HintPath>..\packages\Mono.Security.3.2.3.0\lib\net40\Mono.Security.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=8.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.8.0.3\lib\net40\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
@@ -167,6 +171,7 @@
     <Compile Include="Debugger\Commands\User\UserCommand.cs" />
     <Compile Include="Debugger\Debugger.cs" />
     <Compile Include="Eager.cs" />
+    <Compile Include="Modules\Hotloader.cs" />
     <Compile Include="Middleware\Configuration.cs" />
     <Compile Include="Middleware\Authentication.cs" />
     <Compile Include="Middleware\Communication.cs" />
