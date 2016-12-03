@@ -38,6 +38,7 @@ namespace Zazzles
         private const string LogName = "Settings";
         private static string _file;
         private static JObject _data = new JObject();
+        private static JObject _session = new JObject();
         public static OSType OS { get; }
         public static string Location { get; }
 
@@ -116,6 +117,7 @@ namespace Zazzles
             try
             {
                 _data = JObject.Parse(File.ReadAllText(_file));
+                _session = JObject.Parse(File.ReadAllText(_file + ".session"));
             }
             catch (Exception ex)
             {
@@ -144,6 +146,22 @@ namespace Zazzles
             return false;
         }
 
+        private static bool SaveSession()
+        {
+            try
+            {
+                File.WriteAllText(_file + ".session", _session.ToString());
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Log.Error(LogName, "Unable to save session settings");
+                Log.Error(LogName, ex);
+            }
+
+            return false;
+        }
+
         /// <summary>
         /// </summary>
         /// <param name="key">The setting to retrieve</param>
@@ -158,6 +176,7 @@ namespace Zazzles
             try
             {
                 var value = _data.GetValue(key);
+                if (string.IsNullOrEmpty(value.ToString().Trim())) value = _session.GetValue(key);
                 return string.IsNullOrEmpty(value.ToString().Trim()) ? string.Empty : value.ToString().Trim();
             }
             catch (Exception)
@@ -173,16 +192,26 @@ namespace Zazzles
         /// </summary>
         /// <param name="key">The name of the setting</param>
         /// <param name="value">The new value of the setting</param>
-        public static void Set(string key, JToken value)
+        public static void Set(string key, JToken value, bool session = true)
         {
             if (string.IsNullOrEmpty(key))
                 throw new ArgumentException("Key must be provided!", nameof(key));
             if (value == null)
                 throw new ArgumentNullException(nameof(value));
 
-            if (_data == null) _data = new JObject();
-            _data[key] = value;
-            Save();
+            if (session)
+            {
+                if (_session == null) _session = new JObject();
+                _session[key] = value;
+                SaveSession();
+            }
+            else
+            {
+                if (_data == null) _data = new JObject();
+                _data[key] = value;
+                Save();
+            }
+
         }
     }
 }
