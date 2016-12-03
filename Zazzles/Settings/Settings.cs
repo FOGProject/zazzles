@@ -178,10 +178,11 @@ namespace Zazzles
 
             try
             {
-                JToken value;
-                _data.TryGetValue(key, out value);
-                if (_session != null && string.IsNullOrEmpty(value?.ToString()))
+                JToken value = null;
+                if (_session != null)
                     _session.TryGetValue(key, out value);
+                if (string.IsNullOrEmpty(value?.ToString()))
+                    _data.TryGetValue(key, out value);
                 if (value == null)
                     return string.Empty;
 
