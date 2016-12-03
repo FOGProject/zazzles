@@ -37,6 +37,8 @@ namespace Zazzles
 
         private const string LogName = "Settings";
         private static string _file;
+        private static string _sessionFile => _file + ".session";
+
         private static JObject _data = new JObject();
         private static JObject _session = new JObject();
         public static OSType OS { get; }
@@ -117,7 +119,8 @@ namespace Zazzles
             try
             {
                 _data = JObject.Parse(File.ReadAllText(_file));
-                _session = JObject.Parse(File.ReadAllText(_file + ".session"));
+                if (File.Exists(_sessionFile))
+                    _session = JObject.Parse(File.ReadAllText(_sessionFile));
             }
             catch (Exception ex)
             {
@@ -150,7 +153,7 @@ namespace Zazzles
         {
             try
             {
-                File.WriteAllText(_file + ".session", _session.ToString());
+                File.WriteAllText(_sessionFile, _session.ToString());
                 return true;
             }
             catch (Exception ex)
@@ -175,9 +178,14 @@ namespace Zazzles
 
             try
             {
-                var value = _data.GetValue(key);
-                if (string.IsNullOrEmpty(value.ToString().Trim())) value = _session.GetValue(key);
-                return string.IsNullOrEmpty(value.ToString().Trim()) ? string.Empty : value.ToString().Trim();
+                JToken value;
+                _data.TryGetValue(key, out value);
+                if (_session != null && string.IsNullOrEmpty(value?.ToString()))
+                    _session.TryGetValue(key, out value);
+                if (value == null)
+                    return string.Empty;
+
+                return string.IsNullOrEmpty(value.ToString()) ? string.Empty : value.ToString().Trim();
             }
             catch (Exception)
             {
