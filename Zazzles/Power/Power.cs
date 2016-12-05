@@ -273,9 +273,12 @@ namespace Zazzles
                     if (_requestData.message != null)
                         message = _requestData.message.ToString();
 
+                    if (_requestData.options == null)
+                        _requestData.options = ShutdownOptions.None;
+
                     if (ShouldAbort()) return;
 
-                    QueueShutdown(_requestData.command.ToString(), ShutdownOptions.None, message, (int) _requestData.period);
+                    QueueShutdown(_requestData.command.ToString(), _requestData.options, message, (int) _requestData.period);
                     return;
                 }
 
