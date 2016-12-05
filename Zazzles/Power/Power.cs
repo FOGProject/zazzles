@@ -124,7 +124,6 @@ namespace Zazzles
 
             AggregatedDelayTime = suggestedDelayAggregate;
 
-
             if (_timer != null)
             {
                 _timer.Stop();
@@ -134,15 +133,13 @@ namespace Zazzles
             if (delayTime < 1)
                 return;
 
-
             Log.Entry(LogName, $"Delayed power action by {friendlyDelayTime}");
-
             Notification.Emit(
                "Shutdown Delayed",
                $"Shutdown has been delayed for {friendlyDelayTime}");
 
             _delayed = true;
-            _timer = new Timer(delayTime*1000*60);
+            _timer = new Timer(TimeSpan.FromMinutes(delayTime).TotalMilliseconds);
             _timer.Elapsed += TimerElapsed;
             _timer.Start();
 
@@ -197,8 +194,8 @@ namespace Zazzles
             ShuttingDown = true;
         }
 
-        public static void QueueShutdown(string parameters, ShutdownOptions options = ShutdownOptions.Abort, string message = null,
-            int gracePeriod = -1)
+        public static void QueueShutdown(string parameters, ShutdownOptions options = ShutdownOptions.Abort, 
+            string message = null, int gracePeriod = -1)
         {
             // If no user is logged in, skip trying to notify users
             if (!User.AnyLoggedIn())
@@ -240,7 +237,12 @@ namespace Zazzles
             _requestData.options = options;
             _requestData.command = parameters;
             _requestData.aggregatedDelayTime = AggregatedDelayTime;
-            _requestData.message = message ?? "This computer needs to perform maintenance.";
+
+            var company = Settings.Get("Company");
+            if (string.IsNullOrEmpty(company))
+                company = "FOG";
+
+            _requestData.message = message ?? $"{company} needs to perform maintenance on this computer.";
 
             Bus.Emit(Bus.Channel.Power, _requestData, true);
             _timer = new Timer(gracePeriod*1000);
@@ -267,18 +269,16 @@ namespace Zazzles
                 if (_delayed)
                 {
                     _timer.Dispose();
-
-                    string message = null;
-
-                    if (_requestData.message != null)
-                        message = _requestData.message.ToString();
-
-                    if (_requestData.options == null)
-                        _requestData.options = ShutdownOptions.None;
-
                     if (ShouldAbort()) return;
 
-                    QueueShutdown(_requestData.command.ToString(), _requestData.options, message, (int) _requestData.period);
+                    string message = null;
+                    if (_requestData.message != null)
+                        message = _requestData.message.ToString();
+                    var options = (_requestData.options == null) ?
+                        ShutdownOptions.None :
+                        Enum.Parse(typeof(ShutdownOptions), _requestData.options.ToString());
+
+                    QueueShutdown(_requestData.command.ToString(), options, message, (int) _requestData.period);
                     return;
                 }
 
