@@ -22,7 +22,6 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using Mono.Security.Authenticode;
 
 namespace Zazzles.Data
 {
@@ -353,11 +352,16 @@ namespace Zazzles.Data
             if (string.IsNullOrEmpty(filePath))
                 throw new ArgumentException("Filepath to PE file must be provided!", nameof(filePath));
 
+            // Prevent method from running until a way of getting Mono.Security
+            // to run on a mono installation of a different version
+
+            throw new NotImplementedException();
             // Use Mono's version of the X509 API to perform authenticode extraction
             // Standard .NET does not yet have the capability to parse this data yet
             // Once Mono parses out the timestamper's certificate, convert it to a native
             // X509Certificate2 to allow the rest of the RSA API to use the native
             // implementation
+            /* 
             var deformatter = new AuthenticodeDeformatter(filePath);
             if (deformatter.SigningCertificate == null)
                 return false;
@@ -401,6 +405,7 @@ namespace Zazzles.Data
             }
 
             return true;
+            */
         }
 
         /// <summary>
