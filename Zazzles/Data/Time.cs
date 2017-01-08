@@ -1,6 +1,6 @@
 ﻿/*
  * Zazzles : A cross platform service framework
- * Copyright (C) 2014-2015 FOG Project
+ * Copyright (C) 2014-2017 FOG Project
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -28,7 +28,8 @@ namespace Zazzles.Data
             return FormatSeconds(totalMinutes*60);
         }
 
-        public static string FormatSeconds(double totalSeconds)
+        public static string FormatSeconds(double totalSeconds, string hourStr = "hour", string hoursStr = "hours", string minuteStr = "minute", 
+            string minutesStr = "minutes", string secondStr = "second", string secondsStr = "seconds")
         {
             var timeSpan = TimeSpan.FromSeconds(totalSeconds);
 
@@ -36,7 +37,9 @@ namespace Zazzles.Data
             var minutes = timeSpan.Minutes;
             var seconds = timeSpan.Seconds;
 
-            return BuildFormatSection(hours, "hour", "hours") + BuildFormatSection(minutes, "minute", "minutes") + BuildFormatSection(seconds, "second", "seconds");
+            return BuildFormatSection(hours, hourStr, hoursStr) + 
+                BuildFormatSection(minutes, minuteStr, minutesStr) + 
+                BuildFormatSection(seconds, secondStr, secondsStr);
         }
 
         private static string BuildFormatSection(int value, string singular, string plural)
