@@ -43,9 +43,7 @@ namespace Zazzles
             Log,
             Notification,
             Status,
-            Update,
-            RemoteRX,
-            RemoteTX
+            Update
         }
 
         /// <summary>
@@ -54,8 +52,7 @@ namespace Zazzles
         private static readonly IList<Channel> ProtectedChannels = new ReadOnlyCollection<Channel>(new List<Channel>
         {
             Channel.Status,
-            Channel.Update,
-            Channel.RemoteRX
+            Channel.Update
         });
 
         /// <summary>

@@ -1,6 +1,6 @@
 ﻿/*
  * Zazzles : A cross platform service framework
- * Copyright (C) 2014-2016 FOG Project
+ * Copyright (C) 2014-2017 FOG Project
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,6 +18,7 @@
  */
 
 using System;
+using System.IO;
 using System.Timers;
 using Newtonsoft.Json.Linq;
 using Zazzles.Data;
@@ -134,19 +135,11 @@ namespace Zazzles
                 return;
 
             Log.Entry(LogName, $"Delayed power action by {friendlyDelayTime}");
-            Notification.Emit(
-               "Shutdown Delayed",
-               $"Shutdown has been delayed for {friendlyDelayTime}");
 
             _delayed = true;
             _timer = new Timer(TimeSpan.FromMinutes(delayTime).TotalMilliseconds);
             _timer.Elapsed += TimerElapsed;
             _timer.Start();
-
-            if (Settings.OS == Settings.OSType.Windows)
-                return;
-
-            ProcessHandler.Run("wall", $"-n <<< \"Shutdown has been delayed by {friendlyDelayTime} \"", true);
         }
 
         /// <summary>
@@ -237,21 +230,12 @@ namespace Zazzles
             _requestData.options = options;
             _requestData.command = parameters;
             _requestData.aggregatedDelayTime = AggregatedDelayTime;
-
-            var company = Settings.Get("Company");
-            if (string.IsNullOrEmpty(company))
-                company = "FOG";
-
-            _requestData.message = message ?? $"{company} needs to perform maintenance on this computer.";
+            _requestData.message = message ?? string.Empty;
 
             Bus.Emit(Bus.Channel.Power, _requestData, true);
             _timer = new Timer(gracePeriod*1000);
             _timer.Elapsed += TimerElapsed;
             _timer.Start();
-
-            // Notify all open consoles about the shutdown (for ssh users)
-            if (Settings.OS == Settings.OSType.Windows) return;
-            ProcessHandler.Run("wall", $"-n <<< \"Shutdown will occur in {gracePeriod} seconds\"", true);
         }
 
         private static bool ShouldAbort()
@@ -363,10 +347,6 @@ namespace Zazzles
             abortJson.action = "abort";
             _shouldAbortFunc = null;
             Bus.Emit(Bus.Channel.Power, abortJson, true);
-
-            Notification.Emit(
-             "Shutdown Aborted",
-             "Shutdown has been aborted");
         }
     }
 }
