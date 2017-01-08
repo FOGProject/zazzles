@@ -23,9 +23,10 @@ namespace Zazzles.Data
 {
     public static class Time
     {
-        public static string FormatMinutes(double totalMinutes)
+        public static string FormatMinutes(double totalMinutes, string hourStr = "hour", string hoursStr = "hours", string minuteStr = "minute",
+            string minutesStr = "minutes", string secondStr = "second", string secondsStr = "seconds")
         {
-            return FormatSeconds(totalMinutes*60);
+            return FormatSeconds(totalMinutes*60, hourStr, hoursStr, minuteStr, minutesStr, secondStr, secondsStr);
         }
 
         public static string FormatSeconds(double totalSeconds, string hourStr = "hour", string hoursStr = "hours", string minuteStr = "minute", 
