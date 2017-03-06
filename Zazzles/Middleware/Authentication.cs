@@ -37,7 +37,9 @@ namespace Zazzles.Middleware
     {
         private const string LogName = "Middleware::Authentication";
         private static byte[] Passkey;
+        #if DEBUG
         public static byte[] TestPassKey;
+        #endif
         private static AutoResetEvent CanAuth;
         private static Timer EventTimer;
 
@@ -174,19 +176,25 @@ namespace Zazzles.Middleware
         /// <returns>True if the server was contacted successfully</returns>
         public static string Decrypt(string toDecode)
         {
+            // Legacy API support (2 different flags were used at one point)
             const string encryptedFlag = "#!en=";
             const string encryptedFlag2 = "#!enkey=";
+            
+            byte[] key = Passkey;
+            #if DEBUG
+            if (TestPasskey) key = TestPasskey;
+            #endif
 
             if (toDecode.StartsWith(encryptedFlag2))
             {
                 var decryptedResponse = toDecode.Substring(encryptedFlag2.Length);
-                toDecode = AES.Decrypt(decryptedResponse, TestPassKey ?? Passkey);
+                toDecode = AES.Decrypt(decryptedResponse, key);
                 return toDecode;
             }
             if (!toDecode.StartsWith(encryptedFlag)) return toDecode;
 
             var decrypted = toDecode.Substring(encryptedFlag.Length);
-            return AES.Decrypt(decrypted, TestPassKey ?? Passkey);
+            return AES.Decrypt(decrypted, key);
         }
     }
 }
