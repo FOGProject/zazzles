@@ -21,11 +21,8 @@ namespace Zazzles.PowerComponents
 {
     internal interface IPower
     {
-        void Shutdown(string comment, Power.ShutdownOptions options = Power.ShutdownOptions.Abort, string message = null,
-            int seconds = 30);
-
-        void Restart(string comment, Power.ShutdownOptions options = Power.ShutdownOptions.Abort, string message = null,
-            int seconds = 30);
+        void Shutdown(string comment, Power.ShutdownOptions options = Power.ShutdownOptions.Abort, string message = null);
+        void Restart(string comment, Power.ShutdownOptions options = Power.ShutdownOptions.Abort, string message = null);
 
         void LogOffUser();
         void Hibernate();

@@ -24,22 +24,14 @@ namespace Zazzles.PowerComponents
 {
     internal class MacPower : IPower
     {
-        public void Shutdown(string comment, Power.ShutdownOptions options = Power.ShutdownOptions.Abort, string message = null,
-            int seconds = 30)
+        public void Shutdown(string comment, Power.ShutdownOptions options = Power.ShutdownOptions.Abort, string message = null)
         {
-            var minutes = seconds/60.0;
-            var timeDelay = (int) Math.Round(minutes);
-
-            Power.QueueShutdown($"-h +{timeDelay} \"{comment}\"", options, message);
+            Power.QueueShutdown($"-h +0 \"{comment}\"", options, message);
         }
 
-        public void Restart(string comment, Power.ShutdownOptions options = Power.ShutdownOptions.Abort, string message = null,
-            int seconds = 30)
+        public void Restart(string comment, Power.ShutdownOptions options = Power.ShutdownOptions.Abort, string message = null)
         {
-            var minutes = seconds/60.0;
-            var timeDelay = (int) Math.Round(minutes);
-
-            Power.QueueShutdown($"-r +{timeDelay} \"{comment}\"", options, message);
+            Power.QueueShutdown($"-r +0 \"{comment}\"", options, message);
         }
 
         public void LogOffUser()

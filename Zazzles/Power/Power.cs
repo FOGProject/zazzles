@@ -18,7 +18,6 @@
  */
 
 using System;
-using System.IO;
 using System.Timers;
 using Newtonsoft.Json.Linq;
 using Zazzles.Data;
@@ -177,11 +176,11 @@ namespace Zazzles
             Log.Entry(LogName, "Creating shutdown request");
             Log.Entry(LogName, "Parameters: " + parameters);
 
-            Instance.CreateTask(parameters);
-
             dynamic json = new JObject();
             json.action = "shuttingdown";
             Bus.Emit(Bus.Channel.Power, json, true);
+
+            Instance.CreateTask(parameters);
 
             Requested = false;
             ShuttingDown = true;
@@ -277,30 +276,28 @@ namespace Zazzles
             }
         }
 
-        public static void Shutdown(string comment, ShutdownOptions options = ShutdownOptions.Abort, string message = null,
-            int seconds = 0)
+        public static void Shutdown(string comment, ShutdownOptions options = ShutdownOptions.Abort, string message = null)
         {
-            Instance.Shutdown(comment, options, message, seconds);
+            Instance.Shutdown(comment, options, message);
         }
 
-        public static void Restart(string comment, ShutdownOptions options = ShutdownOptions.Abort, string message = null,
-            int seconds = 0)
+        public static void Restart(string comment, ShutdownOptions options = ShutdownOptions.Abort, string message = null)
         {
-            Instance.Restart(comment, options, message, seconds);
+            Instance.Restart(comment, options, message);
         }
 
         public static void Shutdown(string comment, Func<bool> abortCheckFunc, ShutdownOptions options = ShutdownOptions.Abort,
-            string message = null, int seconds = 0)
+            string message = null)
         {
             _shouldAbortFunc = abortCheckFunc;
-            Shutdown(comment, options, message, seconds);
+            Shutdown(comment, options, message);
         }
 
         public static void Restart(string comment, Func<bool> abortCheckFunc, ShutdownOptions options = ShutdownOptions.Abort,
-            string message = null, int seconds = 0)
+            string message = null)
         {
             _shouldAbortFunc = abortCheckFunc;
-            Restart(comment, options, message, seconds);
+            Restart(comment, options, message);
         }
 
         /// <summary>
