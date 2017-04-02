@@ -138,8 +138,7 @@ namespace Zazzles
         public virtual void Stop()
         {
             Log.Entry(Name, "Stop requested");
-            if (_moduleThread.IsAlive)
-                _moduleThread.Abort();
+            _moduleThread.Abort();
             Unload();
         }
     }
