@@ -97,15 +97,7 @@ namespace Zazzles.PowerComponents
             {
                 Log.Entry(LogName, $"Attempt {i + 1}/{attempts} to shutdown computer");
                 var result = PowerUtilities.ExitWindows(action, ShutdownReason.MinorMaintenance);
-
-                if (result != 0)
-                {
-                    Log.Error(LogName, $"--> API call returned {result}, will re-attempt in 5 minutes");
-                }
-                else
-                {
-                    Log.Entry(LogName, "Waiting 5 minutes for shutdown request to be processed");
-                }
+                Log.Entry(LogName, $"--> API call returned {result}, will re-attempt in 5 minutes");
 
                 // Busy wait for 5 minutes to ensure the request went through (it may be blocked)
                 for (int j = 0; j < 5; j++)
@@ -121,6 +113,8 @@ namespace Zazzles.PowerComponents
             {
                 var proc = Process.Start("shutdown", parameters);
                 proc.WaitForExit(60 * 1000);
+                Log.Entry(LogName, "Issued shutdown request, will re-issue in 5 minutes");
+                Thread.Sleep(5* 60 * 1000);
             }
         }
 
