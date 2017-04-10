@@ -36,8 +36,8 @@ namespace Zazzles.UserComponents
             {
                 StartInfo = new ProcessStartInfo
                 {
-                    FileName = "w",
-                    Arguments = "-h -s",
+                    FileName = "users",
+                    Arguments = "",
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
                     CreateNoWindow = true
@@ -47,15 +47,13 @@ namespace Zazzles.UserComponents
                 process.Start();
                 while (!process.StandardOutput.EndOfStream)
                 {
-                    var user = process.StandardOutput.ReadLine();
-                    if (!string.IsNullOrWhiteSpace(user)) usersInfo.Add(user);
-                }
-            }
+                    var line = process.StandardOutput.ReadLine();
+                    if (string.IsNullOrWhiteSpace(line)) break;
 
-            for (var i = 0; i < usersInfo.Count; i++)
-            {
-                var splitUser = usersInfo[i].Split(null);
-                usersInfo[i] = splitUser[0];
+                    var users = line.Split(' ');
+                    usersInfo.AddRange(users);
+
+                }
             }
             usersInfo = usersInfo.Distinct().ToList();
 
