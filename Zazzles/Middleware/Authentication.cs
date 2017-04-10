@@ -1,6 +1,6 @@
 ﻿/*
  * Zazzles : A cross platform service framework
- * Copyright (C) 2014-2016 FOG Project
+ * Copyright (C) 2014-2017 FOG Project
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -37,9 +37,6 @@ namespace Zazzles.Middleware
     {
         private const string LogName = "Middleware::Authentication";
         private static byte[] Passkey;
-        #if DEBUG
-        public static byte[] TestPassKey;
-        #endif
         private static AutoResetEvent CanAuth;
         private static Timer EventTimer;
 
@@ -180,21 +177,16 @@ namespace Zazzles.Middleware
             const string encryptedFlag = "#!en=";
             const string encryptedFlag2 = "#!enkey=";
             
-            byte[] key = Passkey;
-            #if DEBUG
-            if (TestPasskey) key = TestPasskey;
-            #endif
-
             if (toDecode.StartsWith(encryptedFlag2))
             {
                 var decryptedResponse = toDecode.Substring(encryptedFlag2.Length);
-                toDecode = AES.Decrypt(decryptedResponse, key);
+                toDecode = AES.Decrypt(decryptedResponse, Passkey);
                 return toDecode;
             }
             if (!toDecode.StartsWith(encryptedFlag)) return toDecode;
 
             var decrypted = toDecode.Substring(encryptedFlag.Length);
-            return AES.Decrypt(decrypted, key);
+            return AES.Decrypt(decrypted, Passkey);
         }
     }
 }
