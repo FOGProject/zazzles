@@ -361,7 +361,7 @@ namespace Zazzles.Data
             // Once Mono parses out the timestamper's certificate, convert it to a native
             // X509Certificate2 to allow the rest of the RSA API to use the native
             // implementation
-            /* 
+             
             var deformatter = new AuthenticodeDeformatter(filePath);
             if (deformatter.SigningCertificate == null)
                 return false;
@@ -405,7 +405,7 @@ namespace Zazzles.Data
             }
 
             return true;
-            */
+            
         }
 
         /// <summary>

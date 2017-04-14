@@ -183,7 +183,7 @@ namespace Zazzles
             {
                 var transport = new JObject { {"self", true}, {"channel", channel.ToString()}, {"data", data}};
                 if (channel != Channel.Log)
-                    Log.Entry(LogName, transport.ToString());
+                    Log.Debug(LogName, transport.ToString());
                 SendMessage(transport.ToString());
 
                 // If this bus instance is a client, wait for the event to be bounced-back before processing
@@ -217,7 +217,7 @@ namespace Zazzles
             if (action == null)
                 throw new ArgumentNullException(nameof(action));
 
-            Log.Entry(LogName, $"Registering {action.Method.Name} in channel {channel}");
+            Log.Debug(LogName, $"Registering {action.Method.Name} in channel {channel}");
 
             if (!Registrar.ContainsKey(channel))
                 Registrar.Add(channel, new LinkedList<Action<JObject>>());
@@ -236,7 +236,7 @@ namespace Zazzles
             if (action == null)
                 throw new ArgumentNullException(nameof(action));
 
-            Log.Entry(LogName, $"UnRegistering {action.Method.Name} in channel {channel}");
+            Log.Debug(LogName, $"UnRegistering {action.Method.Name} in channel {channel}");
 
             if (!Registrar.ContainsKey(channel)) return;
             Registrar[channel].Remove(action);

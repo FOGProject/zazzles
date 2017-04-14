@@ -1,6 +1,6 @@
 ﻿/*
  * Zazzles : A cross platform service framework
- * Copyright (C) 2014-2016 FOG Project
+ * Copyright (C) 2014-2017 FOG Project
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -36,14 +36,14 @@ namespace Zazzles
         {
             Name = "Service";
 
-            Log.Entry("Zazzles", "Creating main thread");
+            Log.Debug("Zazzles", "Creating main thread");
             _moduleThread = new Thread(BootStrapModules)
             {
                 Priority = ThreadPriority.Normal,
                 IsBackground = false
             };
 
-            Log.Entry("Zazzles", "Service construction complete");
+            Log.Debug("Zazzles", "Service construction complete");
         }
 
         public string Name { get; protected set; }
