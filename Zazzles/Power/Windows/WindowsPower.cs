@@ -60,10 +60,10 @@ namespace Zazzles.PowerComponents
             if (parameters.StartsWith("/r"))
             {
                 action = ExitWindows.Reboot;
-            } else if(parameters.StartsWith("/s"))
+            } else if (parameters.StartsWith("/s"))
             {
                 action = ExitWindows.ShutDown;
-            } 
+            }
 
             if (action != ExitWindows.Reboot && action != ExitWindows.PowerOff)
             {
@@ -82,10 +82,10 @@ namespace Zazzles.PowerComponents
             AttemptShutdowns(action, 6);
 
             Log.Entry(LogName, "Gracefull shutdown requests failed, attempting to force shutdown");
-            AttemptShutdowns(action & ExitWindows.Force, 3);
+            AttemptShutdowns(action | ExitWindows.Force, 3);
 
             Log.Entry(LogName, "Force shutdown requests failed, bypassing any shutdown blocks");
-            AttemptShutdowns(action & ExitWindows.ForceIfHung, 3);
+            AttemptShutdowns(action | ExitWindows.ForceIfHung, 3);
 
             Log.Error(LogName, "Failed to bypass shutdown blocks, entering saftey net to ensure a shutdown");
             SafteyNet(parameters);
