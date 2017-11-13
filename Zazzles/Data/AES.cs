@@ -41,11 +41,12 @@ namespace FOG.Handlers.Data
         {
             try
             {
-                using (var rijndaelManaged = new RijndaelManaged { Key = key, IV = iv, Mode = CipherMode.CBC, Padding = PaddingMode.Zeros })
+
+                using (var aesManaged = new AesManaged { Key = key, IV = iv, Mode = CipherMode.CBC, Padding = PaddingMode.Zeros })
                 using (var memoryStream = new MemoryStream(toDecode))
-                using (var cryptoStream = new CryptoStream(memoryStream, rijndaelManaged.CreateDecryptor(), CryptoStreamMode.Read))
-                {
-                    //Return the  stream, but trim null bytes due to reading too far
+                using (var cryptoStream = new CryptoStream(memoryStream, aesManaged.CreateDecryptor(), CryptoStreamMode.Read))
+                { 
+                    //Return the  stream, but trim null bytes from zero padding
                     return new StreamReader(cryptoStream).ReadToEnd().Replace("\0", string.Empty).Trim();
                 }
             }
