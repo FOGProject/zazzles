@@ -49,7 +49,7 @@ namespace Zazzles.PowerComponents
             Process.Start(@"/System/Library/CoreServices/Menu\ Extras/User.menu/Contents/Resources/CGSession -suspend");
         }
 
-        public void CreateTask(string parameters)
+        public void CreateTask(string parameters, string message)
         {
             Process.Start("shutdown", parameters);
         }

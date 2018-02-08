@@ -165,7 +165,7 @@ namespace Zazzles
         ///     Create a shutdown command
         /// </summary>
         /// <param name="parameters">The parameters to use</param>
-        public static void CreateTask(string parameters)
+        public static void CreateTask(string parameters, string message = "")
         {
             if (parameters == null)
                 throw new ArgumentNullException(nameof(parameters));
@@ -180,7 +180,7 @@ namespace Zazzles
             json.action = "shuttingdown";
             Bus.Emit(Bus.Channel.Power, json, true);
 
-            Instance.CreateTask(parameters);
+            Instance.CreateTask(parameters, message);
 
             Requested = false;
             ShuttingDown = true;
@@ -192,7 +192,7 @@ namespace Zazzles
             // If no user is logged in, skip trying to notify users
             if (!User.AnyLoggedIn())
             {
-                CreateTask(parameters);
+                CreateTask(parameters, message);
                 return;
             }
 
@@ -267,7 +267,7 @@ namespace Zazzles
 
                 if (ShouldAbort()) return;
 
-                CreateTask(_requestData.command.ToString());
+                CreateTask(_requestData.command.ToString(), _requestData.message.ToString());
             }
             catch (Exception ex)
             {

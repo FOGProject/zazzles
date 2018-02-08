@@ -49,7 +49,7 @@ namespace Zazzles.PowerComponents
             throw new NotImplementedException();
         }
 
-        public void CreateTask(string parameters)
+        public void CreateTask(string parameters, string message)
         {
             Process.Start("shutdown", parameters);
         }

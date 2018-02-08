@@ -54,8 +54,11 @@ namespace Zazzles.PowerComponents
             lockWorkStation();
         }
 
-        public void CreateTask(string parameters)
+        public void CreateTask(string parameters, string message)
         {
+            if(string.IsNullOrWhiteSpace(message))
+                message = string.Empty;
+
             ExitWindows action = ExitWindows.LogOff;
             if (parameters.StartsWith("/r"))
             {
@@ -78,25 +81,24 @@ namespace Zazzles.PowerComponents
                 SafteyNet(parameters);
                 return;
             }
+            var reboot = (action == ExitWindows.Reboot);
 
-            AttemptShutdowns(action, 6);
+            AttemptShutdowns(reboot, message, false, 6);
 
             Log.Entry(LogName, "Gracefull shutdown requests failed, attempting to force shutdown");
-            AttemptShutdowns(action | ExitWindows.Force, 3);
-
-            Log.Entry(LogName, "Force shutdown requests failed, bypassing any shutdown blocks");
-            AttemptShutdowns(action | ExitWindows.ForceIfHung, 3);
+            AttemptShutdowns(reboot, message, true, 3);
 
             Log.Error(LogName, "Failed to bypass shutdown blocks, entering saftey net to ensure a shutdown");
             SafteyNet(parameters);
         }
 
-        private void AttemptShutdowns(ExitWindows action, int attempts)
+        private void AttemptShutdowns(bool reboot, string message, bool force, int attempts)
         {
+            var reason = ShutdownReason.MajorApplication | ShutdownReason.MinorMaintenance | ShutdownReason.FlagPlanned;
             for (int i = 0; i < attempts; i++)
             {
                 Log.Entry(LogName, $"Attempt {i + 1}/{attempts} to shutdown computer");
-                var result = PowerUtilities.ExitWindows(action, ShutdownReason.MinorMaintenance);
+                var result = PowerUtilities.InitiateSystemShutdown(message, 0, force, reboot, reason);
                 Log.Entry(LogName, $"--> API call returned {result}, will re-attempt in 5 minutes");
 
                 // Busy wait for 5 minutes to ensure the request went through (it may be blocked)
@@ -127,10 +129,27 @@ namespace Zazzles.PowerComponents
     {
         [DllImport("user32.dll", SetLastError = true)]
         private static extern int ExitWindowsEx(ExitWindows uFlags, ShutdownReason dwReason);
+        [DllImport("advapi32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        private static extern int InitiateSystemShutdownEx(string lpMachineName, string lpMessage, 
+            uint dwTimeout, bool bForceAppsClosed,
+            bool bRebootAfterShutdown,ShutdownReason dwReason);
 
         public static int ExitWindows(ExitWindows exitWindows, ShutdownReason reason)
         {
             return ExitWindowsEx(exitWindows, reason);
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message">The message to record</param>
+        /// <param name="timeout">How long to show the shutdown dialog box, in seconds. If zero, there is no prompt and it cannot be aborted easily</param>
+        /// <param name="force">Forcibly close all applications, even if they have unsaved changes</param>
+        /// <param name="reboot">Restart the machine immediately after shutdown</param>
+        /// <param name="reason"></param>
+        /// <returns></returns>
+        public static int InitiateSystemShutdown(string message, uint timeout, bool force, bool reboot, ShutdownReason reason)
+        {
+            return InitiateSystemShutdownEx(null, message, timeout, force, reboot, reason);
         }
     }
 

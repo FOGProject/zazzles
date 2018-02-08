@@ -27,6 +27,6 @@ namespace Zazzles.PowerComponents
         void LogOffUser();
         void Hibernate();
         void LockWorkStation();
-        void CreateTask(string parameters);
+        void CreateTask(string parameters, string message = "");
     }
 }
