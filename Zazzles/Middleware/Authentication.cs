@@ -134,6 +134,10 @@ namespace Zazzles.Middleware
         {
             try
             {
+                if (!File.Exists(filePath))
+                {
+                    Log.Warn(LogName, $"No token found at {filePath}, this is expected if the client has not authenticated before");
+                }
                 var token = File.ReadAllBytes(filePath);
                 token = DPAPI.UnProtectData(token, true);
                 return token;

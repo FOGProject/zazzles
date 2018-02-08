@@ -36,6 +36,7 @@ namespace Zazzles
         {
             Normal,
             Debug,
+            Warn,
             Error
         }
 
@@ -108,6 +109,11 @@ namespace Zazzles
         public static void Error(string caller, string message)
         {
             Entry(Level.Error, caller, message);
+        }
+
+        public static void Warn(string caller, string message)
+        {
+            Entry(Level.Warn, caller, message);
         }
 
         public static void Error(string caller, Exception ex)
