@@ -221,17 +221,19 @@ namespace Zazzles.Middleware
                 Log.Error(LogName, "Invalid parameters");
                 return false;
             }
-
-            // Assign values to these objects here so that they can
-            // be referenced in the finally block
-            Stream remoteStream = null;
-            Stream localStream = null;
-            WebResponse response = null;
-
-            var err = false;
-
-            // Use a try/catch/finally block as both the WebRequest and Stream
-            // classes throw exceptions upon error
+            try
+            {
+                if (File.Exists(filePath))
+                {
+                    File.Delete(filePath);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(LogName, "Could not delete existing file");
+                Log.Error(LogName, ex);
+                return false;
+            }
             try
             {
                 if (!Directory.Exists(Path.GetDirectoryName(filePath)))
@@ -239,52 +241,19 @@ namespace Zazzles.Middleware
                     Directory.CreateDirectory(Path.GetDirectoryName(filePath));
                 }
 
-                // Create a request for the specified remote file name
-                var request = WebRequest.Create(url);
-                // Send the request to the server and retrieve the
-                // WebResponse object 
-                response = request.GetResponse();
+                using (var wclient = new WebClient())
                 {
-                    // Once the WebResponse object has been retrieved,
-                    // get the stream object associated with the response's data
-                    remoteStream = response.GetResponseStream();
-
-                    // Create the local file
-                    localStream = File.Create(filePath);
-
-                    // Allocate a 1k buffer
-                    var buffer = new byte[1024];
-                    int bytesRead;
-
-                    // Simple do/while loop to read from stream until
-                    // no bytes are returned
-                    do
-                    {
-                        // Read data (up to 1k) from the stream
-                        bytesRead = remoteStream.Read(buffer, 0, buffer.Length);
-
-                        // Write the data to the local file
-                        localStream.Write(buffer, 0, bytesRead);
-                    } while (bytesRead > 0);
+                    wclient.DownloadFile(url, filePath);
                 }
             }
             catch (Exception ex)
             {
                 Log.Error(LogName, "Could not download file");
                 Log.Error(LogName, ex);
-                err = true;
-            }
-            finally
-            {
-                // Close the response and streams objects here 
-                // to make sure they're closed even if an exception
-                // is thrown at some point
-                response?.Close();
-                remoteStream?.Close();
-                localStream?.Close();
+                return false;
             }
 
-            return !err && File.Exists(filePath);
+            return File.Exists(filePath);
         }
     }
 }
