@@ -41,6 +41,14 @@ namespace Zazzles.Debugger.Commands.Middleware
                 Log.Entry(LogName, "MAC: " + Configuration.MACAddresses());
                 return true;
             }
+            if (args[0].EndsWith("getmac"))
+            {
+                Log.Entry(LogName, "Native MAC:  " + Configuration.MACAddresses(NetAdapterType.Native));
+                Log.Entry(LogName, "USB MAC:     " + Configuration.MACAddresses(NetAdapterType.USB));
+                Log.Entry(LogName, "Virtual MAC: " + Configuration.MACAddresses(NetAdapterType.Virtual));
+                Log.Entry(LogName, "All Macs:    " + Configuration.MACAddresses());
+                return true;
+            }
             if (args[0].Equals("default"))
             {
                 Configuration.ServerAddress = Server;
@@ -67,6 +75,7 @@ namespace Zazzles.Debugger.Commands.Middleware
         {
             Log.WriteLine("Available commands");
             Log.WriteLine("--> info");
+            Log.WriteLine("--> getmac");
             Log.WriteLine("--> default");
             Log.WriteLine("--> server  [SERVER_ADDRESS]");
             Log.WriteLine("--> mac     [MAC_ADDRESS]");
