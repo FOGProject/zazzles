@@ -17,16 +17,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+using Zazzles.Core.Power.DataContract;
+
 namespace Zazzles.Core
 {
     public interface IPower
     {
-        void Shutdown(string comment, Power.ShutdownOptions options = Power.ShutdownOptions.Abort, string message = null);
-        void Restart(string comment, Power.ShutdownOptions options = Power.ShutdownOptions.Abort, string message = null);
-
         void LogOffUser();
         void Hibernate();
         void LockWorkStation();
-        void CreateTask(string parameters, string message = "");
+        void ProcessRequest(PowerRequest request);
     }
 }

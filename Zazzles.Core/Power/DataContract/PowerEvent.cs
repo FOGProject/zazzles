@@ -24,9 +24,9 @@ namespace Zazzles.Core.Power.DataContract
 {
 
     [DataContract(Name="PowerEvent")]
-    [KnownType(typeof(RequestAbort))]
-    [KnownType(typeof(RequestDelay))]
-    public class Notification
+    [KnownType(typeof(Notify))]
+    [KnownType(typeof(PowerRequest))]
+    public class PowerEvent
     {
 
     }

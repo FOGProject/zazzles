@@ -21,14 +21,15 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using Zazzles.Core.User;
 
-namespace Zazzles.UserComponents
+namespace Zazzles.Linux.User
 {
     public class LinuxUser : IUser
     {
         private const string LogName = "User";
 
-        public List<string> GetUsersLoggedIn()
+        public IEnumerable<string> GetUsersLoggedIn()
         {
             var usersInfo = new List<string>();
 
@@ -55,9 +56,8 @@ namespace Zazzles.UserComponents
 
                 }
             }
-            usersInfo = usersInfo.Distinct().ToList();
 
-            return usersInfo;
+            return usersInfo.Distinct();
         }
 
         public int GetInactivityTime()

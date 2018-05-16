@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+ /*
 using System;
 using System.Timers;
 using Microsoft.Extensions.Logging;
@@ -269,12 +270,15 @@ namespace Zazzles.Core.Power
 
         public void Shutdown(string comment, ShutdownOptions options = ShutdownOptions.Abort, string message = null)
         {
-            Instance.Shutdown(comment, options, message);
+            var command = Instance.CreateShutdownCommand(comment);
+            QueueShutdown(command, options, message);
+            
         }
 
         public void Restart(string comment, ShutdownOptions options = ShutdownOptions.Abort, string message = null)
         {
-            Instance.Restart(comment, options, message);
+            var command = Instance.CreateRestartCommand(comment);
+            QueueShutdown(command, options, message);
         }
 
         public void Shutdown(string comment, Func<bool> abortCheckFunc, ShutdownOptions options = ShutdownOptions.Abort,
@@ -338,3 +342,5 @@ namespace Zazzles.Core.Power
         }
     }
 }
+
+*/

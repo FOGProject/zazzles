@@ -22,7 +22,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Management;
 using System.Runtime.InteropServices;
-using Zazzles.UserComponents;
+using Zazzles.Core.User;
 
 namespace Zazzles.Windows.User
 {
@@ -76,14 +76,14 @@ namespace Zazzles.Windows.User
             return (int) idleTime/1000;
         }
 
-        public List<string> GetUsersLoggedIn()
+        public IEnumerable<string> GetUsersLoggedIn()
         {
             var sessionIds = GetSessionIds();
 
             return (from sessionId in sessionIds
                 where !GetUserNameFromSessionId(sessionId, false)
                     .Equals("SYSTEM")
-                select GetUserNameFromSessionId(sessionId, false)).Distinct().ToList();
+                select GetUserNameFromSessionId(sessionId, false)).Distinct();
         }
 
         [DllImport("user32.dll")]

@@ -22,31 +22,32 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Threading;
+using Zazzles.Core;
 
 namespace Zazzles.Windows.Power
 {
-    internal class WindowsPower : IPower
+    public class WindowsPower : IPower
     {
         private const string LogName = "Power";
 
-        public void Shutdown(string comment, Power.ShutdownOptions options = Power.ShutdownOptions.Abort, string message = null)
+        public string CreateShutdownCommand(string comment)
         {
-            Power.QueueShutdown($"/s /c \"{comment}\" /t 0", options, message);
+            return $"/s /c \"{comment}\" /t 0";
         }
 
-        public void Restart(string comment, Power.ShutdownOptions options = Power.ShutdownOptions.Abort, string message = null)
+        public string CreateRestartCommand(string comment)
         {
-            Power.QueueShutdown($"/r /c \"{comment}\" /t 0", options, message);
+            return $"/r /c \"{comment}\" /t 0";
         }
 
         public void LogOffUser()
         {
-            Power.CreateTask("/l");
+            CreateTask("/l", "");
         }
 
         public void Hibernate()
         {
-            Power.CreateTask("/h");
+            CreateTask("/h", "");
         }
 
         public void LockWorkStation()

@@ -1,6 +1,6 @@
 ﻿/*
  * Zazzles : A cross platform service framework
- * Copyright (C) 2014-2015 FOG Project
+ * Copyright (C) 2014-2018 FOG Project
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,17 +17,27 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-using NUnit.Framework;
 
-namespace Zazzles.Tests.Data
+using System.Runtime.Serialization;
+
+namespace Zazzles.Core.Power.DataContract
 {
-    [TestFixture]
-    public class RSATests
+
+    public enum PowerAction
     {
-        [SetUp]
-        public void Init()
-        {
-            Log.Output = Log.Mode.Console;
-        }
+        Abort,
+        Shutdown,
+        Reboot
+    }
+
+    [DataContract(Name="PowerRequest")]
+    public class PowerRequest : PowerEvent
+    {
+        [DataMember(Name = "comment", IsRequired = true)]
+        public string Comment { get; set; }
+
+        [DataMember(Name = "action", IsRequired = true)]
+        public PowerAction Action { get; set; }
+
     }
 }

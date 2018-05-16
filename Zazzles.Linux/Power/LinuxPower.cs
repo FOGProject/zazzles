@@ -19,21 +19,13 @@
 
 using System;
 using System.Diagnostics;
+using Zazzles.Core;
+using Zazzles.Core.Power.DataContract;
 
-namespace Zazzles.PowerComponents
+namespace Zazzles.Linux.Power
 {
     public class LinuxPower : IPower
     {
-        public void Shutdown(string comment, Power.ShutdownOptions options = Power.ShutdownOptions.Abort, string message = null)
-        {
-            Power.QueueShutdown($"-h +0 \"{comment}\"", options, message);
-        }
-
-        public void Restart(string comment, Power.ShutdownOptions options = Power.ShutdownOptions.Abort, string message = null)
-        {
-            Power.QueueShutdown($"-r +0 \"{comment}\"", options, message);
-        }
-
         public void LogOffUser()
         {
             Process.Start("logout");
@@ -46,11 +38,26 @@ namespace Zazzles.PowerComponents
 
         public void LockWorkStation()
         {
+            // gnome-screensaver-command -l
+            // physlock 
             throw new NotImplementedException();
         }
 
-        public void CreateTask(string parameters, string message)
+        public void ProcessRequest(PowerRequest request)
         {
+            var switches = "";
+            switch(request.Action)
+            {
+                case PowerAction.Shutdown:
+                    switches = "-h";
+                    break;
+                case PowerAction.Reboot:
+                    switches = "-r";
+                    break;
+                default:
+                    return;
+            } 
+            var parameters = $"{switches} + 0 \"{request.Comment}\"";
             Process.Start("shutdown", parameters);
         }
     }

@@ -21,7 +21,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Zazzles.UserComponents;
+using Zazzles.Core.User;
 
 namespace Zazzles.Mac.User
 {
@@ -29,7 +29,7 @@ namespace Zazzles.Mac.User
     {
         private const string LogName = "User";
 
-        public List<string> GetUsersLoggedIn()
+        public IEnumerable<string> GetUsersLoggedIn()
         {
             var usersInfo = new List<string>();
 
