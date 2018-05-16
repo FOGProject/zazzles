@@ -55,7 +55,6 @@ namespace Zazzles.Core.PubSub
             MetaData receivedMeta = null;
             string receivedPayload = null;
 
-            bus.RegisterTypeCaster<string>();
             bus.Subscribe<string>((msg) =>
             {
                 receivedMeta = msg.MetaData;
@@ -88,8 +87,6 @@ namespace Zazzles.Core.PubSub
             var payload = "foobar";
 
             bool ipcCalled = false;
-
-            bus.RegisterTypeCaster<string>();
 
             mockAgent.Out += (sender, data) => {
                 ipcCalled = true;
@@ -163,7 +160,6 @@ namespace Zazzles.Core.PubSub
             MetaData receivedMeta = null;
             string receivedPayload = null;
 
-            bus2.RegisterTypeCaster<string>();
             bus2.Subscribe<string>((msg) =>
             {
                 receivedMeta = msg.MetaData;

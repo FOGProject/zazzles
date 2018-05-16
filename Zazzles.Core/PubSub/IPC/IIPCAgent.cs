@@ -80,8 +80,7 @@ namespace Zazzles.Core.PubSub.IPC
         public bool RegisterTypeCaster(Type type, Action<IParser, Transport> caster)
         {
             if (_typeCasters == null) return false;
-            if (_typeCasters.ContainsKey(type))
-                throw new ArgumentException("Typecaster already defined");
+            if (_typeCasters.ContainsKey(type)) return false;
 
             using (_logger.BeginScope(nameof(RegisterTypeCaster)))
             {

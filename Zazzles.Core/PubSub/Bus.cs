@@ -125,11 +125,9 @@ namespace Zazzles.Core.PubSub
 
                 _hub.Publish(msg);
             }
-
-            RegisterTypeCaster<Transport>();
         }
 
-        public bool RegisterTypeCaster<T>() where T : class
+        private bool RegisterTypeCaster<T>() where T : class
         {
             if (_ipcAgent == null) return false;
 
@@ -169,13 +167,16 @@ namespace Zazzles.Core.PubSub
         ///     Subscribe an action
         /// </summary>
         /// <param name="action"></param>
-        public void Subscribe<T>(Action<Message<T>> action)
+        public void Subscribe<T>(Action<Message<T>> action) where T : class
         {
             if (action == null)
                 throw new ArgumentNullException(nameof(action));
 
             using (_logger.BeginScope(nameof(Unsubscribe)))
             {
+                _logger.LogTrace("Registering type caster");
+                RegisterTypeCaster<T>();
+
                 _logger.LogTrace("Subscribing '{name}' with message type '{mtype}'",
                     nameof(action), nameof(T));
 
