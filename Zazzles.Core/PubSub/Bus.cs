@@ -18,7 +18,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using PubSub;
 using Zazzles.Core.PubSub.IPC;
@@ -43,9 +42,9 @@ namespace Zazzles.Core.PubSub
     /// 
     public class Bus : IDisposable
     {
-        private ILogger _logger;
-        private AbstractIPCAgent _ipcAgent;
-        private Hub _hub;
+        private readonly ILogger _logger;
+        private readonly AbstractIPCAgent _ipcAgent;
+        private readonly Hub _hub;
 
         public Bus(ILogger<Bus> logger, AbstractIPCAgent ipcAgent = null)
         {

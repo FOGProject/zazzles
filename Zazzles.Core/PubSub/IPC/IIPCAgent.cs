@@ -28,6 +28,7 @@ namespace Zazzles.Core.PubSub.IPC
         protected readonly ILogger _logger;
         protected readonly IParser _parser;
         private readonly Dictionary<Type, Action<IParser, Transport>> _typeCasters;
+        private readonly object casterLock = new object();
 
         public abstract bool Connect();
         public abstract bool Disconnect();
@@ -60,12 +61,17 @@ namespace Zazzles.Core.PubSub.IPC
                     var transport = _parser.Deserialize<Transport>(message);
                     Type type = transport.PayloadType;
                     _logger.LogTrace("Message type: '{type}'", type);
+                    Action<IParser, Transport> caster = null;
 
-                    if (!_typeCasters.ContainsKey(type)) return;
-                    _logger.LogTrace("Typecaster found");
+                    lock (casterLock)
+                    {
+                        if (!_typeCasters.ContainsKey(type)) return;
+                        _logger.LogTrace("Typecaster found");
 
-                    var caster = _typeCasters[type];
+                        caster = _typeCasters[type];
+                    }
 
+                    if (caster == null) return;
                     caster(_parser, transport);
                 }
                 // Catch all exceptions to prevent malicious messages from crashing the process
@@ -79,15 +85,18 @@ namespace Zazzles.Core.PubSub.IPC
 
         public bool RegisterTypeCaster(Type type, Action<IParser, Transport> caster)
         {
-            if (_typeCasters == null) return false;
-            if (_typeCasters.ContainsKey(type)) return false;
-
-            using (_logger.BeginScope(nameof(RegisterTypeCaster)))
+            lock(casterLock)
             {
-                _logger.LogTrace("Creating caster for type '{type}'", type);
-                _typeCasters.Add(type, caster);
+                if (_typeCasters == null) return false;
+                if (_typeCasters.ContainsKey(type)) return false;
+
+                using (_logger.BeginScope(nameof(RegisterTypeCaster)))
+                {
+                    _logger.LogTrace("Creating caster for type '{type}'", type);
+                    _typeCasters.Add(type, caster);
+                }
+                return true;
             }
-            return true;
         }
     }
 }
