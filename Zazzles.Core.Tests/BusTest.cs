@@ -17,9 +17,10 @@ namespace Zazzles.Core.PubSub
             // Arrange
             string srcMsg = "5";
             var mockLogger = new Microsoft.Extensions.Logging.Abstractions.NullLogger<Bus>();
+            var mockIPCLogger = new Microsoft.Extensions.Logging.Abstractions.NullLogger<MockIPCAgent>();
             var mockParser = new MockParser();
 
-            var mockAgent = new MockIPCAgent(mockLogger, mockParser);
+            var mockAgent = new MockIPCAgent(mockIPCLogger, mockParser);
             var bus = new Bus(mockLogger, mockAgent);
 
             byte[] rawOut = new byte[0];
@@ -41,9 +42,10 @@ namespace Zazzles.Core.PubSub
         {
             // Arrange
             var mockLogger = new Microsoft.Extensions.Logging.Abstractions.NullLogger<Bus>();
+            var mockIPCLogger = new Microsoft.Extensions.Logging.Abstractions.NullLogger<MockIPCAgent>();
             var mockParser = new MockParser();
 
-            var mockAgent = new MockIPCAgent(mockLogger, mockParser);
+            var mockAgent = new MockIPCAgent(mockIPCLogger, mockParser);
             var bus = new Bus(mockLogger, mockAgent);
 
             var payload = "foobar";
@@ -79,9 +81,10 @@ namespace Zazzles.Core.PubSub
         {
             // Arrange
             var mockLogger = new Microsoft.Extensions.Logging.Abstractions.NullLogger<Bus>();
+            var mockIPCLogger = new Microsoft.Extensions.Logging.Abstractions.NullLogger<MockIPCAgent>();
             var mockParser = new MockParser();
 
-            var mockAgent = new MockIPCAgent(mockLogger, mockParser);
+            var mockAgent = new MockIPCAgent(mockIPCLogger, mockParser);
             var bus = new Bus(mockLogger, mockAgent);
 
             var payload = "foobar";
@@ -139,16 +142,42 @@ namespace Zazzles.Core.PubSub
         }
 
         [TestMethod]
+        public void Unsubscribed_ActionDoesNotGet_CalledOnPublish()
+        {
+            // Arrange
+            var srcMsg = new Wrapper1(5);
+            var wasCalled = false;
+            var mockLogger = new Microsoft.Extensions.Logging.Abstractions.NullLogger<Bus>();
+            var bus = new Bus(mockLogger);
+
+            var testAction = new Action<Message<Wrapper1>>((msg) =>
+            {
+                wasCalled = true;
+            });
+
+            bus.Subscribe(testAction);
+            bus.Unsubscribe(testAction);
+
+            // Act
+            bus.Publish(srcMsg, MessageScope.Local);
+
+            // Assert
+            Assert.IsFalse(wasCalled);
+        }
+
+        [TestMethod]
         public void Bus_IPC_RoundTrip()
         {
             // Arrange
-            var mockLogger = new Microsoft.Extensions.Logging.Abstractions.NullLogger<Bus>();
+            var mockBusLogger = new Microsoft.Extensions.Logging.Abstractions.NullLogger<Bus>();
+            var mockIPCLogger = new Microsoft.Extensions.Logging.Abstractions.NullLogger<MockIPCAgent>();
+
             var mockParser1 = new MockParser();
             var mockParser2 = new MockParser();
-            var mockAgent1 = new MockIPCAgent(mockLogger, mockParser1);
-            var mockAgent2 = new MockIPCAgent(mockLogger, mockParser2);
-            var bus1 = new Bus(mockLogger, mockAgent1);
-            var bus2 = new Bus(mockLogger, mockAgent2);
+            var mockAgent1 = new MockIPCAgent(mockIPCLogger, mockParser1);
+            var mockAgent2 = new MockIPCAgent(mockIPCLogger, mockParser2);
+            var bus1 = new Bus(mockBusLogger, mockAgent1);
+            var bus2 = new Bus(mockBusLogger, mockAgent2);
 
             mockAgent1.Out += (sender, data) =>
             {
@@ -206,7 +235,7 @@ namespace Zazzles.Core.PubSub
         public event EventHandler<byte[]> Out;
         public event EventHandler<byte[]> In;
 
-        public MockIPCAgent(ILogger logger, IParser parser) : base(logger, parser)
+        public MockIPCAgent(ILogger<MockIPCAgent> logger, IParser parser) : base(logger, parser)
         {
             In += onIn;
         }
