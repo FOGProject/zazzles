@@ -20,14 +20,27 @@
 
 using System.Runtime.Serialization;
 
-namespace Zazzles.Core.Power.DataContract
+namespace Zazzles.Core.System.Power.DataContract
 {
-
-    [DataContract(Name="PowerEvent")]
-    [KnownType(typeof(Notify))]
-    [KnownType(typeof(PowerRequest))]
-    public class PowerEvent
+    [DataContract(Name="PowerRequest")]
+    public class PowerRequest
     {
+        [DataMember(Name = "action", IsRequired = true)]
+        public PowerAction Action { get; set; }
+
+        [DataMember(Name = "comment", IsRequired = true)]
+        public string Comment { get; set; }
+
+        public PowerRequest()
+        {
+
+        }
+
+        public PowerRequest(PowerAction action, string comment = "")
+        {
+            Action = action;
+            Comment = comment;
+        }
 
     }
 }

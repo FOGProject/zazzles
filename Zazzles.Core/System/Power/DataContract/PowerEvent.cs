@@ -18,13 +18,38 @@
  */
 
 
+using System;
 using System.Runtime.Serialization;
 
-namespace Zazzles.Core.Power.DataContract
+namespace Zazzles.Core.System.Power.DataContract
 {
-
-    [DataContract(Name="NotifyAbort")]
-    public class Notify : PowerEvent
+    [DataContract(Name="PowerEvent")]
+    public class PowerEvent
     {
+        [DataMember(Name = "action", IsRequired = true)]
+        public PowerAction Action { get; set; }
+
+        [DataMember(Name = "comment", IsRequired = true)]
+        public string Comment { get; set; }
+
+        [DataMember(Name = "options", IsRequired = true)]
+        public UserOptions Options { get; set; }
+
+        [DataMember(Name = "atTime", IsRequired = true)]
+        public DateTime AtTime { get; set; }
+
+
+        public PowerEvent()
+        {
+
+        }
+
+        public PowerEvent(PowerAction action, UserOptions options, DateTime at, string comment = "")
+        {
+            Action = action;
+            Options = options;
+            AtTime = at;
+            Comment = comment;
+        }
     }
 }

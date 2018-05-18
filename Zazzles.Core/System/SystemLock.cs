@@ -18,26 +18,10 @@
  */
 
 
-using System.Runtime.Serialization;
-
-namespace Zazzles.Core.Power.DataContract
+namespace Zazzles.Core.System
 {
-
-    public enum PowerAction
+    public static class SystemLock
     {
-        Abort,
-        Shutdown,
-        Reboot
-    }
-
-    [DataContract(Name="PowerRequest")]
-    public class PowerRequest : PowerEvent
-    {
-        [DataMember(Name = "comment", IsRequired = true)]
-        public string Comment { get; set; }
-
-        [DataMember(Name = "action", IsRequired = true)]
-        public PowerAction Action { get; set; }
-
+        public static readonly object Lock = new object();
     }
 }
