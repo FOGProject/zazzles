@@ -23,13 +23,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace Zazzles.Modules
+namespace Zazzles.Core.Modules
 {
     public static class Hotload 
     {
         private const string LogName = "Module::Hotloader";
         private static readonly Dictionary<string, HotloadModule> _modules;
-        public static List<IModule> Modules
+        public static List<AbstractModule> Modules
         {
             get
             {
@@ -117,7 +117,7 @@ namespace Zazzles.Modules
     internal class HotloadModule
     {
         public AppDomain Domain;
-        public IModule Module;
+        public AbstractModule Module;
     }
 }
 

@@ -1,6 +1,6 @@
 ﻿/*
  * Zazzles : A cross platform service framework
- * Copyright (C) 2014-2016 FOG Project
+ * Copyright (C) 2014-2018 FOG Project
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,19 +17,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
- /*
-using Zazzles.Middleware;
-
-namespace Zazzles.Modules
+namespace Zazzles.Core.Modules.Updater
 {
-    /// <summary>
-    ///     The interface of all FOG Modules
-    /// </summary>
-    public interface IModule
+    public interface IUpdater
     {
-        void Start(Response data);
-        string GetName();
+        string GetInstallerName();
+        void ApplyUpdate();
+        void StartService();
+        void StopService();
     }
 }
-
-*/

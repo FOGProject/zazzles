@@ -1,6 +1,6 @@
 ﻿/*
  * Zazzles : A cross platform service framework
- * Copyright (C) 2014-2016 FOG Project
+ * Copyright (C) 2014-2018 FOG Project
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,77 +17,34 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
- /*
 using System;
-using Zazzles.Middleware;
+using Microsoft.Extensions.Logging;
+using Zazzles.Core.PubSub;
+using Zazzles.Core.Settings;
 
-namespace Zazzles.Modules
+namespace Zazzles.Core.Modules
 {
     /// <summary>
     ///     The base of all FOG Modules
     /// </summary>
-    public abstract class AbstractModule<T> : IModule
+    public abstract class AbstractModule : IDisposable
     {
-        public string Name { get; protected set; }
-        public Settings.OSType Compatiblity { get; protected set; }
-        public bool ShutdownFriendly { get; protected set; } 
+        protected readonly ILogger _logger;
+        protected readonly Bus _bus;
 
-        protected AbstractModule()
+        protected AbstractModule(ILogger<AbstractModule> logger, Bus bus, OSType compatibility)
         {
-            Name = "Generic Module";
-            Compatiblity = Settings.OSType.All;
-            ShutdownFriendly = true;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _bus = bus ?? throw new ArgumentNullException(nameof(bus));
+
+            //if (!Settings.IsCompatible(Compatiblity))
+            //{
+            //    Log.Entry(Name, "Module is not compatible with " + Settings.OS);
+            //    return;
+            //}
+            throw new NotImplementedException();
         }
 
-        /// <summary>
-        ///     Called to Start the module. Filters out modules that are not compatible
-        /// </summary>
-        public void Start(Response data)
-        {
-            if (!Settings.IsCompatible(Compatiblity))
-            {
-                Log.Entry(Name, "Module is not compatible with " + Settings.OS);
-                return;
-            }
-
-            if (!ShutdownFriendly && Power.Requested)
-            {
-                Log.Entry(Name, "A power operation is pending, aborting module");
-                return;
-            }
-
-            T msg;
-            try
-            {
-                msg = ConvertData(data);
-            }
-            catch (Exception ex)
-            {
-                Log.Error(Name, $"Data conversion using the DataContract {typeof (T)} failed");
-                Log.Error(Name, ex);
-                return;
-            }
-            DoWork(data, msg);
-        }
-
-        public string GetName()
-        {
-            return Name;
-        }
-
-        /// <summary>
-        ///     Called after Start() filters out disabled modules. Contains the module's functionality
-        /// </summary>
-        protected abstract void DoWork(Response response, T msg);
-
-        private T ConvertData(Response data)
-        {
-            if (data == null) return default(T);
-
-            var obj = data.Data.ToObject<T>();
-            return obj;
-        }
+        public abstract void Dispose();
     }
 }
-
-*/

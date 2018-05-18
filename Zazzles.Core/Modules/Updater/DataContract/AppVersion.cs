@@ -1,6 +1,6 @@
 ﻿/*
  * Zazzles : A cross platform service framework
- * Copyright (C) 2014-2016 FOG Project
+ * Copyright (C) 2014-2018 FOG Project
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,10 +17,24 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-namespace Zazzles.Modules.Updater
+using System.Runtime.Serialization;
+
+namespace Zazzles.Modules.Updater.DataContract
 {
-    public class UpdateMessage
+    [DataContract(Name = "AppVersion")]
+    public class AppVersion
     {
+        [DataMember(Name = "version", IsRequired = true)]
         public string Version;
+
+        public AppVersion()
+        {
+
+        }
+
+        public AppVersion(string version)
+        {
+            Version = version;
+        }
     }
 }
