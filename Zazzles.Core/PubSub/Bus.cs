@@ -187,7 +187,7 @@ namespace Zazzles.Core.PubSub
         ///     Unsubscribe an action
         /// </summary>
         /// <param name="action"></param>
-        public void Unsubscribe<T>(Action<T> action)
+        public void Unsubscribe<T>(Action<Message<T>> action) where T : class
         {
             if (action == null)
                 throw new ArgumentNullException(nameof(action));

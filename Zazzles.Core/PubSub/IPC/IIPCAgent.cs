@@ -35,7 +35,7 @@ namespace Zazzles.Core.PubSub.IPC
         protected abstract bool Send(byte[] msg);
         public abstract void Dispose();
 
-        public AbstractIPCAgent(ILogger logger, IParser parser)
+        public AbstractIPCAgent(ILogger<AbstractIPCAgent> logger, IParser parser)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _parser = parser ?? throw new ArgumentNullException(nameof(parser));
