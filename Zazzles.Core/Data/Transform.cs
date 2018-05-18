@@ -1,6 +1,6 @@
 ﻿/*
  * Zazzles : A cross platform service framework
- * Copyright (C) 2014-2015 FOG Project
+ * Copyright (C) 2014-2018 FOG Project
  * 
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,11 +17,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
- /*
+
 using System;
 using System.Text;
-
-// ReSharper disable InconsistentNaming
 
 namespace Zazzles.Data
 {
@@ -30,8 +28,6 @@ namespace Zazzles.Data
     /// </summary>
     public static class Transform
     {
-        private const string LogName = "Data::Transform";
-
         /// <summary>
         ///     Base64 encode a string
         /// </summary>
@@ -42,17 +38,8 @@ namespace Zazzles.Data
             if (string.IsNullOrEmpty(toEncode))
                 throw new ArgumentException("toEncode must be provided!", nameof(toEncode));
 
-            try
-            {
-                var bytes = Encoding.ASCII.GetBytes(toEncode);
-                return Convert.ToBase64String(bytes);
-            }
-            catch (Exception ex)
-            {
-                Log.Error(LogName, "Could not base64 encode");
-                Log.Error(LogName, ex);
-            }
-            return "";
+            var bytes = Encoding.ASCII.GetBytes(toEncode);
+            return Convert.ToBase64String(bytes);
         }
 
         /// <summary>
@@ -65,17 +52,8 @@ namespace Zazzles.Data
             if (string.IsNullOrEmpty(toDecode))
                 throw new ArgumentException("toEncode must be provided!", nameof(toDecode));
 
-            try
-            {
-                var bytes = Convert.FromBase64String(toDecode);
-                return Encoding.ASCII.GetString(bytes);
-            }
-            catch (Exception ex)
-            {
-                Log.Error(LogName, "Could not base64 decode");
-                Log.Error(LogName, ex);
-            }
-            return "";
+            var bytes = Convert.FromBase64String(toDecode);
+            return Encoding.ASCII.GetString(bytes);
         }
 
         /// <summary>
@@ -114,5 +92,3 @@ namespace Zazzles.Data
         }
     }
 }
-
-*/

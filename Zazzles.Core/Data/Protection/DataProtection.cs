@@ -17,28 +17,35 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
- /*
+ 
 using System;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.Extensions.Logging;
 
-namespace Zazzles.Data
+namespace Zazzles.Data.Protection
 {
-    public static class DPAPI
+    public class DataProtection
     {
-        private const string LogName = "Data::DPAPI";
+        private readonly ILogger _logger;
+        private const string SECRETS_DIR = "securedata";
+
+        public DataProtection(ILogger logger)
+        {
+            _logger = logger;
+        }
         /// <summary>
         ///     Securly protect bytes by using local credentials
         /// </summary>
         /// <param name="data">The bytes to protect</param>
         /// <param name="userScope">Encrypt the data as the current user (false means use the local machine)</param>
         /// <returns></returns>
-        public static byte[] ProtectData(byte[] data, bool userScope)
-        {
-            if(data == null)
-                throw new ArgumentNullException(nameof(data));
-            return ProtectedData.Protect(data, null,
-                userScope ? DataProtectionScope.CurrentUser : DataProtectionScope.LocalMachine);
-        }
+    //    public static byte[] Protect(byte[] data, bool alterPermissions)
+    //    {
+    //        if(data == null)
+    //            throw new ArgumentNullException(nameof(data));
+    //        return ProtectedData.Protect(data, null,
+     //           userScope ? DataProtectionScope.CurrentUser : DataProtectionScope.LocalMachine);
+     //   }
 
         /// <summary>
         ///     Unprotect bytes by using local credentials
@@ -46,14 +53,13 @@ namespace Zazzles.Data
         /// <param name="data">The bytes to unprotect</param>
         /// <param name="userScope">Decrypt the data as the current user (false means use the local machine)</param>
         /// <returns></returns>
-        public static byte[] UnProtectData(byte[] data, bool userScope)
-        {
-            if (data == null)
-                throw new ArgumentNullException(nameof(data));
-
-            return ProtectedData.Unprotect(data, null,
-                userScope ? DataProtectionScope.CurrentUser : DataProtectionScope.LocalMachine);
-        }
+     //   public static byte[] UnProtect(byte[] data, bool userScope)
+     //   {
+     //       if (data == null)
+     //           throw new ArgumentNullException(nameof(data));
+     //
+     //       return ProtectedData.Unprotect(data, null,
+     //           userScope ? DataProtectionScope.CurrentUser : DataProtectionScope.LocalMachine);
+     //   }
     }
 }
-*/

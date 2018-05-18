@@ -17,20 +17,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-
-using System.Collections.Generic;
-
-namespace Zazzles.Core.Settings
+ 
+namespace Zazzles.Data.Protection
 {
-    public enum StorageType
+    public interface IProtection
     {
-        Persistent,
-        Session
-    }
-
-    public interface IStorage
-    {
-        IDictionary<string, string> Load(StorageType sType);
-        bool Save(IDictionary<string, string> data, StorageType sType);
+    
     }
 }
