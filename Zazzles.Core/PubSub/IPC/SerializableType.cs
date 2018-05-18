@@ -54,7 +54,7 @@ namespace Zazzles.Core.PubSub.IPC
         public static bool operator ==(SerializableType a, SerializableType b)
         {
             // If both are null, or both are same instance, return true.
-            if (System.Object.ReferenceEquals(a, b))
+            if (ReferenceEquals(a, b))
             {
                 return true;
             }
@@ -80,7 +80,7 @@ namespace Zazzles.Core.PubSub.IPC
         }
 
         // overload the .Equals method
-        public override bool Equals(System.Object obj)
+        public override bool Equals(Object obj)
         {
             // If parameter is null return false.
             if (obj == null)
@@ -90,7 +90,7 @@ namespace Zazzles.Core.PubSub.IPC
 
             // If parameter cannot be cast to SerializableType return false.
             SerializableType p = obj as SerializableType;
-            if ((System.Object)p == null)
+            if ((Object)p == null)
             {
                 return false;
             }

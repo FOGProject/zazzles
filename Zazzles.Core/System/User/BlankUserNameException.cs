@@ -20,7 +20,7 @@
 using System;
 using System.Runtime.Serialization;
 
-namespace Zazzles.Core.User
+namespace Zazzles.Core.System.User
 {
     public class BlankUserNameException : Exception
     {

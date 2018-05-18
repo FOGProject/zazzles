@@ -20,7 +20,7 @@
 
 using System.Collections.Generic;
 
-namespace Zazzles.Core.User
+namespace Zazzles.Core.System.User
 {
     public interface IUser
     {

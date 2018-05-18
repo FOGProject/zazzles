@@ -22,14 +22,14 @@ using System.Linq;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 
-namespace Zazzles.Core.User
+namespace Zazzles.Core.System.User
 {
-    public class User
+    public class SystemUsers
     {
         private readonly IUser _userAPI;
         private readonly ILogger _logger;
 
-        public User(IUser userAPI, ILogger<User> logger)
+        public SystemUsers(ILogger<SystemUsers> logger, IUser userAPI)
         {
             _userAPI = userAPI;
             _logger = logger;
