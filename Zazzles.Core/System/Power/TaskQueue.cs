@@ -17,7 +17,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-using Microsoft.Extensions.Logging;
 using System;
 using System.Timers;
 using Zazzles.Core.System.Power.DataContract;
@@ -26,7 +25,6 @@ namespace Zazzles.Core.System.Power
 {
     internal class TaskQueue : IDisposable
     {
-        private readonly ILogger _logger;
         private readonly PowerEvent _powerEvent;
         private readonly Timer _timer;
         public readonly TimeSpan DelayTotal;
