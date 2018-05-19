@@ -31,6 +31,7 @@ namespace Zazzles.Core.System.Power
     public enum PowerAction
     {
         Abort,
+        Delay,
         PerformImmediately,
         Shutdown,
         Reboot
@@ -103,6 +104,9 @@ namespace Zazzles.Core.System.Power
             {
                 case PowerAction.Abort:
                     AbortShutdown();
+                    break;
+                case PowerAction.Delay:
+                    DelayShutdown(req.Payload.When);
                     break;
                 case PowerAction.PerformImmediately:
                     if (_taskQueue != null && !_taskQueue.Executed)
@@ -185,6 +189,14 @@ namespace Zazzles.Core.System.Power
 
         }
 
+        private bool DelayShutdown(DateTime until)
+        {
+            var now = DateTime.UtcNow;
+            var delayAmount = until - now;
+            return DelayShutdown(delayAmount);
+        }
+
+
         private bool DelayShutdown(TimeSpan span)
         {
             if (span == null)
@@ -244,7 +256,7 @@ namespace Zazzles.Core.System.Power
                 if (abortException != null)
                     _logger.LogCritical("Abort check threw exception", abortException);
 
-                if (powerEvent.Action != PowerAction.Abort)
+                if (powerEvent.Action != PowerAction.Abort && powerEvent.Action != PowerAction.Delay)
                 {
                     _logger.LogTrace("Acquiring SystemLock");
                     lock (SystemLock.Lock)

@@ -18,6 +18,7 @@
  */
 
 
+using System;
 using System.Runtime.Serialization;
 
 namespace Zazzles.Core.System.Power.DataContract
@@ -31,20 +32,24 @@ namespace Zazzles.Core.System.Power.DataContract
         [DataMember(Name = "comment", IsRequired = true)]
         public string Comment { get; set; }
 
+        [DataMember(Name = "when", IsRequired = true)]
+        public DateTime When { get; set; }
+
         public PowerRequest()
         {
 
         }
 
-        public PowerRequest(PowerAction action, string comment = "")
+        public PowerRequest(PowerAction action, DateTime when, string comment = "")
         {
             Action = action;
             Comment = comment;
+            When = when;
         }
 
         public override string ToString()
         {
-            return $"{Action}, {Comment ?? string.Empty}";
+            return $"{Action}, {When}, {Comment ?? string.Empty}";
         }
 
     }
