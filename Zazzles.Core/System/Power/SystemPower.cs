@@ -41,14 +41,11 @@ namespace Zazzles.Core.System.Power
         Abort,
         Delay
     }
-    /// <summary>
-    ///     Handle all shutdown requests
-    ///     The windows shutdown command is used instead of the win32 api because it notifies the user prior
-    /// </summary>
+
     public class SystemPower : IDisposable
     {
         private const int DEFAULT_GRACE_PERIOD_MINUTES = 10;
-        public const int MAX_DELAY_TIME_MINUTES = 8*60;
+        public const int MAX_DELAY_TIME_MINUTES = 8 * 60;
 
         private TaskQueue _taskQueue;
         private readonly object _taskLock = new object();
@@ -72,21 +69,36 @@ namespace Zazzles.Core.System.Power
 
             bus.Subscribe<PowerRequest>(OnPowerRequest);
 
-            if (remoteLocking)
-                bus.Subscribe<PowerEvent>(OnPowerEvent);
+            using (_logger.BeginScope(nameof(SystemPower)))
+            {
+                _logger.LogTrace("RemoteLocking set to '{remoteLocking}'", remoteLocking);
+                if (remoteLocking)
+                    bus.Subscribe<PowerEvent>(OnPowerEvent);
+            }
         }
+
 
         public void ReleaseSystemLockIfHeld()
         {
-            lock (_remoteEventLock)
+            using (_logger.BeginScope(nameof(ProcessEvent)))
             {
-                _abortEvent.Set();
-                _abortEvent.Reset();
+                _logger.LogTrace("Acquiring remote event lock");
+                lock (_remoteEventLock)
+                {
+                    _logger.LogTrace("Toggling reset event");
+                    _abortEvent.Set();
+                    _abortEvent.Reset();
+                }
             }
         }
 
         private void OnPowerRequest(Message<PowerRequest> req)
         {
+            using (_logger.BeginScope(nameof(OnPowerRequest)))
+            {
+                _logger.LogTrace("Recieved PowerRequest {req}", req);
+            }
+
             switch (req.Payload.Action)
             {
                 case PowerAction.Abort:
@@ -109,64 +121,110 @@ namespace Zazzles.Core.System.Power
 
         private void OnPowerEvent(Message<PowerEvent> msg)
         {
-            switch(msg.Payload.Action)
+            using (_logger.BeginScope(nameof(OnPowerEvent)))
             {
-                case PowerAction.Abort:
-                    lock (_remoteEventLock)
-                    {
-                        _abortEvent.Set();
-                    }
-                    break;
-                case PowerAction.Reboot:
-                case PowerAction.Shutdown:
-                    lock (_remoteEventLock)
-                    {
-                        if (_isLocking)
-                            return;
+                _logger.LogTrace("Recieved PowerEvent {msg}", msg);
 
-                        _isLocking = true;
-                        Task.Run(() =>
+                switch (msg.Payload.Action)
+                {
+                    case PowerAction.Abort:
+                        _logger.LogTrace("Acquiring remote event lock");
+                        lock (_remoteEventLock)
                         {
-                            lock (SystemLock.Lock)
+                            _logger.LogTrace("Triggering reset event");
+                            _abortEvent.Set();
+                        }
+                        break;
+                    case PowerAction.Reboot:
+                    case PowerAction.Shutdown:
+                        _logger.LogTrace("Acquiring remote event lock");
+                        lock (_remoteEventLock)
+                        {
+                            if (_isLocking)
                             {
-                                _abortEvent.WaitOne();
-                                _isLocking = false;
+                                _logger.LogTrace("A remote lock is already in progress, skipping");
+                                return;
                             }
-                        });
-                    }
-                    break;
-                default:
-                    break;
-            }
 
+                            _isLocking = true;
+                            _logger.LogTrace("Spawning lock task");
+                            Task.Run(() =>
+                            {
+                                _logger.LogTrace("Acquiring SystemLock");
+                                lock (SystemLock.Lock)
+                                {
+                                    _logger.LogTrace("Keeping system locked until an abort is signaled");
+                                    _abortEvent.WaitOne();
+                                    _logger.LogTrace("Abort signal received, releasing SystemLock");
+                                    _isLocking = false;
+                                }
+                            });
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
         }
 
         public bool IsTaskPending()
         {
-            lock (_taskLock)
+            using (_logger.BeginScope(nameof(IsTaskPending)))
             {
-                return _taskQueue != null;
-            }
-        }
+                var isPending = false;
 
-        private void DelayShutdown(TimeSpan span)
-        {
-            lock(_taskLock)
-            {
-                if (_taskQueue == null || _taskQueue.Executed)
-                    return;
-
-                var delayAmount = _taskQueue.DelayTotal + span;
-                var allowedDelay = MAX_DELAY_TIME_MINUTES - delayAmount.TotalMinutes;
-                if (allowedDelay <= 0)
-                    return;
-
-                if (allowedDelay < span.TotalMinutes)
+                _logger.LogTrace("Acquiring task lock");
+                lock (_taskLock)
                 {
-                    span = TimeSpan.FromMinutes(allowedDelay);
+                    isPending = _taskQueue != null;
                 }
 
-                _taskQueue.Delay(span);
+                _logger.LogTrace("Task Pending is '{isPending}'", isPending);
+                return isPending;
+            }
+
+        }
+
+        private bool DelayShutdown(TimeSpan span)
+        {
+            if (span == null)
+                throw new ArgumentNullException(nameof(span));
+
+            using (_logger.BeginScope(nameof(DelayShutdown)))
+            {
+                _logger.LogTrace("Requested delay shutdown for '{span}'", span);
+                _logger.LogTrace("Acquiring task lock");
+                lock (_taskLock)
+                {
+                    if (_taskQueue == null)
+                    {
+                        _logger.LogTrace("No actice task defined");
+                        return false;
+                    }
+
+                    if (_taskQueue.Executed)
+                    {
+                        _logger.LogTrace("Task has already executed");
+                        return false;
+                    }
+
+                    var delayAmount = _taskQueue.DelayTotal + span;
+                    var allowedDelay = MAX_DELAY_TIME_MINUTES - delayAmount.TotalMinutes;
+                    if (allowedDelay <= 0)
+                    {
+                        _logger.LogTrace("Cannot delay anymore");
+                        return false;
+                    }
+
+                    if (allowedDelay < span.TotalMinutes)
+                    {
+                        span = TimeSpan.FromMinutes(allowedDelay);
+                        _logger.LogInformation("Adjusting new delay to be '{span}'", span);
+                    }
+
+                    _taskQueue.Delay(span);
+                    return true;
+                }
             }
         }
 
@@ -174,47 +232,76 @@ namespace Zazzles.Core.System.Power
         ///     Create a shutdown command
         /// </summary>
         /// <param name="parameters">The parameters to use</param>
-        private void ProcessEvent(PowerEvent powerEvent)
+        private void ProcessEvent(PowerEvent powerEvent, Exception abortException)
         {
             if (powerEvent == null)
                 throw new ArgumentNullException(nameof(powerEvent));
 
-            if (powerEvent.Action != PowerAction.Abort)
+            using (_logger.BeginScope(nameof(ProcessEvent)))
             {
-                lock (SystemLock.Lock)
+                _logger.LogTrace("Processing {powerEvent}", powerEvent);
+
+                if (abortException != null)
+                    _logger.LogCritical("Abort check threw exception", abortException);
+
+                if (powerEvent.Action != PowerAction.Abort)
                 {
+                    _logger.LogTrace("Acquiring SystemLock");
+                    lock (SystemLock.Lock)
+                    {
+                        _logger.LogTrace("Invoking");
+                        InvokeEvent(powerEvent);
+                    }
+                }
+                else
+                {
+                    _logger.LogTrace("Invoking");
                     InvokeEvent(powerEvent);
                 }
-            } else
-            {
-                InvokeEvent(powerEvent);
             }
-
         }
 
         private void InvokeEvent(PowerEvent powerEvent)
         {
+            if (powerEvent == null)
+                throw new ArgumentNullException(nameof(powerEvent));
+
             _bus.Publish(powerEvent, MessageScope.Global);
             _powerAPI.InvokeEvent(powerEvent);
         }
 
         public bool QueueEvent(PowerEvent powerEvent, Func<bool> abortCheck = null)
         {
-            lock(_taskLock)
+            if (powerEvent == null)
+                throw new ArgumentNullException(nameof(powerEvent));
+
+            using (_logger.BeginScope(nameof(QueueEvent)))
             {
-                if (_taskQueue != null && !_taskQueue.Executed)
-                    return false;
+                if (abortCheck != null)
+                    _logger.LogTrace("AbortCheck is defined");
 
-                if (!_systemUsers.AnyLoggedIn())
+                _logger.LogTrace("Acquiring SystemLock");
+                lock (_taskLock)
                 {
-                    InvokeEvent(powerEvent);
-                    return true;
+                    if (_taskQueue != null && !_taskQueue.Executed)
+                    {
+                        _logger.LogTrace("Active task already present");
+                        return false;
+                    }
+
+                    if (!_systemUsers.AnyLoggedIn())
+                    {
+                        _logger.LogInformation("No users logged in, performing immediately");
+                        InvokeEvent(powerEvent);
+                        return true;
+                    }
+
+                    if (_taskQueue != null)
+                        _taskQueue.Dispose();
+
+                    _logger.LogTrace("Creating and queueing task");
+                    _taskQueue = new TaskQueue(powerEvent, ProcessEvent, abortCheck);
                 }
-
-                if (_taskQueue != null)
-                    _taskQueue.Dispose();
-
-                _taskQueue = new TaskQueue(powerEvent, ProcessEvent, abortCheck);
             }
 
             return true;
@@ -259,18 +346,34 @@ namespace Zazzles.Core.System.Power
         /// <summary>
         ///     Abort a shutdown if it is not to late
         /// </summary>
-        public void AbortShutdown()
+        public bool AbortShutdown()
         {
-            lock(_taskLock)
+            using (_logger.BeginScope(nameof(AbortShutdown)))
             {
-                if (_taskQueue == null || _taskQueue.Executed)
-                    return;
+                _logger.LogTrace("Acquiring task lock");
+                lock (_taskLock)
+                {
+                    if (_taskQueue == null)
+                    {
+                        _logger.LogTrace("No actice task defined");
+                        return false;
+                    }
 
-                _taskQueue.Dispose();
-                _taskQueue = null;
+                    if (_taskQueue.Executed)
+                    {
+                        _logger.LogTrace("Task has already executed");
+                        return false;
+                    }
+
+                    _logger.LogTrace("DeQueuing task");
+                    _taskQueue.Dispose();
+                    _taskQueue = null;
+                }
+                var pEvent = new PowerEvent(PowerAction.Abort, UserOptions.None, DateTime.UtcNow);
+                _bus.Publish(pEvent, MessageScope.Global);
+
+                return true;
             }
-            var pEvent = new PowerEvent(PowerAction.Abort, UserOptions.None, DateTime.UtcNow);
-            _bus.Publish(pEvent, MessageScope.Global);
         }
 
         public void Dispose()

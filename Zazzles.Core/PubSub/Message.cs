@@ -35,5 +35,10 @@ namespace Zazzles.Core.PubSub
             Payload = payload;
             MetaData = metaData;
         }
+
+        public override string ToString()
+        {
+            return $"{MetaData.ToString() ?? string.Empty}, {Payload.ToString() ?? string.Empty}";
+        }
     }
 }

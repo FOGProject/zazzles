@@ -47,5 +47,10 @@ namespace Zazzles.Core.PubSub
             Scope = scope;
             SentTimestamp = DateTime.UtcNow;
         }
+
+        public override string ToString()
+        {
+            return $"{Origin}, {Scope}, {ReceiveTimestamp}, {SentTimestamp}";
+        }
     }
 }

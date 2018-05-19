@@ -119,8 +119,7 @@ namespace Zazzles.Core.PubSub
 
             using (_logger.BeginScope(nameof(Publish)))
             {
-                _logger.LogTrace("Publishing message with scope '{scope}', origin '{origin}', and timestamp of '{timestamp}'",
-                    msg.MetaData.Scope, msg.MetaData.Origin, msg.MetaData.SentTimestamp);
+                _logger.LogTrace("Publishing message with metadata '{metadata'}", msg.MetaData);
 
                 _hub.Publish(msg);
             }

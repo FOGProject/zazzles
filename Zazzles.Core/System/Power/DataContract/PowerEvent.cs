@@ -51,5 +51,10 @@ namespace Zazzles.Core.System.Power.DataContract
             AtTime = at;
             Comment = comment;
         }
+
+        public override string ToString()
+        {
+            return $"{Action}, {AtTime}, {Options}, {Comment ?? string.Empty}";
+        }
     }
 }
