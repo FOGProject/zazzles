@@ -18,10 +18,10 @@
  */
 
 using System.Diagnostics;
-using Zazzles.Core;
-using Zazzles.Core.Power.DataContract;
+using Zazzles.Core.Device.Power;
+using Zazzles.Core.Device.Power.DataContract;
 
-namespace Zazzles.Mac.Power
+namespace Zazzles.Mac.Device.Power
 {
     public class MacPower : IPower
     {
@@ -40,10 +40,10 @@ namespace Zazzles.Mac.Power
             Process.Start(@"/System/Library/CoreServices/Menu\ Extras/User.menu/Contents/Resources/CGSession -suspend");
         }
 
-        public void ProcessRequest(PowerRequest request)
+        public void InvokeEvent(PowerEvent powerEvent)
         {
             var switches = "";
-            switch (request.Action)
+            switch (powerEvent.Action)
             {
                 case PowerAction.Shutdown:
                     switches = "-h";
@@ -54,7 +54,7 @@ namespace Zazzles.Mac.Power
                 default:
                     return;
             }
-            var parameters = $"{switches} + 0 \"{request.Comment}\"";
+            var parameters = $"{switches} + 0 \"{powerEvent.Comment}\"";
             Process.Start("shutdown", parameters);
         }
     }

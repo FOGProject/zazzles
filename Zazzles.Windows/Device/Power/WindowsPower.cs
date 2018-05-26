@@ -22,32 +22,33 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Threading;
-using Zazzles.Core;
+using Zazzles.Core.Device.Power;
+using Zazzles.Core.Device.Power.DataContract;
 
-namespace Zazzles.Windows.Power
+namespace Zazzles.Windows.Device.Power
 {
     public class WindowsPower : IPower
     {
         private const string LogName = "Power";
 
-        public string CreateShutdownCommand(string comment)
+        private string CreateShutdownCommand(string comment)
         {
             return $"/s /c \"{comment}\" /t 0";
         }
 
-        public string CreateRestartCommand(string comment)
+        private string CreateRestartCommand(string comment)
         {
             return $"/r /c \"{comment}\" /t 0";
         }
 
         public void LogOffUser()
         {
-            CreateTask("/l", "");
+            Process.Start("shutdown", "/l").WaitForExit(60 * 1000);
         }
 
         public void Hibernate()
         {
-            CreateTask("/h", "");
+            Process.Start("shutdown", "/h").WaitForExit(60*1000);
         }
 
         public void LockWorkStation()
@@ -55,52 +56,61 @@ namespace Zazzles.Windows.Power
             lockWorkStation();
         }
 
-        public void CreateTask(string parameters, string message)
+        public void InvokeEvent(PowerEvent powerEvent)
         {
-            if(string.IsNullOrWhiteSpace(message))
-                message = string.Empty;
+            string command = null;
+            if (powerEvent.Action == PowerAction.Shutdown)
+                command = CreateShutdownCommand(powerEvent.Comment);
+            else if (powerEvent.Action == PowerAction.Reboot)
+                command = CreateRestartCommand(powerEvent.Comment);
+
+            if (string.IsNullOrWhiteSpace(command))
+                return;
+
 
             ExitWindows action = ExitWindows.LogOff;
-            if (parameters.StartsWith("/r"))
+            if (command.StartsWith("/r"))
             {
                 action = ExitWindows.Reboot;
-            } else if (parameters.StartsWith("/s"))
+            }
+            else if (command.StartsWith("/s"))
             {
                 action = ExitWindows.ShutDown;
             }
 
             if (action != ExitWindows.Reboot && action != ExitWindows.PowerOff)
             {
-                var proc = Process.Start("shutdown", parameters);
+                var proc = Process.Start("shutdown", command);
                 proc.WaitForExit(60 * 1000);
                 return;
             }
 
             if (!TokenAdjuster.EnablePrivilege("SeShutdownPrivilege", true))
             {
-                Log.Error(LogName, "Failed to obtain needed permissions, entering saftey net to ensure a shutdown");
-                SafteyNet(parameters);
+                //Log.Error(LogName, "Failed to obtain needed permissions, entering saftey net to ensure a shutdown");
+                SafteyNet(command);
                 return;
             }
             var reboot = (action == ExitWindows.Reboot);
 
-            AttemptShutdowns(reboot, message, false, 6);
+            AttemptShutdowns(reboot, powerEvent.Comment ?? string.Empty, false, 6);
 
-            Log.Entry(LogName, "Gracefull shutdown requests failed, attempting to force shutdown");
-            AttemptShutdowns(reboot, message, true, 3);
+            //Log.Entry(LogName, "Gracefull shutdown requests failed, attempting to force shutdown");
+            AttemptShutdowns(reboot, powerEvent.Comment ?? string.Empty, true, 3);
 
-            Log.Error(LogName, "Failed to bypass shutdown blocks, entering saftey net to ensure a shutdown");
-            SafteyNet(parameters);
+            //Log.Error(LogName, "Failed to bypass shutdown blocks, entering saftey net to ensure a shutdown");
+            SafteyNet(command);
         }
+
 
         private void AttemptShutdowns(bool reboot, string message, bool force, int attempts)
         {
             var reason = ShutdownReason.MajorApplication | ShutdownReason.MinorMaintenance | ShutdownReason.FlagPlanned;
             for (int i = 0; i < attempts; i++)
             {
-                Log.Entry(LogName, $"Attempt {i + 1}/{attempts} to shutdown computer");
+              //  Log.Entry(LogName, $"Attempt {i + 1}/{attempts} to shutdown computer");
                 var result = PowerUtilities.InitiateSystemShutdown(message, 0, force, reboot, reason);
-                Log.Entry(LogName, $"--> API call returned {result}, will re-attempt in 5 minutes");
+               // Log.Entry(LogName, $"--> API call returned {result}, will re-attempt in 5 minutes");
 
                 // Busy wait for 5 minutes to ensure the request went through (it may be blocked)
                 for (int j = 0; j < 5; j++)
@@ -116,7 +126,7 @@ namespace Zazzles.Windows.Power
             {
                 var proc = Process.Start("shutdown", parameters);
                 proc.WaitForExit(60 * 1000);
-                Log.Entry(LogName, "Issued shutdown request, will re-issue in 5 minutes");
+             //   Log.Entry(LogName, "Issued shutdown request, will re-issue in 5 minutes");
                 Thread.Sleep(5* 60 * 1000);
             }
         }

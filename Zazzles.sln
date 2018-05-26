@@ -21,6 +21,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zazzles.Linux", "Zazzles.Li
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Zazzles.Core.Tests", "Zazzles.Core.Tests\Zazzles.Core.Tests.csproj", "{91517458-2501-4ADB-B38E-27B82E04A0D1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Zazzles.Unix", "Zazzles.Unix\Zazzles.Unix.csproj", "{515A6CD4-ED05-49D4-BEBE-048BEB2E17B9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -121,6 +123,24 @@ Global
 		{91517458-2501-4ADB-B38E-27B82E04A0D1}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{91517458-2501-4ADB-B38E-27B82E04A0D1}.Release|x86.ActiveCfg = Release|Any CPU
 		{91517458-2501-4ADB-B38E-27B82E04A0D1}.Release|x86.Build.0 = Release|Any CPU
+		{515A6CD4-ED05-49D4-BEBE-048BEB2E17B9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{515A6CD4-ED05-49D4-BEBE-048BEB2E17B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{515A6CD4-ED05-49D4-BEBE-048BEB2E17B9}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{515A6CD4-ED05-49D4-BEBE-048BEB2E17B9}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{515A6CD4-ED05-49D4-BEBE-048BEB2E17B9}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{515A6CD4-ED05-49D4-BEBE-048BEB2E17B9}.Debug|x86.Build.0 = Debug|Any CPU
+		{515A6CD4-ED05-49D4-BEBE-048BEB2E17B9}.Development|Any CPU.ActiveCfg = Debug|Any CPU
+		{515A6CD4-ED05-49D4-BEBE-048BEB2E17B9}.Development|Any CPU.Build.0 = Debug|Any CPU
+		{515A6CD4-ED05-49D4-BEBE-048BEB2E17B9}.Development|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{515A6CD4-ED05-49D4-BEBE-048BEB2E17B9}.Development|Mixed Platforms.Build.0 = Debug|Any CPU
+		{515A6CD4-ED05-49D4-BEBE-048BEB2E17B9}.Development|x86.ActiveCfg = Debug|Any CPU
+		{515A6CD4-ED05-49D4-BEBE-048BEB2E17B9}.Development|x86.Build.0 = Debug|Any CPU
+		{515A6CD4-ED05-49D4-BEBE-048BEB2E17B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{515A6CD4-ED05-49D4-BEBE-048BEB2E17B9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{515A6CD4-ED05-49D4-BEBE-048BEB2E17B9}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{515A6CD4-ED05-49D4-BEBE-048BEB2E17B9}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{515A6CD4-ED05-49D4-BEBE-048BEB2E17B9}.Release|x86.ActiveCfg = Release|Any CPU
+		{515A6CD4-ED05-49D4-BEBE-048BEB2E17B9}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

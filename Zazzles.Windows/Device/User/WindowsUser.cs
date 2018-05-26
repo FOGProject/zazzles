@@ -22,9 +22,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Management;
 using System.Runtime.InteropServices;
-using Zazzles.Core.User;
+using Zazzles.Core.Device.User;
 
-namespace Zazzles.Windows.User
+namespace Zazzles.Windows.Device.User
 {
     public class WindowsUser : IUser
     {
@@ -56,8 +56,6 @@ namespace Zazzles.Windows.User
             WTSClientInfo,
             WTSSessionInfo
         }
-
-        private const string LogName = "User";
 
         public int GetInactivityTime()
         {
@@ -110,16 +108,8 @@ namespace Zazzles.Windows.User
 
             foreach (var envVar in searcher.Get())
             {
-                try
-                {
-                    if (!sessionIds.Contains(int.Parse(envVar["SessionId"].ToString())))
-                        sessionIds.Add(int.Parse(envVar["SessionId"].ToString()));
-                }
-                catch (Exception ex)
-                {
-                    Log.Error(LogName, "Unable to parse Session ID");
-                    Log.Error(LogName, ex);
-                }
+                if (!sessionIds.Contains(int.Parse(envVar["SessionId"].ToString())))
+                    sessionIds.Add(int.Parse(envVar["SessionId"].ToString()));
             }
 
             return sessionIds;
@@ -134,10 +124,8 @@ namespace Zazzles.Windows.User
         //https://stackoverflow.com/questions/19487541/get-windows-user-name-from-sessionid
         private static string GetUserNameFromSessionId(int sessionId, bool prependDomain)
         {
-            IntPtr buffer;
-            int strLen;
             var username = "SYSTEM";
-            if (!WTSQuerySessionInformation(IntPtr.Zero, sessionId, WtsInfoClass.WTSUserName, out buffer, out strLen) ||
+            if (!WTSQuerySessionInformation(IntPtr.Zero, sessionId, WtsInfoClass.WTSUserName, out IntPtr buffer, out int strLen) ||
                 strLen <= 1) return username;
             username = Marshal.PtrToStringAnsi(buffer);
             WTSFreeMemory(buffer);

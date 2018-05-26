@@ -1,9 +1,8 @@
 using System;
 using System.IO;
-using System.Text;
+using System.Runtime.Serialization;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Newtonsoft.Json;
 using Zazzles.Core.PubSub.IPC;
 
 namespace Zazzles.Core.PubSub
@@ -285,15 +284,22 @@ namespace Zazzles.Core.PubSub
     {
         public T Deserialize<T>(byte[] obj) where T : class
         {
+            var serializer = new DataContractSerializer(typeof(T));
             using (var stream = new MemoryStream(obj))
-            using (var reader = new StreamReader(stream, Encoding.UTF8))
-                return JsonSerializer.Create().Deserialize(reader, typeof(T)) as T;
+            {
+                return (T)serializer.ReadObject(stream);
+            }
         }
 
         public byte[] Serialize<T>(T obj) where T : class
         {
-            var json = JsonConvert.SerializeObject(obj);
-            return Encoding.UTF8.GetBytes(json);
+            using (var stream = new MemoryStream())
+            {
+                var serializer = new DataContractSerializer(typeof(T));
+                serializer.WriteObject(stream, obj);
+
+                return stream.ToArray();
+            }
         }
     }
 }

@@ -21,14 +21,12 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Zazzles.Core.User;
+using Zazzles.Core.Device.User;
 
-namespace Zazzles.Linux.User
+namespace Zazzles.Linux.Device.User
 {
     public class LinuxUser : IUser
     {
-        private const string LogName = "User";
-
         public IEnumerable<string> GetUsersLoggedIn()
         {
             var usersInfo = new List<string>();
@@ -80,15 +78,9 @@ namespace Zazzles.Linux.User
                     time = process.StandardOutput.ReadLine();
             }
 
-            try
-            {
-                if (time != null) return int.Parse(time);
-            }
-            catch (Exception ex)
-            {
-                Log.Error(LogName, "Can not detect idle time");
-                Log.Error(LogName, ex);
-            }
+            if (time != null)
+                return int.Parse(time);
+
             return -1;
         }
     }

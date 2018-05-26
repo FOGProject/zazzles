@@ -17,18 +17,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Zazzles.Core.User;
+using Zazzles.Core.Device.User;
 
-namespace Zazzles.Mac.User
+namespace Zazzles.Mac.Device.User
 {
     public class MacUser : IUser
     {
-        private const string LogName = "User";
-
         public IEnumerable<string> GetUsersLoggedIn()
         {
             var usersInfo = new List<string>();
@@ -85,15 +82,9 @@ namespace Zazzles.Mac.User
                     time = process.StandardOutput.ReadLine();
             }
 
-            try
-            {
-                if (time != null) return int.Parse(time);
-            }
-            catch (Exception ex)
-            {
-                Log.Error(LogName, "Can not detect idle time");
-                Log.Error(LogName, ex);
-            }
+            if (time != null)
+                return int.Parse(time);
+
             return -1;
         }
     }

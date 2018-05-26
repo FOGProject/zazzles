@@ -19,10 +19,10 @@
 
 using System;
 using System.Diagnostics;
-using Zazzles.Core;
-using Zazzles.Core.Power.DataContract;
+using Zazzles.Core.Device.Power;
+using Zazzles.Core.Device.Power.DataContract;
 
-namespace Zazzles.Linux.Power
+namespace Zazzles.Linux.Device.Power
 {
     public class LinuxPower : IPower
     {
@@ -43,10 +43,10 @@ namespace Zazzles.Linux.Power
             throw new NotImplementedException();
         }
 
-        public void ProcessRequest(PowerRequest request)
+        public void InvokeEvent(PowerEvent powerEvent)
         {
             var switches = "";
-            switch(request.Action)
+            switch(powerEvent.Action)
             {
                 case PowerAction.Shutdown:
                     switches = "-h";
@@ -57,7 +57,7 @@ namespace Zazzles.Linux.Power
                 default:
                     return;
             } 
-            var parameters = $"{switches} + 0 \"{request.Comment}\"";
+            var parameters = $"{switches} + 0 \"{powerEvent.Comment}\"";
             Process.Start("shutdown", parameters);
         }
     }
