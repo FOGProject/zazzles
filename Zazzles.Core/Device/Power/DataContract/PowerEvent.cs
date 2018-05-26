@@ -21,7 +21,7 @@
 using System;
 using System.Runtime.Serialization;
 
-namespace Zazzles.Core.System.Power.DataContract
+namespace Zazzles.Core.Device.Power.DataContract
 {
     [DataContract(Name="PowerEvent")]
     public class PowerEvent

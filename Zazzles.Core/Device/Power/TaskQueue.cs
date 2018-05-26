@@ -19,9 +19,9 @@
 
 using System;
 using System.Timers;
-using Zazzles.Core.System.Power.DataContract;
+using Zazzles.Core.Device.Power.DataContract;
 
-namespace Zazzles.Core.System.Power
+namespace Zazzles.Core.Device.Power
 {
     internal class TaskQueue : IDisposable
     {
@@ -35,6 +35,7 @@ namespace Zazzles.Core.System.Power
         private readonly Func<bool> _abortCheck;
 
         public bool Executed { get; private set; }
+        public UserOptions Options { get { return _powerEvent.Options; } }
 
         public TaskQueue(PowerEvent action, Action<PowerEvent, Exception> executor, Func<bool> check)
         {
@@ -51,7 +52,7 @@ namespace Zazzles.Core.System.Power
             _timer.AutoReset = false;
             ConfigureTimer();
         }
-
+          
 
         public void ExecuteNow()
         {

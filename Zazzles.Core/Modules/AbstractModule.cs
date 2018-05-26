@@ -18,9 +18,9 @@
  */
 
 using System;
+using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
 using Zazzles.Core.PubSub;
-using Zazzles.Core.Settings;
 
 namespace Zazzles.Core.Modules
 {
@@ -32,17 +32,19 @@ namespace Zazzles.Core.Modules
         protected readonly ILogger _logger;
         protected readonly Bus _bus;
 
-        protected AbstractModule(ILogger<AbstractModule> logger, Bus bus, OSType compatibility)
+        protected AbstractModule(ILogger<AbstractModule> logger, Bus bus, OSPlatform[] compatiblePlatforms = null)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _bus = bus ?? throw new ArgumentNullException(nameof(bus));
 
-            //if (!Settings.IsCompatible(Compatiblity))
-            //{
-            //    Log.Entry(Name, "Module is not compatible with " + Settings.OS);
-            //    return;
-            //}
-            throw new NotImplementedException();
+            if (compatiblePlatforms == null)
+                return;
+
+            foreach (var platform in compatiblePlatforms)
+                if (RuntimeInformation.IsOSPlatform(platform))
+                    return;
+
+            throw new NotImplementedException("Module is not compatible with the current platform");
         }
 
         public abstract void Dispose();

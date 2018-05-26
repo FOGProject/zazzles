@@ -22,17 +22,17 @@ using System.Linq;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 
-namespace Zazzles.Core.System.User
+namespace Zazzles.Core.Device.User
 {
-    public class SystemUsers
+    public class DeviceUsers
     {
         private readonly IUser _userAPI;
         private readonly ILogger _logger;
 
-        public SystemUsers(ILogger<SystemUsers> logger, IUser userAPI)
+        public DeviceUsers(ILogger<DeviceUsers> logger, IUser userAPI)
         {
-            _userAPI = userAPI;
-            _logger = logger;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _userAPI = userAPI ?? throw new ArgumentNullException(nameof(userAPI));
         }
 
         /// <summary>

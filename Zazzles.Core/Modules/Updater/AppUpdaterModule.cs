@@ -23,10 +23,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography.X509Certificates;
-using Zazzles.Core.System.Power;
+using Zazzles.Core.Device;
+using Zazzles.Core.Device.Power;
 using Zazzles.Core.PubSub;
-using Zazzles.Core.Settings;
-using Zazzles.Core.System;
 using Zazzles.Modules.Updater.DataContract;
 
 namespace Zazzles.Core.Modules.Updater
@@ -39,13 +38,12 @@ namespace Zazzles.Core.Modules.Updater
         private const char VERSION_DELIMITER = '.';
 
         private readonly string[] _upgradeFiles;
-        private readonly SystemPower _power;
+        private readonly DevicePower _power;
         private readonly IUpdater _updater;
 
 
-        public AppUpdaterModule(ILogger<AppUpdaterModule> logger, Bus bus, SystemPower power, 
-            IUpdater updater, string[] upgradeFiles) 
-            : base(logger, bus, OSType.Linux | OSType.Mac | OSType.Windows)
+        public AppUpdaterModule(ILogger<AppUpdaterModule> logger, Bus bus, DevicePower power, 
+            IUpdater updater, string[] upgradeFiles) : base(logger, bus)
         {
             _upgradeFiles = upgradeFiles ?? throw new ArgumentNullException(nameof(upgradeFiles));
             _power = power ?? throw new ArgumentNullException(nameof(power));
@@ -68,7 +66,7 @@ namespace Zazzles.Core.Modules.Updater
             if (!ShouldUpgrade(msg.Payload.Version, ""))
                 return;
 
-            lock(SystemLock.Lock)
+            lock(DeviceLock.Lock)
             {
               //  var updaterPath = Path.Combine(Settings.Location, "tmp", _updater.GetInstallerName());
               //  Communication.DownloadFile("/client/" + _updater.GetInstallerName(), updaterPath);

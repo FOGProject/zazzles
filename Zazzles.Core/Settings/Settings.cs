@@ -26,14 +26,6 @@ using Microsoft.Extensions.Logging;
 
 namespace Zazzles.Core.Settings
 {
-    [Flags]
-    public enum OSType
-    {
-        None    = 1,
-        Windows = 2,
-        Mac     = 4,
-        Linux   = 8,
-    }
     /*
    public class Settings
    {

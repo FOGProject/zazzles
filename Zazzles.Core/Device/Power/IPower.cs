@@ -17,14 +17,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+using Zazzles.Core.Device.Power.DataContract;
 
-using System.Collections.Generic;
-
-namespace Zazzles.Core.System.User
+namespace Zazzles.Core.Device.Power
 {
-    public interface IUser
+    public interface IPower
     {
-        IEnumerable<string> GetUsersLoggedIn();
-        int GetInactivityTime();
+        void LogOffUser();
+        void Hibernate();
+        void LockWorkStation();
+        void InvokeEvent(PowerEvent powerEvent);
     }
 }

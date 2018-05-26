@@ -18,10 +18,13 @@
  */
 
 
-namespace Zazzles.Core.System
+using System.Collections.Generic;
+
+namespace Zazzles.Core.Device.User
 {
-    public static class SystemLock
+    public interface IUser
     {
-        public static readonly object Lock = new object();
+        IEnumerable<string> GetUsersLoggedIn();
+        int GetInactivityTime();
     }
 }

@@ -23,10 +23,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Zazzles.Core.PubSub;
-using Zazzles.Core.System.Power.DataContract;
-using Zazzles.Core.System.User;
+using Zazzles.Core.Device.Power.DataContract;
+using Zazzles.Core.Device.User;
 
-namespace Zazzles.Core.System.Power
+namespace Zazzles.Core.Device.Power
 {
     public enum PowerAction
     {
@@ -36,14 +36,17 @@ namespace Zazzles.Core.System.Power
         Shutdown,
         Reboot
     }
+
+    [Flags]
     public enum UserOptions
     {
-        None,
-        Abort,
-        Delay
+        None = 0,
+        Abort = 1,
+        Delay = 2,
+        PerformImmediately = 4
     }
 
-    public class SystemPower : IDisposable
+    public class DevicePower : IDisposable
     {
         private const int DEFAULT_GRACE_PERIOD_MINUTES = 10;
         public const int MAX_DELAY_TIME_MINUTES = 8 * 60;
@@ -58,10 +61,10 @@ namespace Zazzles.Core.System.Power
         private readonly IPower _powerAPI;
         private readonly ILogger _logger;
         private readonly Bus _bus;
-        private readonly SystemUsers _systemUsers;
+        private readonly DeviceUsers _systemUsers;
 
 
-        public SystemPower(ILogger<SystemPower> logger, Bus bus, SystemUsers systemUsers, IPower powerAPI, bool remoteLocking = false)
+        public DevicePower(ILogger<DevicePower> logger, Bus bus, DeviceUsers systemUsers, IPower powerAPI, bool remoteLocking = false)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _bus = bus ?? throw new ArgumentNullException(nameof(bus));
@@ -70,7 +73,8 @@ namespace Zazzles.Core.System.Power
 
             bus.Subscribe<PowerRequest>(OnPowerRequest);
 
-            using (_logger.BeginScope(nameof(SystemPower)))
+
+            using (_logger.BeginScope(nameof(DevicePower)))
             {
                 _logger.LogTrace("RemoteLocking set to '{remoteLocking}'", remoteLocking);
                 if (remoteLocking)
@@ -103,14 +107,13 @@ namespace Zazzles.Core.System.Power
             switch (req.Payload.Action)
             {
                 case PowerAction.Abort:
-                    AbortShutdown();
+                    AbortShutdown(true);
                     break;
                 case PowerAction.Delay:
-                    DelayShutdown(req.Payload.When);
+                    DelayShutdown(req.Payload.When, true);
                     break;
                 case PowerAction.PerformImmediately:
-                    if (_taskQueue != null && !_taskQueue.Executed)
-                        _taskQueue.ExecuteNow();
+                    PerformNow(true);
                     break;
                 case PowerAction.Reboot:
                     Reboot(req.Payload.Comment);
@@ -155,7 +158,7 @@ namespace Zazzles.Core.System.Power
                             Task.Run(() =>
                             {
                                 _logger.LogTrace("Acquiring SystemLock");
-                                lock (SystemLock.Lock)
+                                lock (DeviceLock.Lock)
                                 {
                                     _logger.LogTrace("Keeping system locked until an abort is signaled");
                                     _abortEvent.WaitOne();
@@ -189,15 +192,46 @@ namespace Zazzles.Core.System.Power
 
         }
 
-        private bool DelayShutdown(DateTime until)
+        public bool PerformNow(bool enforcePermissions = false)
+        {
+            using (_logger.BeginScope(nameof(PerformNow)))
+            {
+                _logger.LogTrace("Acquiring task lock");
+                lock (_taskLock)
+                {
+                    if (_taskQueue == null)
+                    {
+                        _logger.LogTrace("No actice task defined");
+                        return false;
+                    }
+
+                    if (_taskQueue.Executed)
+                    {
+                        _logger.LogTrace("Task has already executed");
+                        return false;
+                    }
+
+                    if (enforcePermissions && !_taskQueue.Options.HasFlag(UserOptions.PerformImmediately))
+                    {
+                        _logger.LogTrace("PerformImmediately not permitted on current task");
+                        return false;
+                    }
+
+                    _taskQueue.ExecuteNow();
+                    return true;
+                }
+            }
+        }
+
+        private bool DelayShutdown(DateTime until, bool enforcePermissions = false)
         {
             var now = DateTime.UtcNow;
             var delayAmount = until - now;
-            return DelayShutdown(delayAmount);
+            return DelayShutdown(delayAmount, enforcePermissions);
         }
 
 
-        private bool DelayShutdown(TimeSpan span)
+        private bool DelayShutdown(TimeSpan span, bool enforcePermissions = false)
         {
             if (span == null)
                 throw new ArgumentNullException(nameof(span));
@@ -217,6 +251,12 @@ namespace Zazzles.Core.System.Power
                     if (_taskQueue.Executed)
                     {
                         _logger.LogTrace("Task has already executed");
+                        return false;
+                    }
+
+                    if (enforcePermissions && !_taskQueue.Options.HasFlag(UserOptions.Delay))
+                    {
+                        _logger.LogTrace("Delay not permitted on current task");
                         return false;
                     }
 
@@ -259,7 +299,7 @@ namespace Zazzles.Core.System.Power
                 if (powerEvent.Action != PowerAction.Abort && powerEvent.Action != PowerAction.Delay)
                 {
                     _logger.LogTrace("Acquiring SystemLock");
-                    lock (SystemLock.Lock)
+                    lock (DeviceLock.Lock)
                     {
                         _logger.LogTrace("Invoking");
                         InvokeEvent(powerEvent);
@@ -358,7 +398,7 @@ namespace Zazzles.Core.System.Power
         /// <summary>
         ///     Abort a shutdown if it is not to late
         /// </summary>
-        public bool AbortShutdown()
+        public bool AbortShutdown(bool enforcePermissions = false)
         {
             using (_logger.BeginScope(nameof(AbortShutdown)))
             {
@@ -374,6 +414,12 @@ namespace Zazzles.Core.System.Power
                     if (_taskQueue.Executed)
                     {
                         _logger.LogTrace("Task has already executed");
+                        return false;
+                    }
+
+                    if(enforcePermissions && !_taskQueue.Options.HasFlag(UserOptions.Abort))
+                    {
+                        _logger.LogTrace("Abort not permitted on current task");
                         return false;
                     }
 
