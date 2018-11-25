@@ -95,6 +95,9 @@ namespace Zazzles.Middleware
 
             Log.Entry(LogName, "URL: " + Configuration.ServerAddress + postfix);
 
+            // Set custom certificate policy manager
+            ServicePointManager.ServerCertificateValidationCallback =
+                CertificatePolicy.CertValidationCallback;
             var webRequest = WebRequest.Create(Configuration.ServerAddress + postfix);
 
             using (var response = webRequest.GetResponse())
@@ -118,9 +121,14 @@ namespace Zazzles.Middleware
 
             try
             {
+                // Set custom certificate policy manager
+                ServicePointManager.ServerCertificateValidationCallback =
+                    CertificatePolicy.CertValidationCallback;
+
                 // Create a request using a URL that can receive a post. 
-                var request = WebRequest.Create(Configuration.ServerAddress + postfix);
+                var request = (HttpWebRequest)WebRequest.Create(Configuration.ServerAddress + postfix);
                 request.Method = "POST";
+                request.AllowAutoRedirect = false;
 
                 // Create POST data and convert it to a byte array.
                 var byteArray = Encoding.UTF8.GetBytes(param);
@@ -241,6 +249,9 @@ namespace Zazzles.Middleware
                     Directory.CreateDirectory(Path.GetDirectoryName(filePath));
                 }
 
+                // Set custom certificate policy manager
+                ServicePointManager.ServerCertificateValidationCallback =
+                    CertificatePolicy.CertValidationCallback;
                 using (var wclient = new WebClient())
                 {
                     wclient.DownloadFile(url, filePath);
@@ -254,6 +265,28 @@ namespace Zazzles.Middleware
             }
 
             return File.Exists(filePath);
+        }
+    }
+
+    public static class CertificatePolicy
+    {
+        private const string LogName = "Middleware::Communication";
+
+        public static bool CertValidationCallback(object sender,
+            System.Security.Cryptography.X509Certificates.X509Certificate cert,
+            System.Security.Cryptography.X509Certificates.X509Chain chain,
+            System.Net.Security.SslPolicyErrors polerrors)
+        {
+            if (polerrors == System.Net.Security.SslPolicyErrors.None)
+            {
+                return true;
+            }
+            else if (polerrors == System.Net.Security.SslPolicyErrors.RemoteCertificateNameMismatch)
+            {
+                Log.Error(LogName, "FOG server host name does not match certificate subject (" + cert.Subject + ").");
+                return false;
+            }
+            return false;
         }
     }
 }
