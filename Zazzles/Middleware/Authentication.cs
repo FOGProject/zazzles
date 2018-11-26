@@ -69,7 +69,10 @@ namespace Zazzles.Middleware
 
                 // Obtain a public key from the server
                 var keyPath = Path.Combine(Settings.Location, "tmp", "public.cer");
-                Communication.DownloadFile("/management/other/ssl/srvpublic.crt", keyPath);
+                if (!Communication.DownloadFile("/management/other/ssl/srvpublic.crt", keyPath))
+                {
+                    return false;
+                }
                 Log.Debug(LogName, "KeyPath = " + keyPath);
                 var certificate = new X509Certificate2(keyPath);
 
