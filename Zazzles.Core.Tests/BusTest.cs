@@ -23,6 +23,7 @@
 using System;
 using System.IO;
 using System.Runtime.Serialization;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Zazzles.Core.PubSub.IPC;
@@ -59,7 +60,7 @@ namespace Zazzles.Core.PubSub
         }
 
         [TestMethod]
-        public void Bus_Publishes_OnIPC()
+        public async Task Bus_Publishes_OnIPC()
         {
             // Arrange
             var mockLogger = new Microsoft.Extensions.Logging.Abstractions.NullLogger<Bus>();
@@ -85,7 +86,7 @@ namespace Zazzles.Core.PubSub
             });
 
             // Act
-            mockAgent.FakeReceive(payload, meta);
+            await mockAgent.FakeReceive(payload, meta);
 
             // Assert
             Assert.IsNotNull(receivedPayload);
@@ -263,25 +264,20 @@ namespace Zazzles.Core.PubSub
 
         private void onIn(object sender, byte[] msg)
         {
-            OnReceive(msg);
+            OnReceive(msg).Wait();
         }
 
-        public override bool Connect()
-        {
-            return true;
-        }
+        public override async Task<bool> Connect() => true;
 
-        public override bool Disconnect()
-        {
-            return true;
-        }
+        public override async Task<bool> Disconnect() => true;
+
 
         public override void Dispose()
         {
 
         }
 
-        protected override bool Send(byte[] msg)
+        protected override async Task<bool> Send(byte[] msg)
         {
             Out.Invoke(this, msg);
             return true;
@@ -292,19 +288,19 @@ namespace Zazzles.Core.PubSub
             In.Invoke(this, data);
         }
 
-        public void FakeReceive<T>(T payload, MetaData meta) where T : class
+        public async Task FakeReceive<T>(T payload, MetaData meta) where T : class
         {
             // construct a fake transport
-            var serialized = _parser.Serialize(payload);
+            byte[] serialized = await _parser.Serialize(payload);
             var transport = new Transport(typeof(T), serialized, meta);
-            var serializedTransport = _parser.Serialize(transport);
+            byte[] serializedTransport = await _parser.Serialize(transport);
             Relay(serializedTransport);
         }
     }
 
     class MockParser : IParser
     {
-        public T Deserialize<T>(byte[] obj) where T : class
+        public async Task<T> Deserialize<T>(byte[] obj) where T : class
         {
             var serializer = new DataContractSerializer(typeof(T));
             using (var stream = new MemoryStream(obj))
@@ -313,7 +309,7 @@ namespace Zazzles.Core.PubSub
             }
         }
 
-        public byte[] Serialize<T>(T obj) where T : class
+        public async Task<byte[]> Serialize<T>(T obj) where T : class
         {
             using (var stream = new MemoryStream())
             {

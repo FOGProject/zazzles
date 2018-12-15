@@ -28,7 +28,7 @@ namespace Zazzles.Core.PubSub.IPC
 {
     public interface IParser
     {
-        Task Serialize<T>(T obj) where T : class;
+        Task<byte[]> Serialize<T>(T obj) where T : class;
         Task<T> Deserialize<T>(byte[] obj) where T : class;
     }
 }

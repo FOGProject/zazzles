@@ -21,6 +21,7 @@
 */
 
 using System;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using PubSub;
 using Zazzles.Core.PubSub.IPC;
@@ -79,7 +80,7 @@ namespace Zazzles.Core.PubSub
         ///  When a BusMessage is published via the hub, relay it via the IPC agent
         /// </summary>
         /// <param name="msg">The message to relay via IPC agent</param>
-        private void relayMessageToIPC<T>(Message<T> msg) where T : class
+        private async Task relayMessageToIPC<T>(Message<T> msg) where T : class
         {
             using (_logger.BeginScope(nameof(relayMessageToIPC)))
             {
@@ -101,7 +102,7 @@ namespace Zazzles.Core.PubSub
                 }
 
                 _logger.LogTrace("Sending message via IPC agent");
-                _ipcAgent.Send(msg);
+                await _ipcAgent.Send(msg);
             }
         }
 
@@ -110,11 +111,11 @@ namespace Zazzles.Core.PubSub
         /// </summary>
         /// <param name="data">The object to serialize and send</param>
         /// <param name="scope">Where to send the message (e.g. only local or other processes)</param>
-        public void Publish<T>(T data, MessageScope scope) where T : class
+        public async Task Publish<T>(T data, MessageScope scope) where T : class
         {
             var msg = new Message<T>(data, scope, MessageOrigin.Self);
             Publish(msg);
-            relayMessageToIPC(msg);
+            await relayMessageToIPC(msg);
         }
 
         private void Publish<T>(Message<T> msg) where T : class
@@ -140,7 +141,7 @@ namespace Zazzles.Core.PubSub
             {
                 var type = typeof(T);
                 _logger.LogTrace("Creating caster for type '{type}'", type);
-                var caster = new Action<IParser, Transport>((parser, transport) =>
+                var caster = new Action<IParser, Transport>(async (parser, transport) =>
                 {
                     try
                     {
@@ -152,7 +153,7 @@ namespace Zazzles.Core.PubSub
                             transport.MetaData.SentTimestamp, transport.MetaData.ReceiveTimestamp);
 
 
-                        var payload = parser.Deserialize<T>(transport.Payload);
+                        var payload = await parser.Deserialize<T>(transport.Payload);
                         var msg = new Message<T>(payload, transport.MetaData);
                         Publish(msg);
                     }

@@ -60,16 +60,12 @@ namespace Zazzles.Core.PubSub.IPC
 
         public async Task<bool> Send<T>(Message<T> msg) where T : class
         {
-            var payload = _parser.Serialize(msg.Payload);
+            var payload = await _parser.Serialize(msg.Payload);
             var transport = new Transport(typeof(T), payload, msg.MetaData);
 
-            var serTransport = _parser.Serialize(transport);
+            var serTransport = await _parser.Serialize(transport);
 
-            _retryPolicy.ExecuteAsync(async () =>
-            {
-                var ret = await Send(serTransport);
-                response.EnsureSuccessStatusCode();
-            });
+            return await Send(serTransport);
         }
 
         protected async Task<bool> OnReceive(byte[] message)
@@ -101,6 +97,8 @@ namespace Zazzles.Core.PubSub.IPC
                 {
                     _logger.LogError("Failed to cast IPC message", ex);
                 }
+
+                return false;
             }
 
         }
