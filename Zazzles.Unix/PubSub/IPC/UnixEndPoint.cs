@@ -1,4 +1,4 @@
-﻿// copied from https://github.com/mono/mono/blob/master/mcs/class/Mono.Posix/Mono.Unix/UnixEndPoint.cs
+﻿// Origin: https://github.com/mono/mono/blob/master/mcs/class/Mono.Posix/Mono.Unix/UnixEndPoint.cs
 
 //
 // Mono.Unix.UnixEndPoint: EndPoint derived class for AF_UNIX family sockets.

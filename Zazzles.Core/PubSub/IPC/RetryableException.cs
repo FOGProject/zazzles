@@ -1,4 +1,4 @@
-﻿/*
+/*
     Copyright(c) 2014-2018 FOG Project
 
     The MIT License
@@ -23,23 +23,23 @@
 using System;
 using System.Runtime.Serialization;
 
-namespace Zazzles.Core.Data.Authenticode
+namespace Zazzles.Core.PubSub.IPC
 {
-    public class CertificateChainNotValidException : Exception
+    public class RetryableException : Exception
     {
-        public CertificateChainNotValidException()
+        public RetryableException()
         {
         }
 
-        public CertificateChainNotValidException(string message) : base(message)
+        public RetryableException(string message) : base(message)
         {
         }
 
-        public CertificateChainNotValidException(string message, Exception innerException) : base(message, innerException)
+        public RetryableException(string message, Exception innerException) : base(message, innerException)
         {
         }
 
-        protected CertificateChainNotValidException(SerializationInfo info, StreamingContext context) : base(info, context)
+        protected RetryableException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
         }
     }

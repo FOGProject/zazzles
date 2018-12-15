@@ -1,4 +1,4 @@
-﻿/*
+/*
     Copyright(c) 2014-2018 FOG Project
 
     The MIT License
@@ -20,50 +20,71 @@
     THE SOFTWARE.
 */
 
+using System;
 using System.Net;
-using System.Net.Sockets;
+using System.Net.Cache;
+using System.Security.Cryptography.X509Certificates;
 using Microsoft.Extensions.Logging;
 using Zazzles.Core.PubSub.IPC;
+using Polly;
+using System.Net.Http;
 
-namespace Zazzles.Windows.PubSub.IPC
+namespace Zazzles.Core.Middlware
 {
-    class SocketServer : AbstractIPCAgent
+    class HttpPollingAgent : AbstractIPCAgent
     {
-        private readonly Socket _server;
-        private readonly UnixEndPoint _endpoint;
-        private readonly int _backlog;
+        bool _authenticated;
+        private readonly HttpClient _httpClient;
+        private readonly Uri _endpoint;
 
-        public SocketServer(string sock, int backlog, ILogger<AbstractIPCAgent> logger, IParser parser) : base(logger, parser)
+
+        public HttpPollingAgent(Uri endpoint, X509Certificate[] whitelist, bool strict, ILogger<AbstractIPCAgent> logger, IParser parser)
+            : base(logger, parser)
         {
-            _server = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.IP);
-            _endpoint = new UnixEndPoint(sock);
-            _backlog = backlog;
+            _endpoint = endpoint;
+            _webclient = new WhitelistWebClient(whitelist, strict);
+
+            _retryPolicy = Policy
+                .Handle<HttpRequestException>()
+                .WaitAndRetryAsync(new[]
+                {
+                    TimeSpan.FromSeconds(2),
+                    TimeSpan.FromSeconds(4),
+                    TimeSpan.FromSeconds(8)
+                });
+        }
+
+        public HttpPollingAgent(Uri endpoint, ILogger<AbstractIPCAgent> logger, IParser parser)
+            : base(logger, parser)
+        {
+            _endpoint = endpoint;
+            _httpClient = new HttpClient();
         }
 
         public override bool Connect()
         {
-            _server.Bind(_endpoint);
-            _server.Listen(_backlog);
             return true;
         }
 
         public override bool Disconnect()
         {
-            _server.Shutdown(SocketShutdown.Both);
             return true;
         }
 
         protected override bool Send(byte[] msg)
         {
-            _server.Send(msg);
+            _retryPolicy.ExecuteAsync(async () =>
+            {
+                var response = await _httpClient
+                .DeleteAsync("https://example.com/api/products/1");
+                response.EnsureSuccessStatusCode();
+            });
             return true;
         }
 
         public override void Dispose()
         {
-            Disconnect();
-            _server.Dispose();
+            _httpClient.Dispose();
         }
-
     }
 }

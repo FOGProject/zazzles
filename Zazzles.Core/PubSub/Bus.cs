@@ -1,21 +1,24 @@
 ﻿/*
- * Zazzles : A cross platform service framework
- * Copyright (C) 2014-2018 FOG Project
- * 
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 3
- * of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
+    Copyright(c) 2014-2018 FOG Project
+
+    The MIT License
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files(the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions :
+    The above copyright notice and this permission notice shall be included in
+    all copies or substantial portions of the Software.
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+    THE SOFTWARE.
+*/
 
 using System;
 using Microsoft.Extensions.Logging;
@@ -39,7 +42,7 @@ namespace Zazzles.Core.PubSub
     /// <summary>
     ///     A pub/sub that also has IPC support. This enables system-wide events to be published
     /// </summary>
-    /// 
+    ///
     public class Bus : IDisposable
     {
         private readonly ILogger _logger;
@@ -84,14 +87,16 @@ namespace Zazzles.Core.PubSub
                 // Only broadcast messages marked for global
                 if (msg.MetaData.Scope != MessageScope.Global)
                 {
-                    _logger.LogTrace("MessageScope not marked for global, skipping");
+                    _logger.LogTrace(
+                        "MessageScope not marked for global, skipping");
                     return;
                 }
 
                 // Only broadcast messages we originated
                 if (msg.MetaData.Origin != MessageOrigin.Self)
                 {
-                    _logger.LogTrace("Message did not originate from this process, skipping");
+                    _logger.LogTrace(
+                        "Message did not originate from this process, skipping");
                     return;
                 }
 
@@ -119,7 +124,9 @@ namespace Zazzles.Core.PubSub
 
             using (_logger.BeginScope(nameof(Publish)))
             {
-                _logger.LogTrace("Publishing message with metadata '{metadata'}", msg.MetaData);
+                _logger.LogTrace(
+                    "Publishing message with metadata '{metadata'}",
+                    msg.MetaData);
 
                 _hub.Publish(msg);
             }
@@ -140,7 +147,8 @@ namespace Zazzles.Core.PubSub
                         transport.MetaData.Origin = MessageOrigin.Remote;
                         transport.MetaData.Scope = MessageScope.Global;
                         transport.MetaData.ReceiveTimestamp = DateTime.UtcNow;
-                        _logger.LogTrace("Received message via IPC agent, message sent at '{sent}', and received at '{received}'",
+                        _logger.LogTrace(
+                            "Received message via IPC agent, message sent at '{sent}', and received at '{received}'",
                             transport.MetaData.SentTimestamp, transport.MetaData.ReceiveTimestamp);
 
 
@@ -150,8 +158,9 @@ namespace Zazzles.Core.PubSub
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError("Failed to deserialize '{payload}' of type '{type}'", 
-                            ex, 
+                        _logger.LogError(
+                            "Failed to deserialize '{payload}' of type '{type}'",
+                            ex,
                             transport.Payload, type);
                     }
 
@@ -175,7 +184,8 @@ namespace Zazzles.Core.PubSub
                 _logger.LogTrace("Registering type caster");
                 RegisterTypeCaster<T>();
 
-                _logger.LogTrace("Subscribing '{name}' with message type '{mtype}'",
+                _logger.LogTrace(
+                    "Subscribing '{name}' with message type '{mtype}'",
                     nameof(action), nameof(T));
 
                 _hub.Subscribe(action);
@@ -193,7 +203,8 @@ namespace Zazzles.Core.PubSub
 
             using (_logger.BeginScope(nameof(Unsubscribe)))
             {
-                _logger.LogTrace("Unsubscribing '{name}' with message type '{mtype}'",
+                _logger.LogTrace(
+                    "Unsubscribing '{name}' with message type '{mtype}'",
                     nameof(action), nameof(T));
 
                 _hub.Unsubscribe(action);

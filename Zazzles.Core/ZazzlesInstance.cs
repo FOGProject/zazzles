@@ -21,26 +21,37 @@
 */
 
 using System;
-using System.Runtime.Serialization;
+using Zazzles.Core.Device.Power;
+using Zazzles.Core.Device.Proc;
+using Zazzles.Core.Device.User;
+using Zazzles.Core.PubSub;
 
-namespace Zazzles.Core.Data.Authenticode
+namespace Zazzles.Core
 {
-    public class CertificateChainNotValidException : Exception
+    public class ZazzlesInstance : IDisposable
     {
-        public CertificateChainNotValidException()
+        public Bus Bus {get; private set;}
+        public DeviceUsers Users {get; private set;}
+        public DevicePower Power {get; private set;}
+
+        public DeviceProcess Processes {get; private set;}
+
+        public ZazzlesInstance(
+            Bus bus,
+            DeviceUsers users,
+            DevicePower power,
+            DeviceProcess processes)
         {
+            this.Bus = bus;
+            this.Users = Users;
+            this.Power = power;
+            this.Processes = processes;
         }
 
-        public CertificateChainNotValidException(string message) : base(message)
+        public void Dispose()
         {
-        }
-
-        public CertificateChainNotValidException(string message, Exception innerException) : base(message, innerException)
-        {
-        }
-
-        protected CertificateChainNotValidException(SerializationInfo info, StreamingContext context) : base(info, context)
-        {
+            Power.Dispose();
+            Bus.Dispose();
         }
     }
 }

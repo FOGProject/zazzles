@@ -21,26 +21,30 @@
 */
 
 using System;
-using System.Runtime.Serialization;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Zazzles.Core.Device.Power;
+using Zazzles.Core.Device.Proc;
+using Zazzles.Core.Device.User;
+using Zazzles.Core.PubSub;
+using Zazzles.Core.PubSub.IPC;
 
-namespace Zazzles.Core.Data.Authenticode
+namespace Zazzles.Core
 {
-    public class CertificateChainNotValidException : Exception
+    public static class ZazzlesFactory
     {
-        public CertificateChainNotValidException()
+        private static void RegisterServices()
         {
+            var services = new ServiceCollection();
+
+            services.AddSingleton<Bus>();
+            services.AddSingleton<DeviceUsers>();
+            services.AddSingleton<DeviceProcess>();
+            services.AddSingleton<DevicePower>();
+
+            Container = services.BuildServiceProvider();
         }
 
-        public CertificateChainNotValidException(string message) : base(message)
-        {
-        }
-
-        public CertificateChainNotValidException(string message, Exception innerException) : base(message, innerException)
-        {
-        }
-
-        protected CertificateChainNotValidException(SerializationInfo info, StreamingContext context) : base(info, context)
-        {
-        }
+        public static IServiceProvider Container { get; private set; }
     }
 }

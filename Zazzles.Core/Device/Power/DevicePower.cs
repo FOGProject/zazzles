@@ -1,23 +1,25 @@
 ﻿/*
- * Zazzles : A cross platform service framework
- * Copyright (C) 2014-2018 FOG Project
- * 
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 3
- * of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
+    Copyright(c) 2014-2018 FOG Project
 
- 
+    The MIT License
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files(the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions :
+    The above copyright notice and this permission notice shall be included in
+    all copies or substantial portions of the Software.
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+    THE SOFTWARE.
+*/
+
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -56,36 +58,49 @@ namespace Zazzles.Core.Device.Power
 
         private readonly AutoResetEvent _abortEvent = new AutoResetEvent(false);
         private readonly object _remoteEventLock = new object();
-        private bool _isLocking = false;
+        private volatile bool _isAsyncRemoteLocking = false;
 
         private readonly IPower _powerAPI;
         private readonly ILogger _logger;
         private readonly Bus _bus;
-        private readonly DeviceUsers _systemUsers;
+        private readonly DeviceUsers _deviceUsers;
 
 
-        public DevicePower(ILogger<DevicePower> logger, Bus bus, DeviceUsers systemUsers, IPower powerAPI, bool remoteLocking = false)
+        public DevicePower(
+            ILogger<DevicePower> logger,
+            Bus bus,
+            DeviceUsers deviceUsers,
+            IPower powerAPI,
+            bool allowIPCLocking = false)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _bus = bus ?? throw new ArgumentNullException(nameof(bus));
-            _systemUsers = systemUsers ?? throw new ArgumentNullException(nameof(systemUsers));
+            _deviceUsers = deviceUsers ?? throw new ArgumentNullException(nameof(deviceUsers));
             _powerAPI = powerAPI ?? throw new ArgumentNullException(nameof(powerAPI));
 
             bus.Subscribe<PowerRequest>(OnPowerRequest);
 
 
+            // If allowIPCLocking, another process can lock us
+            //   this is desired when the system-service is performing a power
+            //   operation and wants to notify any user-services.
+            //   The system-service should NOT have this set for security.
             using (_logger.BeginScope(nameof(DevicePower)))
             {
-                _logger.LogTrace("RemoteLocking set to '{remoteLocking}'", remoteLocking);
-                if (remoteLocking)
-                    bus.Subscribe<PowerEvent>(OnPowerEvent);
+                _logger.LogTrace(
+                    "RemoteLocking set to '{allowIPCLocking}'", allowIPCLocking);
+                if (allowIPCLocking)
+                    bus.Subscribe<PowerEvent>(OnRemotePowerEvent);
             }
         }
 
-
+        // Force an unlock of the system-wide device lock
+        // if we are currently holding it due to a *remote* power event.
+        // Provide this method as a means of preventing potential DOS attacks
+        // on the user services
         public void ReleaseSystemLockIfHeld()
         {
-            using (_logger.BeginScope(nameof(ProcessEvent)))
+            using (_logger.BeginScope(nameof(ReleaseSystemLockIfHeld)))
             {
                 _logger.LogTrace("Acquiring remote event lock");
                 lock (_remoteEventLock)
@@ -97,6 +112,7 @@ namespace Zazzles.Core.Device.Power
             }
         }
 
+        // Handles power requests from another process
         private void OnPowerRequest(Message<PowerRequest> req)
         {
             using (_logger.BeginScope(nameof(OnPowerRequest)))
@@ -113,6 +129,10 @@ namespace Zazzles.Core.Device.Power
                     DelayShutdown(req.Payload.When, true);
                     break;
                 case PowerAction.PerformImmediately:
+                    // If a remote process wants to invoke the pending requests
+                    //   right away, enforce the event policy to prevent
+                    //   forcing other logged in users off without their consent
+                    //   if this was not supposed to be allowed
                     PerformNow(true);
                     break;
                 case PowerAction.Reboot:
@@ -126,9 +146,10 @@ namespace Zazzles.Core.Device.Power
             }
         }
 
-        private void OnPowerEvent(Message<PowerEvent> msg)
+        // Handle power events triggered by anotheer process
+        private void OnRemotePowerEvent(Message<PowerEvent> msg)
         {
-            using (_logger.BeginScope(nameof(OnPowerEvent)))
+            using (_logger.BeginScope(nameof(OnRemotePowerEvent)))
             {
                 _logger.LogTrace("Recieved PowerEvent {msg}", msg);
 
@@ -147,14 +168,20 @@ namespace Zazzles.Core.Device.Power
                         _logger.LogTrace("Acquiring remote event lock");
                         lock (_remoteEventLock)
                         {
-                            if (_isLocking)
+                            // Use a bool to keep track of this lock state for now
+                            //  as wee will need to spawn a new thread to process
+                            //  a remote reboot/shutdown.
+                            if (_isAsyncRemoteLocking)
                             {
                                 _logger.LogTrace("A remote lock is already in progress, skipping");
                                 return;
                             }
 
-                            _isLocking = true;
+                            _isAsyncRemoteLocking = true;
                             _logger.LogTrace("Spawning lock task");
+                            // Spawn a new thread lock the system-wide
+                            //   device lock and hold it until an abort event
+                            //   is triggered
                             Task.Run(() =>
                             {
                                 _logger.LogTrace("Acquiring SystemLock");
@@ -162,8 +189,9 @@ namespace Zazzles.Core.Device.Power
                                 {
                                     _logger.LogTrace("Keeping system locked until an abort is signaled");
                                     _abortEvent.WaitOne();
+
                                     _logger.LogTrace("Abort signal received, releasing SystemLock");
-                                    _isLocking = false;
+                                    _isAsyncRemoteLocking = false;
                                 }
                             });
                         }
@@ -189,7 +217,6 @@ namespace Zazzles.Core.Device.Power
                 _logger.LogTrace("Task Pending is '{isPending}'", isPending);
                 return isPending;
             }
-
         }
 
         public bool PerformNow(bool enforcePermissions = false)
@@ -211,7 +238,8 @@ namespace Zazzles.Core.Device.Power
                         return false;
                     }
 
-                    if (enforcePermissions && !_taskQueue.Options.HasFlag(UserOptions.PerformImmediately))
+                    if (enforcePermissions &&
+                        !_taskQueue.Options.HasFlag(UserOptions.PerformImmediately))
                     {
                         _logger.LogTrace("PerformImmediately not permitted on current task");
                         return false;
@@ -223,10 +251,13 @@ namespace Zazzles.Core.Device.Power
             }
         }
 
-        private bool DelayShutdown(DateTime until, bool enforcePermissions = false)
+        private bool DelayShutdown(DateTime when, bool enforcePermissions = false)
         {
+            if (when == null)
+                throw new ArgumentNullException(nameof(when));
+
             var now = DateTime.UtcNow;
-            var delayAmount = until - now;
+            var delayAmount = when - now;
             return DelayShutdown(delayAmount, enforcePermissions);
         }
 
@@ -254,12 +285,14 @@ namespace Zazzles.Core.Device.Power
                         return false;
                     }
 
-                    if (enforcePermissions && !_taskQueue.Options.HasFlag(UserOptions.Delay))
+                    if (enforcePermissions &&
+                        !_taskQueue.Options.HasFlag(UserOptions.Delay))
                     {
                         _logger.LogTrace("Delay not permitted on current task");
                         return false;
                     }
 
+                    // Make sure we do not delay more than MAX_DELAY_TIME_MINUTES
                     var delayAmount = _taskQueue.DelayTotal + span;
                     var allowedDelay = MAX_DELAY_TIME_MINUTES - delayAmount.TotalMinutes;
                     if (allowedDelay <= 0)
@@ -296,7 +329,9 @@ namespace Zazzles.Core.Device.Power
                 if (abortException != null)
                     _logger.LogCritical("Abort check threw exception", abortException);
 
-                if (powerEvent.Action != PowerAction.Abort && powerEvent.Action != PowerAction.Delay)
+                // Aborts and delays don't require holding the device lock
+                if (powerEvent.Action != PowerAction.Abort &&
+                    powerEvent.Action != PowerAction.Delay)
                 {
                     _logger.LogTrace("Acquiring SystemLock");
                     lock (DeviceLock.Lock)
@@ -318,6 +353,8 @@ namespace Zazzles.Core.Device.Power
             if (powerEvent == null)
                 throw new ArgumentNullException(nameof(powerEvent));
 
+            // Publish the message first before invoking it,
+            //  otherwise we may be shutdown before we have a chance to notify
             _bus.Publish(powerEvent, MessageScope.Global);
             _powerAPI.InvokeEvent(powerEvent);
         }
@@ -337,11 +374,11 @@ namespace Zazzles.Core.Device.Power
                 {
                     if (_taskQueue != null && !_taskQueue.Executed)
                     {
-                        _logger.LogTrace("Active task already present");
+                        _logger.LogTrace("An active task is already present");
                         return false;
                     }
 
-                    if (!_systemUsers.AnyLoggedIn())
+                    if (!_deviceUsers.AnyLoggedIn())
                     {
                         _logger.LogInformation("No users logged in, performing immediately");
                         InvokeEvent(powerEvent);
@@ -359,24 +396,22 @@ namespace Zazzles.Core.Device.Power
             return true;
         }
 
-        public void Shutdown(string message, UserOptions options = UserOptions.Abort, Func<bool> abortCheck = null)
+        public void Shutdown(
+            string message,
+            UserOptions options = UserOptions.Abort,
+            Func<bool> abortCheck = null)
         {
             var powerEvent = new PowerEvent(PowerAction.Shutdown, options, DateTime.UtcNow, message);
             QueueEvent(powerEvent, abortCheck);
         }
 
-        public void Reboot(string message, UserOptions options = UserOptions.Abort, Func<bool> abortCheck = null)
+        public void Reboot(
+            string message,
+            UserOptions options = UserOptions.Abort,
+            Func<bool> abortCheck = null)
         {
             var powerEvent = new PowerEvent(PowerAction.Reboot, options, DateTime.UtcNow, message);
             QueueEvent(powerEvent, abortCheck);
-        }
-
-        /// <summary>
-        ///     Entry off the current user
-        /// </summary>
-        public void LogOffUser()
-        {
-            _powerAPI.LogOffUser();
         }
 
         /// <summary>
@@ -417,7 +452,8 @@ namespace Zazzles.Core.Device.Power
                         return false;
                     }
 
-                    if(enforcePermissions && !_taskQueue.Options.HasFlag(UserOptions.Abort))
+                    if(enforcePermissions &&
+                        !_taskQueue.Options.HasFlag(UserOptions.Abort))
                     {
                         _logger.LogTrace("Abort not permitted on current task");
                         return false;

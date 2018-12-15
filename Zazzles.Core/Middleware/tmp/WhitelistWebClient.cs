@@ -1,4 +1,4 @@
-﻿/*
+/*
     Copyright(c) 2014-2018 FOG Project
 
     The MIT License
@@ -21,26 +21,29 @@
 */
 
 using System;
-using System.Runtime.Serialization;
+using System.Net;
+using System.Security.Cryptography.X509Certificates;
 
-namespace Zazzles.Core.Data.Authenticode
+namespace Zazzles.Core.Middlware
 {
-    public class CertificateChainNotValidException : Exception
+    class WhitelistWebClient : WebClient
     {
-        public CertificateChainNotValidException()
+        private readonly X509Certificate[] _whitelist;
+        private readonly bool _strict;
+        public WhitelistWebClient(X509Certificate[] whitelist, bool strict=true)
         {
+            _whitelist = whitelist;
+            _strict = strict;
         }
-
-        public CertificateChainNotValidException(string message) : base(message)
+        protected override WebRequest GetWebRequest(Uri address)
         {
-        }
+            HttpWebRequest request = (HttpWebRequest)base.GetWebRequest(address);
 
-        public CertificateChainNotValidException(string message, Exception innerException) : base(message, innerException)
-        {
-        }
+            if (_strict)
+                request.ClientCertificates.Clear();
 
-        protected CertificateChainNotValidException(SerializationInfo info, StreamingContext context) : base(info, context)
-        {
+            request.ClientCertificates.AddRange(_whitelist);
+            return request;
         }
     }
 }

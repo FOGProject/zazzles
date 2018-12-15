@@ -1,25 +1,30 @@
 ﻿/*
- * Zazzles : A cross platform service framework
- * Copyright (C) 2014-2018 FOG Project
- * 
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 3
- * of the License, or (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
- */
+    Copyright(c) 2014-2018 FOG Project
 
-using Microsoft.Extensions.Logging;
+    The MIT License
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files(the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and / or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions :
+    The above copyright notice and this permission notice shall be included in
+    all copies or substantial portions of the Software.
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+    THE SOFTWARE.
+*/
+
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Polly;
 
 namespace Zazzles.Core.PubSub.IPC
 {
@@ -29,10 +34,12 @@ namespace Zazzles.Core.PubSub.IPC
         protected readonly IParser _parser;
         private readonly Dictionary<Type, Action<IParser, Transport>> _typeCasters;
         private readonly object casterLock = new object();
+        private readonly Policy _retryPolicy;
 
-        public abstract bool Connect();
-        public abstract bool Disconnect();
-        protected abstract bool Send(byte[] msg);
+
+        public abstract Task<bool> Connect();
+        public abstract Task<bool> Disconnect();
+        protected abstract Task<bool> Send(byte[] msg);
         public abstract void Dispose();
 
         public AbstractIPCAgent(ILogger<AbstractIPCAgent> logger, IParser parser)
@@ -40,39 +47,54 @@ namespace Zazzles.Core.PubSub.IPC
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _parser = parser ?? throw new ArgumentNullException(nameof(parser));
             _typeCasters = new Dictionary<Type, Action<IParser, Transport>>();
+
+            _retryPolicy = Policy
+                .Handle<RetryableException>()
+                .WaitAndRetryAsync(new[]
+                {
+                    TimeSpan.FromSeconds(2),
+                    TimeSpan.FromSeconds(4),
+                    TimeSpan.FromSeconds(8)
+                });
         }
 
-        public bool Send<T>(Message<T> msg) where T : class
+        public async Task<bool> Send<T>(Message<T> msg) where T : class
         {
             var payload = _parser.Serialize(msg.Payload);
             var transport = new Transport(typeof(T), payload, msg.MetaData);
 
             var serTransport = _parser.Serialize(transport);
-            return Send(serTransport);
+
+            _retryPolicy.ExecuteAsync(async () =>
+            {
+                var ret = await Send(serTransport);
+                response.EnsureSuccessStatusCode();
+            });
         }
 
-        protected void OnReceive(byte[] message)
+        protected async Task<bool> OnReceive(byte[] message)
         {
             using (_logger.BeginScope(nameof(OnReceive)))
             {
                 try
                 {
                     _logger.LogTrace("Received IPC message");
-                    var transport = _parser.Deserialize<Transport>(message);
+                    var transport = await _parser.Deserialize<Transport>(message);
                     Type type = transport.PayloadType;
                     _logger.LogTrace("Message type: '{type}'", type);
                     Action<IParser, Transport> caster = null;
 
                     lock (casterLock)
                     {
-                        if (!_typeCasters.ContainsKey(type)) return;
+                        if (!_typeCasters.ContainsKey(type)) return false;
                         _logger.LogTrace("Typecaster found");
 
                         caster = _typeCasters[type];
                     }
 
-                    if (caster == null) return;
+                    if (caster == null) return false;
                     caster(_parser, transport);
+                    return true;
                 }
                 // Catch all exceptions to prevent malicious messages from crashing the process
                 catch (Exception ex)
