@@ -169,7 +169,7 @@ namespace Zazzles.Core.Device.Power
                         lock (_remoteEventLock)
                         {
                             // Use a bool to keep track of this lock state for now
-                            //  as wee will need to spawn a new thread to process
+                            //  as  will need to spawn a new thread to process
                             //  a remote reboot/shutdown.
                             if (_isAsyncRemoteLocking)
                             {
@@ -355,7 +355,7 @@ namespace Zazzles.Core.Device.Power
 
             // Publish the message first before invoking it,
             //  otherwise we may be shutdown before we have a chance to notify
-            _bus.Publish(powerEvent, MessageScope.Global);
+            _bus.Publish(powerEvent, MessageScope.Global).Wait();
             _powerAPI.InvokeEvent(powerEvent);
         }
 
@@ -464,7 +464,7 @@ namespace Zazzles.Core.Device.Power
                     _taskQueue = null;
                 }
                 var pEvent = new PowerEvent(PowerAction.Abort, UserOptions.None, DateTime.UtcNow);
-                _bus.Publish(pEvent, MessageScope.Global);
+                _bus.Publish(pEvent, MessageScope.Global).Wait();
 
                 return true;
             }
