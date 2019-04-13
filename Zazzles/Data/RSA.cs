@@ -154,12 +154,25 @@ namespace Zazzles.Data
                 X509Certificate2 CAroot = null;
                 var store = new X509Store(StoreName.Root, StoreLocation.LocalMachine);
                 store.Open(OpenFlags.ReadOnly);
-                var cers = store.Certificates.Find(X509FindType.FindBySubjectName, name, true);
+                var cers = store.Certificates.Find(X509FindType.FindBySubjectName, name, false);
 
                 if (cers.Count > 0)
                 {
-                    Log.Entry(LogName, name + " cert found");
-                    CAroot = cers[0];
+                    foreach (var certificate in cers)
+                    {
+                        var chain = X509Chain.Create();
+                        chain.ChainPolicy.RevocationMode = X509RevocationMode.Offline;
+                        chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllFlags;
+                        if (chain.Build(certificate))
+                        {
+                            CAroot = certificate;
+                            Log.Entry(LogName, name + " cert found");
+                        }
+                    }
+                }
+                else
+                {
+                    throw new ArgumentException(name + " NOT found in keystore");
                 }
                 store.Close();
 
