@@ -83,8 +83,10 @@ namespace Zazzles.Tests.Settings
         [Test]
         public void BadGet()
         {
-            Assert.IsNullOrEmpty(Zazzles.Settings.Get("NO_EXIST"));
-            Assert.IsNullOrEmpty(Zazzles.Settings.Get("https"));
+            Assert.IsNull(Zazzles.Settings.Get("NO_EXIST"));
+            Assert.IsEmpty(Zazzles.Settings.Get("NO_EXIST"));
+            Assert.IsNull(Zazzles.Settings.Get("https"));
+            Assert.IsEmpty(Zazzles.Settings.Get("https"));
         }
 
         [Test]

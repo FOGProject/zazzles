@@ -37,7 +37,8 @@ namespace Zazzles.Tests.Middleware
         [Test]
         public void IPAddress()
         {
-            Assert.IsNotNullOrEmpty(Configuration.IPAddress());
+            Assert.IsNotEmpty(Configuration.IPAddress());
+            Assert.IsNotNull(Configuration.IPAddress());
         }
 
         [Test]
