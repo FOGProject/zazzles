@@ -339,7 +339,7 @@ namespace Zazzles
         {
             Entry(LogName, "Unhandled exception caught");
             Entry(LogName, $"    Terminating: {ex.IsTerminating}");
-            Entry(LogName, $"    Hash code: {ex.ExceptionObject.GetHashCode()}");
+            Entry(LogName, $"    Hash code: {ex.ExceptionObject.ToString()}");
         }
 
         /// <summary>
