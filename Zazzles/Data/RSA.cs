@@ -152,7 +152,7 @@ namespace Zazzles.Data
             try
             {
                 X509Certificate2 CAroot = null;
-                var store = new X509Store(StoreName.Root, StoreLocation.CurrentUser);
+                var store = new X509Store(StoreName.Root, GetCertStoreLocation());
                 store.Open(OpenFlags.ReadOnly);
                 var cers = store.Certificates.Find(X509FindType.FindBySubjectName, name, false);
 
@@ -188,7 +188,7 @@ namespace Zazzles.Data
         }
 
         /// <summary>
-        ///     Add a CA certificate to the machine store
+        ///     Add a CA certificate to the user store
         /// </summary>
         /// <param name="caCert">The certificate to add</param>
         public static bool InjectCA(X509Certificate2 caCert)
@@ -199,7 +199,7 @@ namespace Zazzles.Data
             Log.Entry(LogName, "Injecting root CA: " + caCert.FriendlyName);
             try
             {
-                var store = new X509Store(StoreName.Root, StoreLocation.CurrentUser);
+                var store = new X509Store(StoreName.Root, GetCertStoreLocation());
                 store.Open(OpenFlags.ReadWrite);
                 store.Add(caCert);
                 store.Close();
@@ -475,6 +475,27 @@ namespace Zazzles.Data
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// OS specific X509Store location
+        /// </summary>
+        /// <returns>OS specific X509 Storelocation</returns>
+        private static StoreLocation GetCertStoreLocation()
+        {
+            switch (Settings.OS)
+            {
+                case Settings.OSType.Windows:
+                    return StoreLocation.LocalMachine;
+                case Settings.OSType.Nix:
+                    return StoreLocation.LocalMachine;
+                case Settings.OSType.Mac:
+                    return StoreLocation.CurrentUser;
+                case Settings.OSType.Linux:
+                    return StoreLocation.LocalMachine;
+                default:
+                    return StoreLocation.LocalMachine;
+            }
         }
 
     }
