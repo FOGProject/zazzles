@@ -152,7 +152,7 @@ namespace Zazzles.Data
             try
             {
                 X509Certificate2 CAroot = null;
-                var store = new X509Store(StoreName.Root, StoreLocation.LocalMachine);
+                var store = new X509Store(StoreName.Root, StoreLocation.CurrentUser);
                 store.Open(OpenFlags.ReadOnly);
                 var cers = store.Certificates.Find(X509FindType.FindBySubjectName, name, false);
 
@@ -199,7 +199,7 @@ namespace Zazzles.Data
             Log.Entry(LogName, "Injecting root CA: " + caCert.FriendlyName);
             try
             {
-                var store = new X509Store(StoreName.Root, StoreLocation.LocalMachine);
+                var store = new X509Store(StoreName.Root, StoreLocation.CurrentUser);
                 store.Open(OpenFlags.ReadWrite);
                 store.Add(caCert);
                 store.Close();
