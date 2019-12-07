@@ -56,7 +56,7 @@ namespace Zazzles.Tests.Bus
             Assert.Throws<ArgumentNullException>(() => Zazzles.Bus.Subscribe(Zazzles.Bus.Channel.Debug, null));
         }
 
-        [Test, MaxTime(2000)]
+        [Test, MaxTime(3000)]
         public void LocalEmit()
         {
             var expected = "HelloWorld@123$";
