@@ -62,7 +62,12 @@ namespace Zazzles
         {
             // Suppress settings errors on initialization
             Output = Mode.Quiet;
-            FilePath = Path.Combine(Settings.Location, "zazzles.log");
+            var temp = Environment.GetEnvironmentVariable("TEMP", EnvironmentVariableTarget.Machine);
+            if (string.IsNullOrEmpty(temp))
+                temp = Path.GetTempPath();
+            if (!string.IsNullOrEmpty(temp) && !Directory.Exists(temp))
+                Directory.CreateDirectory(temp);
+            FilePath = Path.Combine(temp, "FOGService.install.log");
             Output = Mode.File;
 
             MaxSize = DefaultMaxLogSize;
