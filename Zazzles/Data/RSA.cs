@@ -172,7 +172,7 @@ namespace Zazzles.Data
                 }
                 else
                 {
-                    throw new ArgumentException(name + " NOT found in keystore");
+                    throw new ArgumentException(name + " NOT found in keystore - needs to be installed");
                 }
                 store.Close();
 
@@ -180,7 +180,6 @@ namespace Zazzles.Data
             }
             catch (Exception ex)
             {
-                Log.Error(LogName, "Unable to retrieve " + name);
                 Log.Error(LogName, ex);
             }
 

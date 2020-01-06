@@ -48,7 +48,6 @@ namespace Zazzles.Middleware
             if (string.IsNullOrEmpty(Settings.Get("HTTPS")) || Settings.Get("WebRoot") == null ||
                 string.IsNullOrEmpty(Settings.Get("Server")))
             {
-                Log.Error(LogName, "Invalid parameters");
                 return false;
             }
 

@@ -118,14 +118,14 @@ namespace Zazzles
         {
             try
             {
-                _data = JObject.Parse(File.ReadAllText(_file));
+                if (File.Exists(_file))
+                    _data = JObject.Parse(File.ReadAllText(_file));
                 if (File.Exists(_sessionFile))
                     _session = JObject.Parse(File.ReadAllText(_sessionFile));
             }
             catch (Exception ex)
             {
-                Log.Error(LogName, "Could not load settings");
-                Log.Error(LogName, ex);
+                Log.Entry(LogName, "Could not load settings - " + ex.Message);
             }
         }
 
@@ -142,8 +142,7 @@ namespace Zazzles
             }
             catch (Exception ex)
             {
-                Log.Error(LogName, "Unable to save settings");
-                Log.Error(LogName, ex);
+                Log.Error(LogName, "Unable to save settings - " + ex.Message);
             }
 
             return false;
@@ -158,8 +157,7 @@ namespace Zazzles
             }
             catch (Exception ex)
             {
-                Log.Error(LogName, "Unable to save session settings");
-                Log.Error(LogName, ex);
+                Log.Error(LogName, "Unable to save session settings - " + ex.Message);
             }
 
             return false;
