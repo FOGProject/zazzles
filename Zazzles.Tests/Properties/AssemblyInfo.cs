@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("FOG")]
 [assembly: AssemblyProduct("Zazzles.Tests")]
-[assembly: AssemblyCopyright("Copyright © 2015-2016")]
+[assembly: AssemblyCopyright("Copyright 2014-2020")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
