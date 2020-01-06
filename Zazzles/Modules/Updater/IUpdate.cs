@@ -21,7 +21,7 @@ namespace Zazzles.Modules.Updater
 {
     public interface IUpdate
     {
-        void ApplyUpdate();
+        int ApplyUpdate();
         void StartService();
         void StopService();
     }

@@ -58,7 +58,12 @@ namespace Zazzles.Modules.Updater
             Log.Entry(LogName, "Killing remaining processes...");
             ProcessHandler.KillAllEXE(processToKill);
             Log.Entry(LogName, "Applying update...");
-            instance.ApplyUpdate();
+            var status = instance.ApplyUpdate();
+            if (status != 0)
+            {
+                Log.Error(LogName, "Failed to apply update, setup returned exit code " + status);
+                Environment.Exit(status);
+            }
 
             Log.Entry(LogName, "Starting service...");
             instance.StartService();
