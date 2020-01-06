@@ -281,10 +281,24 @@ namespace Zazzles.Middleware
             {
                 return true;
             }
-            else if (polerrors == System.Net.Security.SslPolicyErrors.RemoteCertificateNameMismatch)
+            else
             {
-                Log.Error(LogName, "FOG server host name does not match certificate subject (" + cert.Subject + ").");
-                return false;
+                var certAsString = cert.ToString(true);
+                var request = (WebRequest)sender;
+                if (request.RequestUri.AbsolutePath.EndsWith("ca.cert.der") &&
+                    certAsString.Contains(request.RequestUri.Host) &&
+                    cert.Issuer.Equals("CN=FOG Server CA"))
+                {
+                    return true;
+                }
+                else if (polerrors == System.Net.Security.SslPolicyErrors.RemoteCertificateNameMismatch)
+                {
+                    Log.Error(LogName, "FOG server host name does not match certificate subject (" + cert.Subject + ").");
+                }
+                else
+                {
+                    Log.Error(LogName, "SSL connection error: " + chain.ChainStatus.ToString());
+                }
             }
             return false;
         }
