@@ -142,11 +142,24 @@ namespace Zazzles.Middleware
 
                 // Get the response.
                 var response = request.GetResponse();
+                var httpResponse = (HttpWebResponse)response;
                 dataStream = response.GetResponseStream();
 
                 // Open the stream using a StreamReader for easy access.
                 var reader = new StreamReader(dataStream);
                 var rawResponse = reader.ReadToEnd();
+                if (httpResponse.StatusCode == HttpStatusCode.Found)
+                {
+                    var uri = new Uri(httpResponse.Headers["Location"]);
+                    Log.Entry(LogName, "Received HTTP redirect, retrying POST to " + uri.GetLeftPart(UriPartial.Path));
+                    if (uri.Scheme.Equals("https"))
+                    {
+                        Log.Entry(LogName, "This is a HTTPS redirect and so we switch to that in settings file.");
+                        Settings.Set("HTTPS", "1", false);
+                    }
+                    Configuration.ServerAddress = uri.GetLeftPart(UriPartial.Authority) + Settings.Get("WebRoot");
+                    return Post(postfix, param);
+                }
 
                 // Clean up the streams.
                 reader.Close();
