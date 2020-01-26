@@ -98,7 +98,7 @@ namespace Zazzles
 
 
             WriteLine(level,
-                $" {DateTime.Now.ToShortDateString()} {DateTime.Now.ToShortTimeString()} {caller} {prefix}{message}");
+                $" {DateTime.Now.ToShortDateString()} {DateTime.Now.ToLongTimeString()} {caller} {prefix}{message}");
         }
 
         /// <summary>
