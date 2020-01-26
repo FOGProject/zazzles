@@ -78,7 +78,7 @@ namespace Zazzles.BusComponents
         {
             if (Socket.State == WebSocketState.Open || IsRetrying()) return;
 
-            Log.Error(LogName, "Connection lost");
+            Log.Error(LogName, "Connection lost, socket was closed");
             AutoRetryEvent.Set();
         }
 
@@ -87,7 +87,7 @@ namespace Zazzles.BusComponents
             Log.Error(LogName, errorEventArgs.Exception.Message);
             if (Socket.State == WebSocketState.Open || IsRetrying()) return;
 
-            Log.Error(LogName, "Connection lost");
+            Log.Error(LogName, "Connection lost due to socket error");
             AutoRetryEvent.Set();
         }
 
