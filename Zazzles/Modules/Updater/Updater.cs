@@ -94,9 +94,23 @@ namespace Zazzles.Modules.Updater
 
         private bool IsAuthenticate(string filePath)
         {
-            var signeeCert = RSA.ExtractDigitalSignature(filePath);
+            var signeeSecondaryCerts = UpdaterHelper.CheckSecondarySignature(filePath);
             var targetSigner = RSA.FOGProjectCertificate();
-            if (RSA.IsFromCA(targetSigner, signeeCert))
+            if (signeeSecondaryCerts.Count > 0)
+            {
+                foreach (var secondaryCert in signeeSecondaryCerts)
+                {
+                    if (targetSigner.IssuerName.Name.Equals(secondaryCert.IssuerName.Name) &&
+                        RSA.IsFromCA(targetSigner, secondaryCert))
+                    {
+                        Log.Entry(Name, "Update file is authentic");
+                        return true;
+                    }
+                };
+            }
+            var signeeCert = RSA.ExtractDigitalSignature(filePath);
+            if (targetSigner.IssuerName.Name.Equals(signeeCert.IssuerName.Name) &&
+                RSA.IsFromCA(targetSigner, signeeCert))
             {
                 Log.Entry(Name, "Update file is authentic");
                 return true;
