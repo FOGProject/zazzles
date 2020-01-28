@@ -20,9 +20,9 @@
 using System;
 using System.IO;
 using System.Net;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
-
-// ReSharper disable InconsistentNaming
+using Zazzles.Data;
 
 namespace Zazzles.Middleware
 {
@@ -294,25 +294,48 @@ namespace Zazzles.Middleware
             {
                 return true;
             }
-            else
+            var certAsString = cert.ToString(true);
+            var request = (WebRequest)sender;
+            // Allow for the installer to download the CA cert via HTTPS as well
+            if (request.RequestUri.AbsolutePath.EndsWith("ca.cert.der") &&
+                certAsString.Contains(request.RequestUri.Host) &&
+                cert.Issuer.Equals("CN=FOG Server CA"))
             {
-                var certAsString = cert.ToString(true);
-                var request = (WebRequest)sender;
-                if (request.RequestUri.AbsolutePath.EndsWith("ca.cert.der") &&
-                    certAsString.Contains(request.RequestUri.Host) &&
-                    cert.Issuer.Equals("CN=FOG Server CA"))
-                {
-                    return true;
-                }
-                else if (polerrors == System.Net.Security.SslPolicyErrors.RemoteCertificateNameMismatch)
-                {
-                    Log.Error(LogName, "FOG server host name does not match certificate subject (" + cert.Subject + ").");
-                }
-                else
-                {
-                    Log.Error(LogName, "SSL connection error: " + chain.ChainStatus.ToString());
-                }
+                return true;
             }
+            // great code from https://stackoverflow.com/a/37657252
+            if ((polerrors & System.Net.Security.SslPolicyErrors.RemoteCertificateChainErrors) != 0)
+            {
+                if (chain?.ChainStatus != null)
+                {
+                    foreach (var status in chain.ChainStatus)
+                    {
+                        if ((cert.Subject == cert.Issuer) &&
+                            (status.Status == X509ChainStatusFlags.UntrustedRoot))
+                        {
+                            // Self-signed certificates with an untrusted root are fine
+                            continue;
+                        }
+                        if (status.Status != X509ChainStatusFlags.NoError)
+                        {
+                            if (RSA.IsFromCA(RSA.ServerCertificate(), new X509Certificate2(cert)))
+                            {
+                                // Ok, Mono is simply tooo dump to use the CA cert from the store
+                                // and we need to do this check manually
+                                return true;
+                            }
+                            Log.Entry(LogName, "SSL certificate chain error: " + status.StatusInformation);
+                            return false;
+                        }
+                    }
+                }
+
+                // When we get here the only errors in the certificate chain should be
+                // untrusted root errors for self-signed certificates. These certificates
+                // are valid e.g. for default Exchange server installations.
+                return true;
+            }
+            Log.Entry(LogName, "SSL connection error: " + polerrors);
             return false;
         }
     }
