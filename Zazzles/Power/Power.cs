@@ -279,14 +279,14 @@ namespace Zazzles
             }
         }
 
-        public static void Shutdown(string comment, ShutdownOptions options = ShutdownOptions.Abort, string message = null)
+        public static Task Shutdown(string comment, ShutdownOptions options = ShutdownOptions.Abort, string message = null)
         {
-            Instance.Shutdown(comment, options, message);
+            return Instance.Shutdown(comment, options, message);
         }
 
-        public static void Restart(string comment, ShutdownOptions options = ShutdownOptions.Abort, string message = null)
+        public static Task Restart(string comment, ShutdownOptions options = ShutdownOptions.Abort, string message = null)
         {
-            Instance.Restart(comment, options, message);
+            return Instance.Restart(comment, options, message);
         }
 
         public static void Shutdown(string comment, Func<bool> abortCheckFunc, ShutdownOptions options = ShutdownOptions.Abort,
