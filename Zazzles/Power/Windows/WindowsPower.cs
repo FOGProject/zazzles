@@ -22,6 +22,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zazzles.PowerComponents
 {
@@ -29,14 +30,14 @@ namespace Zazzles.PowerComponents
     {
         private const string LogName = "Power";
 
-        public void Shutdown(string comment, Power.ShutdownOptions options = Power.ShutdownOptions.Abort, string message = null)
+        public Task Shutdown(string comment, Power.ShutdownOptions options = Power.ShutdownOptions.Abort, string message = null)
         {
-            Power.QueueShutdown($"/s /c \"{comment}\" /t 0", options, message);
+            return Power.QueueShutdown($"/s /c \"{comment}\" /t 0", options, message);
         }
 
-        public void Restart(string comment, Power.ShutdownOptions options = Power.ShutdownOptions.Abort, string message = null)
+        public Task Restart(string comment, Power.ShutdownOptions options = Power.ShutdownOptions.Abort, string message = null)
         {
-            Power.QueueShutdown($"/r /c \"{comment}\" /t 0", options, message);
+            return Power.QueueShutdown($"/r /c \"{comment}\" /t 0", options, message);
         }
 
         public void LogOffUser()

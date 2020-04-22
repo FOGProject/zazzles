@@ -19,19 +19,20 @@
 
 using System;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace Zazzles.PowerComponents
 {
     internal class LinuxPower : IPower
     {
-        public void Shutdown(string comment, Power.ShutdownOptions options = Power.ShutdownOptions.Abort, string message = null)
+        public Task Shutdown(string comment, Power.ShutdownOptions options = Power.ShutdownOptions.Abort, string message = null)
         {
-            Power.QueueShutdown($"-h +0 \"{comment}\"", options, message);
+            return Power.QueueShutdown($"-h +0 \"{comment}\"", options, message);
         }
 
-        public void Restart(string comment, Power.ShutdownOptions options = Power.ShutdownOptions.Abort, string message = null)
+        public Task Restart(string comment, Power.ShutdownOptions options = Power.ShutdownOptions.Abort, string message = null)
         {
-            Power.QueueShutdown($"-r +0 \"{comment}\"", options, message);
+            return Power.QueueShutdown($"-r +0 \"{comment}\"", options, message);
         }
 
         public void LogOffUser()

@@ -17,12 +17,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+using System.Threading.Tasks;
+
 namespace Zazzles.PowerComponents
 {
     internal interface IPower
     {
-        void Shutdown(string comment, Power.ShutdownOptions options = Power.ShutdownOptions.Abort, string message = null);
-        void Restart(string comment, Power.ShutdownOptions options = Power.ShutdownOptions.Abort, string message = null);
+        Task Shutdown(string comment, Power.ShutdownOptions options = Power.ShutdownOptions.Abort, string message = null);
+        Task Restart(string comment, Power.ShutdownOptions options = Power.ShutdownOptions.Abort, string message = null);
 
         void LogOffUser();
         void Hibernate();

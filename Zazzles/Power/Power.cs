@@ -18,6 +18,7 @@
  */
 
 using System;
+using System.Threading.Tasks;
 using System.Timers;
 using Newtonsoft.Json.Linq;
 using Zazzles.Data;
@@ -49,6 +50,7 @@ namespace Zazzles
         private static dynamic _requestData = new JObject();
         private static Func<bool> _shouldAbortFunc;
         private static readonly IPower Instance;
+        private static readonly Task CompletedTask = Task.FromResult(false);
 
         public static bool ShuttingDown { get; private set; }
         public static bool Requested { get; private set; }
@@ -186,21 +188,21 @@ namespace Zazzles
             ShuttingDown = true;
         }
 
-        public static void QueueShutdown(string parameters, ShutdownOptions options = ShutdownOptions.Abort, 
+        public static Task QueueShutdown(string parameters, ShutdownOptions options = ShutdownOptions.Abort, 
             string message = null, int gracePeriod = -1)
         {
             // If no user is logged in, skip trying to notify users
             if (!User.AnyLoggedIn())
             {
                 CreateTask(parameters, message);
-                return;
+                return CompletedTask;
             }
 
             // Check if a task is already in progress
             if (_timer != null && _timer.Enabled)
             {
                 Log.Entry(LogName, "Power task already in-progress");
-                return;
+                return CompletedTask;
             }
 
             Requested = true;
@@ -235,6 +237,7 @@ namespace Zazzles
             _timer = new Timer(gracePeriod*1000);
             _timer.Elapsed += TimerElapsed;
             _timer.Start();
+            return CompletedTask;
         }
 
         private static bool ShouldAbort()
