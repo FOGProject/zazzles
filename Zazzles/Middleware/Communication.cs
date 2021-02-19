@@ -98,6 +98,9 @@ namespace Zazzles.Middleware
             // Set custom certificate policy manager
             ServicePointManager.ServerCertificateValidationCallback =
                 CertificatePolicy.CertValidationCallback;
+            // Check and set TLS protocol versions to use for communication to the FOG server
+            SetTlsProtocolVersions();
+
             var webRequest = WebRequest.Create(Configuration.ServerAddress + postfix);
 
             using (var response = webRequest.GetResponse())
@@ -124,6 +127,8 @@ namespace Zazzles.Middleware
                 // Set custom certificate policy manager
                 ServicePointManager.ServerCertificateValidationCallback =
                     CertificatePolicy.CertValidationCallback;
+                // Check and set TLS protocol versions to use for communication to the FOG server
+                SetTlsProtocolVersions();
 
                 // Create a request using a URL that can receive a post. 
                 var request = (HttpWebRequest)WebRequest.Create(Configuration.ServerAddress + postfix);
@@ -265,6 +270,9 @@ namespace Zazzles.Middleware
                 // Set custom certificate policy manager
                 ServicePointManager.ServerCertificateValidationCallback =
                     CertificatePolicy.CertValidationCallback;
+                // Check and set TLS protocol versions to use for communication to the FOG server
+                SetTlsProtocolVersions();
+
                 using (var wclient = new WebClient())
                 {
                     wclient.DownloadFile(url, filePath);
@@ -278,6 +286,51 @@ namespace Zazzles.Middleware
             }
 
             return File.Exists(filePath);
+        }
+
+        public static void SetTlsProtocolVersions()
+        {
+            Log.Debug(LogName, "Runtime: " + System.Diagnostics.FileVersionInfo.GetVersionInfo(typeof(int).Assembly.Location).ProductVersion);
+            Log.Debug(LogName, "Enabled protocols:   " + ServicePointManager.SecurityProtocol);
+            foreach (SecurityProtocolType protocol in Enum.GetValues(typeof(SecurityProtocolType)))
+            {
+                switch (protocol)
+                {
+                    case SecurityProtocolType.Tls11:
+                    case SecurityProtocolType.Tls12:
+                    case (SecurityProtocolType)12288:
+                        if (!ServicePointManager.SecurityProtocol.HasFlag(protocol))
+                        {
+                            Log.Debug(LogName, $"{protocol.ToString()} is NOT enabled. Enabling it now.");
+                            ServicePointManager.SecurityProtocol |= protocol;
+                        }
+                        else
+                        {
+                            Log.Debug(LogName, $"{protocol.ToString()} is enabled already. Leaving it like this!");
+                        }
+                        break;
+                    case SecurityProtocolType.Ssl3:
+                    case SecurityProtocolType.Tls:
+                        if (ServicePointManager.SecurityProtocol.HasFlag(protocol))
+                        {
+                            Log.Debug(LogName, $"{protocol.ToString()} is enabled. Disabling it now.");
+                            ServicePointManager.SecurityProtocol &= ~protocol;
+                        }
+                        else
+                        {
+                            Log.Debug(LogName, $"{protocol.ToString()} is disabled. Leaving it like this!");
+                        }
+                        break;
+                    case (SecurityProtocolType)0:
+                        // Protocol SystemDefault which we just ignore
+                        break;
+                    default:
+                        Log.Debug(LogName,
+                            $"Found yet unknown protocol {protocol.ToString()} ({protocol.GetHashCode()}), please add to the code!");
+                        break;
+                }
+            }
+            Log.Debug(LogName, "Enabled protocols:   " + ServicePointManager.SecurityProtocol);
         }
     }
 
