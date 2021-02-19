@@ -14,7 +14,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("FOG")]
 [assembly: AssemblyProduct("FOG:Zazzles")]
-[assembly: AssemblyCopyright("Copyright 2014-2020")]
+[assembly: AssemblyCopyright("Copyright 2014-2021")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
