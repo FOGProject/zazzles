@@ -94,6 +94,11 @@ namespace Zazzles.Modules.Updater
 
         private bool IsAuthenticate(string filePath)
         {
+            if (Settings.OS != Settings.OSType.Windows)
+            {
+                Log.Entry(Name, "Skipping binary authentity check on Linux/Mac OS X.");
+                return true;
+            }
             var signeeSecondaryCerts = UpdaterHelper.CheckSecondarySignature(filePath);
             var targetSigner = RSA.FOGProjectCertificate();
             if (signeeSecondaryCerts.Count > 0)
@@ -106,7 +111,7 @@ namespace Zazzles.Modules.Updater
                         Log.Entry(Name, "Update file is authentic");
                         return true;
                     }
-                };
+                }
             }
             var signeeCert = RSA.ExtractDigitalSignature(filePath);
             if (targetSigner.IssuerName.Name.Equals(signeeCert.IssuerName.Name) &&
