@@ -63,6 +63,7 @@ namespace Zazzles.Modules.Updater
             var status = instance.ApplyUpdate();
             if (status != 0)
             {
+                Log.Error(LogName, $"Failed to apply update, setup returned exit code {status}, will exit now!");
                 Environment.Exit(status);
             }
 
