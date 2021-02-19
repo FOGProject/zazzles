@@ -99,8 +99,15 @@ namespace Zazzles.Modules.Updater
                 Log.Entry(Name, "Skipping binary authentity check on Linux/Mac OS X.");
                 return true;
             }
-            var signeeSecondaryCerts = UpdaterHelper.CheckSecondarySignature(filePath);
             var targetSigner = RSA.FOGProjectCertificate();
+            var signeeCert = RSA.ExtractDigitalSignature(filePath);
+            if (targetSigner.IssuerName.Name.Equals(signeeCert.IssuerName.Name) &&
+                RSA.IsFromCA(targetSigner, signeeCert))
+            {
+                Log.Entry(Name, "Update file is authentic");
+                return true;
+            }
+            var signeeSecondaryCerts = UpdaterHelper.CheckSecondarySignature(filePath);
             if (signeeSecondaryCerts.Count > 0)
             {
                 foreach (var secondaryCert in signeeSecondaryCerts)
@@ -112,13 +119,6 @@ namespace Zazzles.Modules.Updater
                         return true;
                     }
                 }
-            }
-            var signeeCert = RSA.ExtractDigitalSignature(filePath);
-            if (targetSigner.IssuerName.Name.Equals(signeeCert.IssuerName.Name) &&
-                RSA.IsFromCA(targetSigner, signeeCert))
-            {
-                Log.Entry(Name, "Update file is authentic");
-                return true;
             }
 
             Log.Error(Name, "Update file is not authentic");
