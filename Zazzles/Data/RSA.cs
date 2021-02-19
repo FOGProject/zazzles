@@ -195,7 +195,7 @@ namespace Zazzles.Data
             if (caCert == null)
                 throw new ArgumentNullException(nameof(caCert));
 
-            Log.Entry(LogName, "Injecting root CA: " + caCert.FriendlyName);
+            Log.Entry(LogName, "Injecting root CA: " + caCert.SubjectName.Name);
             try
             {
                 var store = new X509Store(StoreName.Root, GetCertStoreLocation());
