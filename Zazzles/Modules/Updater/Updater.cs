@@ -94,29 +94,35 @@ namespace Zazzles.Modules.Updater
 
         private bool IsAuthenticate(string filePath)
         {
-            if (Settings.OS != Settings.OSType.Windows)
-            {
-                Log.Entry(Name, "Skipping binary authentity check on Linux/Mac OS X.");
-                return true;
-            }
             var targetSigner = RSA.FOGProjectCertificate();
             var signeeCert = RSA.ExtractDigitalSignature(filePath);
-            if (targetSigner.IssuerName.Name.Equals(signeeCert.IssuerName.Name) &&
+            if (targetSigner != null && signeeCert != null &&
+                targetSigner.IssuerName.Name.Equals(signeeCert.IssuerName.Name) &&
                 RSA.IsFromCA(targetSigner, signeeCert))
             {
                 Log.Entry(Name, "Update file is authentic");
                 return true;
             }
-            var signeeSecondaryCerts = UpdaterHelper.CheckSecondarySignature(filePath);
-            if (signeeSecondaryCerts.Count > 0)
+            if (Settings.OS == Settings.OSType.Windows)
             {
-                foreach (var secondaryCert in signeeSecondaryCerts)
+                /*
+                 * Currently we don't have the binary signed with a secondary signature!
+                 * So the following check is useless right now. But if we need to switch to
+                 * a new FOG Project CA some years down the road this will be needed again.
+                 * Only works on Windows as a certain DLL is needed which is not available
+                 * on Linux and Mac OS X.
+                 */
+                var signeeSecondaryCerts = UpdaterHelper.CheckSecondarySignature(filePath);
+                if (signeeSecondaryCerts.Count > 0)
                 {
-                    if (targetSigner.IssuerName.Name.Equals(secondaryCert.IssuerName.Name) &&
-                        RSA.IsFromCA(targetSigner, secondaryCert))
+                    foreach (var secondaryCert in signeeSecondaryCerts)
                     {
-                        Log.Entry(Name, "Update file is authentic");
-                        return true;
+                        if (targetSigner.IssuerName.Name.Equals(secondaryCert.IssuerName.Name) &&
+                            RSA.IsFromCA(targetSigner, secondaryCert))
+                        {
+                            Log.Entry(Name, "Update file is authentic");
+                            return true;
+                        }
                     }
                 }
             }
