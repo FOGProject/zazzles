@@ -18,6 +18,7 @@
  */
 
 using System;
+using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -128,6 +129,20 @@ namespace Zazzles.Data
         /// <returns>The FOG CA root certificate</returns>
         public static X509Certificate2 ServerCertificate()
         {
+            var keyPath = Path.Combine(Settings.Location, "ca.cert.der");
+            try
+            {
+                if (File.Exists(keyPath))
+                {
+                    Log.Debug(LogName, $"Using FOG Server CA certificate from file {keyPath}.");
+                    return new X509Certificate2(keyPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(LogName, ex);
+            }
+            Log.Debug(LogName, $"Unable to load CA cert from {keyPath}, trying cert store now.");
             return GetRootCertificate("FOG Server CA");
         }
 
@@ -136,7 +151,24 @@ namespace Zazzles.Data
         /// <returns>The FOG Project root certificate</returns>
         public static X509Certificate2 FOGProjectCertificate()
         {
-            return GetRootCertificate("FOG Project");
+            if (Settings.OS == Settings.OSType.Windows)
+                return GetRootCertificate("FOG Project");
+
+            var keyPath = Path.Combine(Settings.Location, "fog.ca.cer");
+            try
+            {
+                if (File.Exists(keyPath))
+                {
+                    Log.Debug(LogName, $"Using FOG Project certificate from file {keyPath}.");
+                    return new X509Certificate2(keyPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(LogName, ex);
+            }
+            Log.Error(LogName, $"Unable to load FOG Project certificate from file {keyPath}.");
+            return null;
         }
 
         /// <summary>
@@ -180,7 +212,7 @@ namespace Zazzles.Data
             }
             catch (Exception ex)
             {
-                Log.Error(LogName, ex);
+                Log.Entry(LogName, ex.Message);
             }
 
             return null;
@@ -291,7 +323,7 @@ namespace Zazzles.Data
                     {
                         RevocationMode = X509RevocationMode.NoCheck,
                         RevocationFlag = X509RevocationFlag.ExcludeRoot,
-                        VerificationFlags = X509VerificationFlags.IgnoreNotTimeValid,
+                        VerificationFlags = X509VerificationFlags.IgnoreNotTimeValid | X509VerificationFlags.AllowUnknownCertificateAuthority,
                         VerificationTime = DateTime.Now,
                         UrlRetrievalTimeout = new TimeSpan(0, 0, 0)
                     }
